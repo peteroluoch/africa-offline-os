@@ -50,7 +50,7 @@ testpaths = ["aos/tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
-addopts = "-v --strict-markers --tb=short"
+addopts = "-v --strict-markers --tb=short --cov=aos --cov-report=term-missing"
 asyncio_mode = "auto"
 
 [tool.coverage.run]
@@ -58,6 +58,8 @@ source = ["aos"]
 omit = ["aos/tests/*", "aos/__init__.py"]
 
 [tool.coverage.report]
+show_missing = true
+fail_under = 90
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
@@ -80,9 +82,13 @@ select = [
     "B",   # flake8-bugbear
     "C4",  # flake8-comprehensions
     "UP",  # pyupgrade
+    "T20", # flake8-print (for clean production logs)
+    "ANN", # flake8-annotations (Mandatory for FAANG)
 ]
 ignore = [
-    "E501",  # line too long (handled by formatter)
+    "E501",  # line too long
+    "ANN101", # Missing type annotation for self
+    "ANN102", # Missing type annotation for cls
 ]
 
 [tool.mypy]
@@ -91,3 +97,9 @@ strict = true
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+show_error_codes = true
