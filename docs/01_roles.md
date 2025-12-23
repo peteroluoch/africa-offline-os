@@ -1,25 +1,20 @@
-# Elite AI Architect & Systems Engineer Binding Contract (A-OS Edition)
+# Elite AI Systems Architect & Kernel Engineer Binding Contract (A-OS Edition)
 
 ## ⚠️ **ARCHITECTURAL & GOVERNANCE MANDATE**
 
-This document is the **Single Source of Truth** for the Africa Offline OS (A-OS) project. It is a shared, binding contract for ALL developers (AI or human). It defines the FAANG-grade methodology, engineering standards, and quality gates required to build a production-ready, edge-first kernel.
+This document is the **Single Source of Truth** for the Africa Offline OS (A-OS) project. It is a shared, binding contract for ALL developers (AI or human). It defines the FAANG-grade methodology, engineering standards, and quality gates required to build a production-ready, edge-first kernel for 100M+ users.
 
 ---
 
 ## 🏢 Primary Role & Authority
-**Position**: Elite AI Architect, Product Manager, & Lead Systems Engineer.
-**Authority**:
-- **Design System Steward**: Ensures every UI fragment follows Atomic Design & Design Tokens.
-- **Kernel Architect**: Enforces 100% type safety and async/sync discipline.
-- **QA Supervisor**: Blocks any commit without 100% test coverage for new logic.
-- **Security Officer**: Mandates Ed25519 node identity and JWT-based local auth.
+**Position**: Elite AI Systems Architect, Product Manager, & Lead Kernel Engineer.
 
-### **Engineering Principles (The FAANG Core)**
-- ✅ **Test-Driven Development (TDD)**: No implementation code without a failing test first.
-- ✅ **Data Flow Verification**: 100% integrity check from Database to HTMX Fragment.
-- ✅ **Zero-Bug Methodology**: Automated quality gates (Ruff, MyPy, Pytest) must pass for every change.
-- ✅ **Offline-First Engineering**: Every feature must operate without internet connectivity.
-- ✅ **Kernel Resilience**: WAL mode persistence and journaled state recovery are non-negotiable.
+### **Specializations & Specializations:**
+- 🛡️ **Kernel Resilience**: Ensures 100% data integrity during power loss or abrupt shutdowns.
+- 🚀 **Performance Optimization**: Targets sub-second boot times and minimal memory footprint (<10MB kernel core).
+- 🎨 **Design System Steward**: Ensures every HTMX fragment and UI component follows `aos_tokens.json`.
+- 🧬 **Bus Architect**: Maintains decoupling through the async internal event bus.
+- 🧪 **QA Engineer**: Achieves 100% coverage on core logic and establishes fault-injection testing.
 
 ---
 
@@ -29,74 +24,76 @@ This document is the **Single Source of Truth** for the Africa Offline OS (A-OS)
 - **Deep Analysis Protocol**: Superficial text searches are forbidden for feature validation. Transitive dependencies and kernel-level side effects MUST be analyzed.
 - **Duplication Prohibition**: Check the entire `aos/` tree before implementing new logic. If it exists, refactor/extend; do not duplicate.
 - **Documentation Sync**: All code changes MUST be accompanied by updates to relevant architecture docs or `INTELLIGENCE_JOURNAL.md`.
+- **Root Cause Analysis**: Never apply "hacks" or superficial fixes. Every issue must be traced to its architectural origin.
 
-### 2. Quality Assurance Gates
-- **Guard Check Mandate**: Code removal requires a "Guard Check" – proving it's unused via deep scanning.
-- **Healing Exercise**: After every task, verify `boot -> health-check -> shutdown`.
-- **Sustainable Solutions**: No "hacks." Use hexagonal architecture:
-    - **Domain (`core/`)**: Pure logic, zero dependencies.
-    - **Adapters (`db/`, `bus/`)**: External I/O management.
-    - **Interface (`api/`, `ui/`)**: Transport and presentation.
+### 2. Quality Assurance Gates (FAANG Standard)
+- **TDD Mandate**: No production code is written without a failing test first. NO EXCEPTIONS.
+- **Guard Check Protocol**: Before removing any code, execute a deep scan to prove it's truly unused.
+- **Type Safety**: Python `typing` is mandatory. `mypy --strict` is the goal for core modules.
+- **Healing Exercise**: After every task, verify the system foundation: `boot -> health-check -> shutdown`.
 
 ### 3. Operational Discipline
-- **Strict Typing**: All Python code MUST use explicit type hints. `mypy --strict` is the standard.
-- **Atomic Commits**: One feature/fix per commit. Descriptive, FAANG-style messages.
-- **Server Safety**: Use only the designated runner scripts (managed via `pyproject.toml` or OS service).
+- **Atomic Commits**: One feature/fix per commit. Descriptive, FAANG-style messages detailing "Why" (not just "What").
+- **Offline-First Resilience**: Every module must function fully with zero internet. Sync logic is opportunistic, never blocking.
+- **Mobile-Friendly Paths**: Use relative path resolution for all local I/O to ensure compatibility across Linux, RPi, and Termux (Android).
 
 ---
 
 ## 🏗️ THE A-OS 5-FRAMEWORK SYSTEM
 
 ### **FRAMEWORK A: Performance & Edge Optimization**
-- **Kernel Performance**: Sub-second boot target. Zero blocking I/O on the main thread.
-- **Database Efficiency**: SQLite with WAL mode + optimized indexing for constrained hardware.
-- **Resource Budgets**: Monitor CPU/RAM. Propose optimizations if kernel footprint grows >5%.
+- **Boot Performance**: Sub-second system initialization target.
+- **Minimal Footprint**: Careful dependency management. Avoid heavy libraries (no Pandas, no heavy frameworks).
+- **Concurrency**: `asyncio` loop safety. Never block the event loop with synchronous I/O.
 
-### **FRAMEWORK B: Code Quality & Atomic UI**
-- **Atomic Design for HTMX**:
-    - **Atoms**: Base HTML fragments (Buttons, Inputs).
-    - **Molecules**: Groups of atoms (Search Bars, Chips).
-    - **Organisms**: Functional UI blocks (Sidebar, Module List).
-- **Design Token Governance**: NO hardcoded Tailwind classes for colors/spacing. Use `aos_tokens.json`.
+### **FRAMEWORK B: Code Quality & Hexagonal Architecture**
+- **Hexagonal Separation**:
+    - **Domain (`core/`)**: Pure logic, zero external dependencies.
+    - **Adapters (`db/`, `bus/`, `api/`)**: Handle I/O, persistence, and external communication.
+- **Design Tokens**: Every UI element must consume `aos_tokens.json`. No hardcoded hex codes or spacing in Tailwind/CSS.
 
-### **FRAMEWORK C: Testing & QA (TDD)**
-- **pytest-First**: All PRs must include tests in `aos/tests/`.
-- **Fault Injection**: Test how the kernel behaves during simulated power loss or DB corruption.
-- **Coverage**: Maintain >90% coverage for the Core and Bus layers.
+### **FRAMEWORK C: Testing & Fault Injection**
+- **Test-as-You-Build**: Pytest suite mirrors the codebase.
+- **Fault Injection**: Simulation of "Power Loss" during SQLite writes and "Network Jitter" during opportunistic sync.
+- **Coverage**: 90% target for `core/`, `db/`, and `bus/`.
 
 ### **FRAMEWORK D: Security & Root of Trust**
-- **Identity**: Every node has an Ed25519 keypair for identity and signing.
-- **Persistence**: Encrypt sensitive data at rest using kernel-level providers.
-- **Access Control**: Role-Based access to local API endpoints via internal JWT signature.
+- **Node Identity**: Ed25519-based device keys for all inter-node communication.
+- **Local Access Control**: Stateless JWT-based auth for the local Control UI.
+- **Data Integrity**: WAL mode and checksums for critical database state.
 
-### **FRAMEWORK E: Observability & Health**
-- **System Health**: Distributed monitoring of module state via the Event Bus.
-- **Structured Logging**: Every system event logged in JSON format for automated analysis.
-- **Watchdog Integration**: Hardware/Software watchdog integration for auto-recovery.
-
----
-
-## 🧠 STRATEGIC EVOLUTION & MEMORY
-
-### **1. Intelligence Journaling**
-Every major task completion MUST trigger an entry in `docs/INTELLIGENCE_JOURNAL.md`.
-- **Distill Knowledge**: What kernel pattern was learned?
-- **Anti-Pattern Detection**: What should we never do again?
-
-### **2. Proactive Initiative**
-As the Lead Architect, I will autonomously identify:
-- Performance bottlenecks in DB queries.
-- Type hint gaps in third-party adapters.
-- Circular dependencies in the Bus layer.
+### **FRAMEWORK E: Observability & Health Telemetry**
+- **Health Indicators**: `/health` endpoint providing disk, uptime, and DB telemetry.
+- **Event Auditing**: Every system event is traceable via the Bus with Correlation IDs.
+- **Watchdog Readiness**: Designed to work with system-level watchdogs for auto-recovery.
 
 ---
 
-## 🔧 IMPLEMENTATION WORKFLOW (MANDATORY)
+## 🔍 FAANG-GRADE ISSUE RESOLUTION WORKFLOW
+
+### **PHASE 1: SEARCH & VERIFY (NEVER START CODING)**
+1. **Prior Art Check**: Search for existing solutions/patterns in `aos/`.
+2. **Impact Analysis**: Identify owners of modules affected by the change.
+3. **Instrumentation**: Reproduce the issue with a failing test and logs.
+
+### **PHASE 2: SURGICAL FIX**
+1. **Root Cause Correction**: Fix the actual cause, not the symptom.
+2. **Minimal Diff**: Keep PRs small and focused.
+3. **Zero Mutation Policy**: Avoid changing existing signatures unless architectural upgrade is required.
+
+### **PHASE 3: VALIDATION**
+1. **Healing Exercise**: Run full test suite.
+2. **Regression Check**: Verify related modules are unaffected.
+3. **Sync**: Update docs and Journal.
+
+---
+
+## 🔧 IMPLEMENTATION WORKFLOW
 
 1. **PLAN**: Create `implementation_plan.md`. Define data flow and test cases.
 2. **TEST**: Write failing `pytest` in `aos/tests/`.
-3. **BUILD**: Implement minimal code to pass. Apply type hints.
-4. **HEAL**: Check `ruff` and `mypy` compliance.
+3. **BUILD**: Implement minimal code to pass.
+4. **HEAL**: Verify `ruff` and `mypy` compliance.
 5. **REFLECT**: Update `INTELLIGENCE_JOURNAL.md` and commit.
 
 **By proceeding, ALL developers acknowledge this contract as the governing law of the A-OS codebase.**
