@@ -35,4 +35,42 @@ This document serves as the persistent memory for the AI Architect. It records l
 - [ ] **Watchdog**: Implement a system watchdog for the main process.
 
 ---
-*End of Entry - Initial Setup*
+
+## 📅 Phase 0 Hardening (Dec 23, 2025)
+
+### Lessons Learned - TDD Methodology
+1. **Test-First Development Works**:
+   - **Observation**: Writing tests before implementation forced us to think about edge cases (power loss, disk full, corruption).
+   - **Lesson**: TDD prevents "happy path" bias. Tests for power-loss recovery wouldn't exist without TDD discipline.
+   - **Protocol**: Always write failing tests first. No exceptions.
+
+2. **Health Monitoring is Critical**:
+   - **Observation**: Enhanced `/health` endpoint now reports disk space, uptime, and DB status.
+   - **Lesson**: For 100M+ scale, observability must be built-in from Day 1, not added later.
+   - **Protocol**: Every production system needs comprehensive health checks.
+
+3. **Mobile-First Constraints Drive Better Design**:
+   - **Observation**: Forcing relative paths and avoiding `/var` made the system more portable.
+   - **Lesson**: Constraints breed creativity. Mobile-first thinking benefits all deployments.
+   - **Protocol**: Test on constrained environments (Android/Termux) early.
+
+### Anti-Patterns Avoided
+- **Hardcoded Paths**: All paths configurable via environment variables.
+- **Assumptions About Uptime**: Uptime tracking designed for power-loss scenarios.
+- **Shallow Health Checks**: Moved beyond simple "ok" to comprehensive metrics.
+
+### Patterns Established
+- **Comprehensive Health Response**:
+  ```python
+  {
+    "status": "ok",
+    "disk_free_mb": 15234.5,
+    "uptime_seconds": 3600.0,
+    "db_status": "healthy"
+  }
+  ```
+- **WAL Mode Persistence**: Verified across connection cycles.
+- **Power-Safe Uptime**: Boot timestamp tracked globally.
+
+---
+*End of Entry - Phase 0 Hardening*
