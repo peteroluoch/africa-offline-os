@@ -1,4 +1,4 @@
-# A-OS — MASTER DEVELOPMENT ROADMAP
+# A-OS — MASTER DEVELOPMENT ROADMAP (V1.1)
 
 **Vision**: The foundational operating layer for the next 100M+ edge-connected users in Africa.  
 **Standard**: FAANG-grade Production (TDD, Zero-Bug, Offline-First, Power-Safe).  
@@ -14,100 +14,97 @@
 | **2** | **A-OS Node UI** | Observability (HTMX) | 5% | ⏳ PLANNED |
 | **3** | **Sync & Connectivity** | Intermittent Intelligence | 0% | ⏳ PLANNED |
 | **4** | **Identity & Trust Core** | Decentralized ID | 0% | ⏳ PLANNED |
-| **5** | **Vehicle Implementations** | Human Interaction | 0% | ⏳ PLANNED |
+| **5** | **Vehicle Implementations** | Human Interaction Layers | 0% | ⏳ PLANNED |
+| **6** | **Agri-Module (Lighthouse)**| Harvest & Cold Chain | 0% | ⏳ PLANNED |
+| **7** | **Transport & Mobility** | Rural Navigation & Traffic | 0% | ⏳ PLANNED |
+| **8** | **Resource Awareness** | Power-Safe Scheduling | 0% | ⏳ PLANNED |
+| **9** | **Regional Aggregation** | Scale Without Cloud | 0% | ⏳ PLANNED |
+| **10**| **Governance & Quality** | Enterprise Hardening | 0% | ⏳ FINAL |
 
 ---
 
-## 🧩 Phase 0: Kernel Bootstrap (The Foundation)
-**Goal**: Establish a power-safe, high-concurrency runtime that survives anything.  
-**Status**: 🔒 **SECURED (TDD Hardened)**
+## 🏗️ Execution Strategy (Zero-Hallucination Batching)
+To prevent "AI Drift" and ensure architectural integrity, execution is batched into groups of **3-5 tasks max**. Each batch must:
+1.  **Compile & Pass CI**: Zero broken builds between batches.
+2.  **Pass TDD Mandate**: 90% coverage for all new logic.
+3.  **Be Atomic**: Mergeable and reversible.
 
-### 🛠️ What Exists
-- **FastAPI Core**: Lifespan managed, async-first.
-- **SQLite Engine**: WAL-mode enabled, power-loss resilience validated.
-- **Config System**: Environment-driven, mobile-path aware (`AOS_` prefix).
-- **Health System**: Real-time disk/uptime/DB telemetry.
-- **Quality Gates**: 90% coverage mandate, strict linting/typing (Ruff/MyPy).
-
-### 📦 Artifacts
-- [x] `aos.api.app` (Kernel entry)
-- [x] `aos.db.engine` (Persistence)
-- [x] `docs/01_roles.md` (Shared Blueprint)
-- [x] `aos/tests/` (28+ Production-grade tests)
+| Phase | Est. Batches | Target Style |
+| :--- | :--- | :--- |
+| **Phase 0** | 1 Batch | COMPLETED |
+| **Phase 1** | 2 Batches | Logic Core & PERSISTENCE |
+| **Phase 2** | 1 Batch | Frontend (HTMX) |
+| **Phase 3+** | TBD | Domain Specific |
 
 ---
 
-## ⚡ Phase 1: Event Bus & Adapter Contracts
-**Goal**: Decouple business logic from human/external interfaces.  
-**Status**: 🔜 **NEXT PRIORITY**
+## 🎯 Phase Detail: Foundation (0-4)
 
-### 🎯 Scope
-- **Domain Event Bus**: In-process, thread-safe message passing.
-- **Persistence Hooks**: Event-sourcing readiness (local replay).
-- **The Adapter Contract**: Abstract base for USSD, SMS, WhatsApp, Hub.
-- **The Module Contract**: Abstract base for Agri, Finance, Identity logic.
+### Phase 0: Kernel Bootstrap (Foundation) 🔒
+- **Scope**: Core Process, SQLite WAL-Engine, Health Telemetry.
+- **Artifacts**: `aos.api.app`, `aos.db.engine`, `docs/01_roles.md`.
+- **Status**: Hardened via TDD. Production-ready.
 
-### 🔑 Unlocks
-- Dev teams can build **Modules** (Calculations/Logic) without knowing about **Vehicles** (SMS/Web).
-- **Vehicles** (Adapters) can be hot-swapped or multiplexed.
+### Phase 1: Event Bus & Adapter Contracts 🔜
+- **Scope**: Decoupled messaging. Persistence hooks for event-replay.
+- **Status**: Initial base classes implemented. Needs queue durability.
 
----
+### Phase 2: Node Control UI ⏳
+- **Scope**: PWA (HTMX + Alpine). Real-time node status (RAM/Disk/Power).
+- **Status**: Design tokens defined (`aos_tokens.json`).
 
-## 🖥️ Phase 2: Node Control UI (OS UI)
-**Goal**: Operational visibility for hub managers and field agents.  
-**Status**: ⏳ PLANNED (H1 2026)
+### Phase 3: Connectivity & Sync Layer ⏳
+- **Scope**: Smart retries, signed payloads, delta-sync for bandwidth saving.
 
-### 🎯 Scope
-- **Tech Stack**: HTMX + Alpine.js (Zero heavy JS bundles).
-- **Features**: 
-    - Real-time Node telemetry (Disk, RAM, Battery).
-    - Module status dashboard.
-    - Local sync queue inspection (How much data is waiting for signal?).
-    - Power-loss event logging.
+### Phase 4: Identity & Trust Core ⏳
+- **Scope**: Local registry, Ed25519 signatures, biometric abstraction.
 
 ---
 
-## 📡 Phase 3: Connectivity & Sync Layer
-**Goal**: Smart data movement over "broken" networks.  
-**Status**: ⏳ PLANNED
+## � Phase Detail: Human Interaction & Domain (5-7)
 
-### 🎯 Scope
-- **Connectivity Detection**: Heartbeat logic for signal drift.
-- **Signed Payloads**: Ensuring data remains tamper-proof during ferry/sync.
-- **Delta Sync**: Sending only bits that changed (bandwidth optimization).
-- **Conflict Resolution**: "Last-signed wins" vs "Merge-safe" strategies.
+### Phase 5: Vehicle Implementations (Adapters) ⏳
+- **Concept**: "Vehicles are thin, Infra is thick."
+- **Supported Vehicles**: USSD, SMS, WhatsApp, Telegram, Agent PWA.
+- **Artifacts**: Vehicle Adapters, Message Mappers, Retry logic.
+- **Rule**: No domain logic inside adapters. Maps signals to Bus Events.
 
----
+### Phase 6: First Real Module (Agri - Lighthouse) ⏳
+- **Goal**: Direct impact: Reduced food loss.
+- **Focus**: Harvest intake, spoilage prediction (Edge AI), cold-chain alerts, buyer matching.
+- **Artifacts**: Agri-Domain Module, Edge-Ruleset, Farmer-Flow schemas.
 
-## 🆔 Phase 4: Identity & Trust Core
-**Goal**: Reliable ID in contexts where "Google Login" is impossible.  
-**Status**: ⏳ PLANNED
-
-### 🎯 Scope
-- **Local Registry**: Encrypted local ID tables (Ed25519 signatures).
-- **Biometric Hooks**: Standardized interfaces for external scanners.
-- **Trust Chaining**: Verifying ID `A` was vouched for by Agent `B` offline.
+### Phase 7: Transport & Mobility ⏳
+- **Focus**: Rural transit logic, signal processors for crowd-sourced traffic, offline nav-hints.
+- **Artifacts**: Mobility-Module, Signal Mappers.
 
 ---
 
-## 🚜 Phase 5: Vehicle Implementations
-**Goal**: Multiplexing the A-OS kernel to every African interface.  
-**Status**: ⏳ PLANNED
+## 🔋 Phase Detail: Sustainability & Scale (8-10)
 
-### 🎯 Scope
-- **USSD Adapter**: For low-end feature phones.
-- **SMS Adapter**: For asynchronous field reporting.
-- **WhatsApp/Telegram Adapters**: For smartphone-connected agents.
-- **Agent PWA**: For high-trust field hubs.
+### Phase 8: Power & Resource Awareness ⏳
+- **Critical For**: Edge survival on solar/battery.
+- **Scope**: Power-aware scheduling, task throttling, data compaction.
+- **Artifacts**: Power Profiles, Scheduler Policies (Drop non-critical on low battery).
 
----
+### Phase 9: Regional Aggregation (Sync-Nodes) ⏳
+- **Scope**: Peer-to-peer sync between nodes, governance dashboards for regional managers.
+- **Goal**: Scaling to 100M+ users without a centralized US/EU cloud dependency.
 
-## 🛡️ Strategic Guardrails (Standard for All Phases)
-1. **No Docker Requirement**: Must run native on Linux/Android/RPi.
-2. **Zero Global Variables**: Everything bound to `App` lifecycle.
-3. **TDD Mandatory**: No code pushes without `pytest` coverage.
-4. **Mobile-First Paths**: Default to user-writable directories (no root required).
-5. **Shared Blueprint Compliance**: Every commit must adhere to `docs/01_roles.md`.
+### Phase 10: Hardening & Governance ⏳
+- **Scope**: Full audit, encrypted upgrade paths, data retention compliance, multi-region registry rules.
+- **Status**: Final stabilization.
 
 ---
-*Created by A-OS Architecture Team | Dec 2025*
+
+## 🛡️ Covered vs. Not Covered (Current State)
+
+| Status | Category | Scope |
+| :--- | :--- | :--- |
+| ✅ **COVERED** | **Theoretical** | Architecture, Stack choice, Execution philosophy, Phase ordering. |
+| ✅ **COVERED** | **Foundation** | Production Process (Phase 0), Lifecycle, Basic persistence. |
+| ❌ **NOT EXECUTED** | **Production Logic**| Zero Business Modules (Agri/Transport) built. |
+| ❌ **NOT EXECUTED** | **Human Interfaces**| Zero Vehicles (SMS/WhatsApp) active. |
+
+---
+*A-OS Roadmap V1.1 | Strategic PM Alignment: Phase 0 SECURED*
