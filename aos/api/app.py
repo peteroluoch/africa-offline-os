@@ -25,6 +25,15 @@ def get_db() -> sqlite3.Connection:
     return _db_conn
 
 
+def reset_globals() -> None:
+    """Reset global state for testing purposes."""
+    global _db_conn, _boot_time
+    if _db_conn:
+        _db_conn.close()
+    _db_conn = None
+    _boot_time = None
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Manage application lifecycle with graceful startup and shutdown."""

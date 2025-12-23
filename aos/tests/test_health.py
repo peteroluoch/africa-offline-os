@@ -1,12 +1,23 @@
 from fastapi.testclient import TestClient
+import pytest
+from aos.api.app import create_app, reset_globals
 
-from aos.api.app import create_app
+
+@pytest.fixture(autouse=True)
+def cleanup_globals():
+    """Reset global state before and after each test."""
+    reset_globals()
+    yield
+    reset_globals()
 
 
 def test_health_endpoint_returns_ok() -> None:
     app = create_app()
-    client = TestClient(app)
-
-    resp = client.get("/health")
-    assert resp.status_code == 200
-    assert resp.json() == {"status": "ok"}
+    with TestClient(app) as client:
+        resp = client.get("/health")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "ok"
+        assert "db_status" in data
+        assert "disk_free_mb" in data
+        assert "uptime_seconds" in data
