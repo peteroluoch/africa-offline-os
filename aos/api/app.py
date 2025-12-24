@@ -10,6 +10,8 @@ from fastapi import FastAPI
 from aos.core.config import Settings
 from aos.core.health import HealthStatus, check_db_health, get_disk_space, get_uptime
 from aos.db.engine import connect
+from aos.db.migrations import MigrationManager
+from aos.db.migrations.registry import MIGRATIONS
 
 
 # Global database connection
@@ -43,7 +45,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     _boot_time = time.time()
     settings = Settings()
     _db_conn = connect(settings.sqlite_path)
-    print(f"[A-OS] Started - DB: {settings.sqlite_path} (WAL mode)")
+    
+    # Run migrations
+    mgr = MigrationManager(_db_conn)
+    mgr.apply_migrations(MIGRATIONS)
+    
+    print(f"[A-OS] Started - DB: {settings.sqlite_path} (WAL mode, Migrated)")
     
     try:
         yield

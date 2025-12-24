@@ -13,7 +13,7 @@
 | **1** | **Event Bus & Adapters** | Extension & Contracts | 85% | 🔜 **IN PROGRESS** |
 | **2** | **A-OS Node UI** | Observability (HTMX) | 5% | ⏳ PLANNED |
 | **3** | **Sync & Connectivity** | Intermittent Intelligence | 0% | ⏳ PLANNED |
-| **4** | **Identity & Trust Core** | Decentralized ID | 40% | 🔜 **IN PROGRESS** |
+| **4** | **Identity & Trust Core** | Decentralized ID & DB | 100% | ✅ **HARDENED** |
 | **5** | **Vehicle Implementations** | Human Interaction Layers | 0% | ⏳ PLANNED |
 | **6** | **Agri-Module (Lighthouse)**| Harvest & Cold Chain | 0% | ⏳ PLANNED |
 | **7** | **Transport & Mobility** | Rural Navigation & Traffic | 0% | ⏳ PLANNED |
