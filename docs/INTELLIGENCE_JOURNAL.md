@@ -97,3 +97,33 @@ This document serves as the persistent memory for the AI Architect. It records l
 **Ready For**: Phase 1 Batch 2 (Persistent Queues)
 
 ---
+
+## 📅 Phase 1: Event Bus & Scheduler (Dec 24, 2025)
+
+### Lessons Learned - Durability
+1. **Durable Bus Pattern**:
+   - **Observation**: Just having a store isn't enough; the dispatcher must coordinate enqueuing and marking completion.
+   - **Lesson**: Atomic behavior (Journal-then-Dispatch) is critical for consistency. 
+   - **Protocol**: Every event emitted to the bus must be journaled to `EventStore` first if durability is required.
+
+2. **Persistent Scheduling**:
+   - **Observation**: Using `asyncio.sleep` based on `scheduled_at` is efficient but needs careful management during reboots.
+   - **Lesson**: On boot, the scheduler must sweep the DB for missed tasks and execute them immediately.
+   - **Protocol**: Always check `scheduled_at <= now` on startup.
+
+3. **Multi-Handler Completion**:
+   - **Observation**: One event can have $N$ handlers. 
+   - **Lesson**: Using `asyncio.gather` with `return_exceptions=True` allows tracking results without blocking the whole bus.
+   - **Pattern**: `_execute_with_tracking` ensures the event is only 'completed' in storage if all handlers pass.
+
+### Anti-Patterns Avoided
+- **In-Memory Only Schedulers**: Avoided using `asyncio.sleep` without disk backing, which would lose tasks on power failure.
+- **Synchronous DB Writes in Dispatch**: Used `await` for SQLite operations, ensuring the event loop remains responsive.
+
+### Metrics Evolution
+- **Tests Created**: 80 (Total passing)
+- **Coverage**: 85.36% ✅
+- **Stability**: Verified via `test_crash_recovery.py` simulating process death.
+
+---
+*End of Entry - Phase 1 Batch 3*

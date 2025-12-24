@@ -23,7 +23,15 @@ Each phase is intentional and auditable.
 
 ---
 
-## [0.1.0] — Kernel Bootstrap (In Progress)
+## [0.2.0] — Event Bus & Scheduler (2025-12-24)
+
+### Added
+- **Durable Event Bus**: SQLite-backed journaling with crash recovery.
+- **Event Scheduler**: Persistent time-based task engine (one-off and recurring).
+- **Base Contracts**: Abstract base classes for `Adapter` and `Module` extension points.
+- **Improved Testing**: Reached 80+ tests and 85%+ code coverage.
+
+## [0.1.0] — Kernel Bootstrap (2025-12-23)
 
 ### Added
 - Core configuration system
