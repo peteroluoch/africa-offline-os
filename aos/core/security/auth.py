@@ -51,16 +51,49 @@ class AuthManager:
         except jwt.InvalidTokenError as e:
             raise ValueError(f"Invalid token: {str(e)}")
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-security_scheme = HTTPBearer()
+security_scheme = HTTPBearer(auto_error=False)
 auth_manager = AuthManager()
 
-async def get_current_operator(credentials: HTTPAuthorizationCredentials = Depends(security_scheme)) -> dict:
-    """FastAPI dependency to validate JWT and return the operator payload."""
+async def get_current_operator(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None = Depends(security_scheme)
+) -> dict:
+    """
+    Validate JWT from Cookie OR Bearer token.
+    Cookie takes precedence for browser flows.
+    """
+    token = None
+    
+    # 1. Check Cookie
+    cookie_auth = request.cookies.get("access_token")
+    if cookie_auth:
+        # Expect format "Bearer <token>"
+        parts = cookie_auth.split(" ")
+        if len(parts) == 2:
+            token = parts[1]
+            
+    # 2. Check Header (fallback)
+    if not token and credentials:
+        token = credentials.credentials
+        
+    if not token:
+        # Redirect to login if browser request?
+        # For API, return 401. 
+        # Since we use this for dashboard (browser), we might want 401 and let client handle, 
+        # OR 303 Redirect if it's a GET /dashboard request...
+        # But dependencies shouldn't redirect easily.
+        # We raise 401, logic elsewhere handles it.
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     try:
-        return auth_manager.verify_token(credentials.credentials)
+        return auth_manager.verify_token(token)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

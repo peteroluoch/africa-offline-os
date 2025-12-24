@@ -28,26 +28,44 @@ class MigrationManager:
         cursor = self.conn.execute("SELECT version_id FROM schema_migrations ORDER BY version_id")
         return [row[0] for row in cursor.fetchall()]
 
-    def apply_migrations(self, migrations: List[str]) -> None:
+    def apply_migrations(self, migrations: List[Any]) -> None:
         """
-        Apply a list of SQL migrations in order.
-        Skips already applied migrations based on their index.
+        Apply a list of migrations (SQL strings or Python modules).
+        Skips already applied versions.
         """
         self.ensure_migration_table()
         applied = self.get_applied_versions()
         
-        for idx, sql in enumerate(migrations):
+        for idx, migration in enumerate(migrations):
             version_id = idx + 1
             if version_id in applied:
                 continue
             
-            # Use hash for integrity check
-            m_hash = hashlib.sha256(sql.encode()).hexdigest()
+            # Determine content for hashing
+            if hasattr(migration, 'apply'):
+                # Use module name as content for hashing - more stable than str(module)
+                content = getattr(migration, '__name__', str(migration))
+            else:
+                # SQL String
+                content = str(migration)
+                
+            m_hash = hashlib.sha256(content.encode()).hexdigest()
             
             try:
                 # Use a single transaction per migration
-                self.conn.execute("BEGIN TRANSACTION;")
-                self.conn.execute(sql)
+                # Note: Some Python migrations might manage their own transactions?
+                # For safety, we wrap in BEGIN/COMMIT if it's SQL, 
+                # but for Python apply(conn), we pass the connection.
+                # Ideally, we let the manager handle the transaction scope.
+                
+                # We can't nest transactions easily in sqlite without savepoints.
+                # Let's simple assume one transaction block.
+                
+                if hasattr(migration, 'apply'):
+                    migration.apply(self.conn)
+                else:
+                    self.conn.execute(migration)
+                    
                 self.conn.execute(
                     "INSERT INTO schema_migrations (version_id, migration_hash) VALUES (?, ?)",
                     (version_id, m_hash)

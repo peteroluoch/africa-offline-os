@@ -33,13 +33,13 @@ class EventStream:
 
     async def broadcast(self, event: Event) -> None:
         """Format event as HTML row and push to all listeners."""
-        # Create HTMX-ready HTML fragment
+        # Create HTMX-ready HTML fragment with Premium Styling
         payload_str = json.dumps(event.payload)
         html = f"""
-        <tr class="fade-in">
-            <td class="px-4 py-2 border-b border-gray-700 font-mono text-sm timestamp">{event.timestamp.strftime('%H:%M:%S')}</td>
-            <td class="px-4 py-2 border-b border-gray-700 font-bold text-accent">{event.name}</td>
-            <td class="px-4 py-2 border-b border-gray-700 font-mono text-xs">{payload_str}</td>
+        <tr class="fade-in hover:bg-white/5 transition-colors group border-b border-slate-800/30">
+            <td class="px-6 py-4 text-slate-500 font-mono">{event.timestamp.strftime('%H:%M:%S')}</td>
+            <td class="px-6 py-4 font-bold text-blue-400">{event.name}</td>
+            <td class="px-6 py-4 text-slate-400 max-w-4xl truncate group-hover:whitespace-normal">{payload_str}</td>
         </tr>
         """
         # SSE format: data: <content>\n\n
@@ -136,34 +136,37 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             print("[A-OS] Shutdown complete")
 
 
+from aos.api.routers.auth import router as auth_router
+from aos.core.security.auth import get_current_operator
+from fastapi import Depends
+
 def create_app() -> FastAPI:
     app = FastAPI(
         title="A-OS",
         version="0.1.0",
         lifespan=lifespan,
     )
+    
+    app.include_router(auth_router)
 
     @app.post("/sys/ping")
-    async def sys_ping() -> dict:
-        """Trigger a system ping event (Demostrates Module Logic)."""
+    async def sys_ping(current_user: dict = Depends(get_current_operator)) -> dict:
+        """Trigger a system ping event (Protected)."""
         if _event_dispatcher:
-            event = Event(name="system.ping", payload={"nonce": int(time.time()), "source": "api"})
+            event = Event(name="system.ping", payload={"nonce": int(time.time()), "source": current_user["username"]})
             await _event_dispatcher.dispatch(event)
             return {"status": "ping_sent", "id": event.id}
         return {"status": "error"}
 
     @app.get("/health")
     def health() -> dict:
-        """Comprehensive health check."""
+        """Comprehensive health check (Public)."""
         disk_free = get_disk_space()
         uptime = get_uptime(_boot_time)
         db_status = check_db_health(_db_conn)
         
         # Determine kernel metrics
         events_processed = 0
-        queue_depth = 0
-        # In a real sync handler we'd need to lock or use a metrics store
-        # For now return placeholders or use store if available (async issue in sync handler)
         
         status = HealthStatus(
             status="ok",
@@ -182,16 +185,16 @@ def create_app() -> FastAPI:
         }
 
     @app.get("/stream")
-    async def stream() -> StreamingResponse:
-        """Stream real-time kernel events."""
+    async def stream(current_user: dict = Depends(get_current_operator)) -> StreamingResponse:
+        """Stream real-time kernel events (Protected)."""
         return StreamingResponse(
             _event_stream.subscribe(),
             media_type="text/event-stream"
         )
         
     @app.get("/dashboard")
-    async def dashboard() -> HTMLResponse:
-        """Render the kernel dashboard."""
+    async def dashboard(current_user: dict = Depends(get_current_operator)) -> HTMLResponse:
+        """Render the kernel dashboard (Protected)."""
         template_path = Path(__file__).parent / "templates" / "dashboard.html"
         if not template_path.exists():
             return HTMLResponse("Dashboard template not found", status_code=404)

@@ -13,8 +13,17 @@ class NodeDTO(BaseModel):
 class OperatorDTO(BaseModel):
     """Data Transfer Object representing a local operator."""
     id: str
-    sub: str
-    role: str
+    username: str
+    role_id: str
+    hashed_password: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    last_login: datetime | None = None
+
+class RoleDTO(BaseModel):
+    """Data Transfer Object representing a role."""
+    id: str
+    name: str
+    permissions: list[str] = []
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class ConfigDTO(BaseModel):
