@@ -51,7 +51,8 @@ class EventStore:
                 status TEXT DEFAULT 'pending',
                 retry_count INTEGER DEFAULT 0,
                 created_at REAL NOT NULL,
-                error_message TEXT
+                error_message TEXT,
+                metadata TEXT DEFAULT '{}'
             )
         """)
         
@@ -80,8 +81,8 @@ class EventStore:
             self._conn.execute("""
                 INSERT INTO events (
                     id, event_name, payload, correlation_id, 
-                    timestamp, source_node, created_at, status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
+                    timestamp, source_node, created_at, status, metadata
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)
             """, (
                 event.id,
                 event.name,
@@ -89,7 +90,8 @@ class EventStore:
                 event.correlation_id,
                 event.timestamp.isoformat(),
                 event.source_node,
-                time.time()
+                time.time(),
+                json.dumps(event.metadata)
             ))
             self._conn.commit()
     
@@ -103,7 +105,7 @@ class EventStore:
         async with self._lock:
             # Get oldest pending event
             cursor = self._conn.execute("""
-                SELECT id, event_name, payload, correlation_id, timestamp, source_node
+                SELECT id, event_name, payload, correlation_id, timestamp, source_node, metadata
                 FROM events
                 WHERE status = 'pending'
                 ORDER BY created_at ASC
@@ -128,6 +130,7 @@ class EventStore:
                 name=row[1],
                 payload=json.loads(row[2]),
                 correlation_id=row[3],
+                metadata=json.loads(row[6])
             )
             # Manually set the id and timestamp fields
             object.__setattr__(event, 'id', row[0])
@@ -156,7 +159,7 @@ class EventStore:
             """, (error_message, event_id))
             self._conn.commit()
     
-    async def get_pending_events(self) -> list[Event]:
+    async def get_pending_events(self, limit: int = 100) -> list[Event]:
         """
         Get all pending events (for replay after crash).
         
@@ -165,11 +168,12 @@ class EventStore:
         """
         async with self._lock:
             cursor = self._conn.execute("""
-                SELECT id, event_name, payload, correlation_id, timestamp, source_node
+                SELECT id, event_name, payload, correlation_id, timestamp, source_node, metadata
                 FROM events
                 WHERE status IN ('pending', 'processing')
                 ORDER BY created_at ASC
-            """)
+                LIMIT ?
+            """, (limit,))
             
             events = []
             for row in cursor.fetchall():
@@ -177,6 +181,7 @@ class EventStore:
                     name=row[1],
                     payload=json.loads(row[2]),
                     correlation_id=row[3],
+                    metadata=json.loads(row[6])
                 )
                 object.__setattr__(event, 'id', row[0])
                 object.__setattr__(event, 'timestamp', datetime.fromisoformat(row[4]))
