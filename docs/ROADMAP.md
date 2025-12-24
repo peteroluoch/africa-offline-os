@@ -66,7 +66,7 @@ To prevent "AI Drift" and ensure architectural integrity, execution is batched i
 
 ### Phase 5: Vehicle Implementations (Adapters) 🔜 IN PROGRESS
 - **Concept**: "Vehicles are thin, Infra is thick."
-- **Status**: 30% Complete (3 of 10 batches)
+- **Status**: 30% Complete (3 of 11 batches)
 - **Completed Batches**:
   - ✅ **Batch 1**: Reference Module (TDD + Hexagonal isolation)
   - ✅ **Batch 2**: UI Bridge (SSE + HTMX Dashboard)
@@ -76,15 +76,23 @@ To prevent "AI Drift" and ensure architectural integrity, execution is batched i
     - HTTP-only cookie + Bearer auth
     - Premium glassmorphism UI (login + dashboard)
     - Protected endpoints with RBAC foundation
+- **Current Work**:
+  - 🔜 **Batch 4**: FAANG Design System Port (Strategic Infrastructure)
+    - Study Tenda design system (read-only analysis)
+    - Extract design tokens & component patterns
+    - Build A-OS atomic components (Button, Input, Badge, etc.)
+    - Build molecular components (FormField, DataCard, etc.)
+    - Refactor existing screens to use design system
+    - Establish offline-first design language
 - **Remaining Work**:
-  - Batch 4: Operator Management UI
-  - Batch 5: USSD Adapter
-  - Batch 6: SMS Gateway Integration
-  - Batch 7: WhatsApp Business API
-  - Batch 8: Telegram Bot Adapter
-  - Batch 9: Agent PWA (Offline-first)
-  - Batch 10: Integration Testing & Hardening
-- **Artifacts**: Vehicle Adapters, Message Mappers, Retry logic, Premium UI templates
+  - Batch 5: Operator Management UI
+  - Batch 6: USSD Adapter
+  - Batch 7: SMS Gateway Integration
+  - Batch 8: WhatsApp Business API
+  - Batch 9: Telegram Bot Adapter
+  - Batch 10: Agent PWA (Offline-first)
+  - Batch 11: Integration Testing & Hardening
+- **Artifacts**: Vehicle Adapters, Message Mappers, Retry logic, Premium UI templates, Design System
 - **Rule**: No domain logic inside adapters. Maps signals to Bus Events.
 
 ### Phase 6: First Real Module (Agri - Lighthouse) ⏳
