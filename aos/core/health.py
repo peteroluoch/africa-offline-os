@@ -33,6 +33,9 @@ class HealthStatus:
     disk_free_mb: float = 0.0
     uptime_seconds: float = 0.0
     db_status: Literal["healthy", "degraded", "unavailable"] = "healthy"
+    # Kernel Performance Metrics (Phase 4)
+    events_processed: int = 0
+    avg_latency_ms: float = 0.0
 
 
 def get_disk_space(path: str = ".") -> float:
