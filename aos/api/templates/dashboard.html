@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A-OS Kernel Dashboard</title>
+    <!-- In production these should be local assets -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/htmx.org/dist/ext/sse.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gray: {
+                            900: '#111827',
+                            800: '#1f2937',
+                            700: '#374151',
+                        },
+                        accent: '#3b82f6'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-8 border-b border-gray-700 pb-4 flex justify-between items-end">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight text-blue-500">A-OS Kernel Stream</h1>
+                <p class="text-gray-400 text-sm mt-1">Real-time Event Bus Monitor</p>
+            </div>
+            <div class="text-xs font-mono text-gray-500">
+                <span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>ONLINE
+            </div>
+        </header>
+
+        <div class="bg-gray-800 rounded-lg shadow-xl overflow-hidden border border-gray-700">
+            <!-- SSE Connection -->
+            <div hx-ext="sse" sse-connect="/stream" sse-swap="message" hx-target="#event-stream-body" hx-swap="afterbegin"></div>
+            
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-950 text-gray-400 text-xs uppercase tracking-wider">
+                    <tr>
+                        <th class="px-4 py-3 border-b border-gray-700 w-32">Timestamp</th>
+                        <th class="px-4 py-3 border-b border-gray-700 w-48">Event</th>
+                        <th class="px-4 py-3 border-b border-gray-700">Payload</th>
+                    </tr>
+                </thead>
+                <tbody id="event-stream-body" class="divide-y divide-gray-700 block max-h-[600px] overflow-y-auto">
+                    <!-- Events will be prepended here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

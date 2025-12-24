@@ -40,6 +40,15 @@ class EventDispatcher:
             self._subscribers[event_name].append(handler)
             logger.debug(f"Subscribed handler to {event_name}")
 
+    def subscribe_all(self, handler: EventHandler) -> None:
+        """Register a handler for ALL events (e.g. logging, streaming)."""
+        if "all" not in self._subscribers:
+            self._subscribers["all"] = []
+        
+        if handler not in self._subscribers["all"]:
+            self._subscribers["all"].append(handler)
+            logger.debug("Subscribed global handler")
+
     async def dispatch(self, event: Event) -> None:
         """
         Dispatch an event to all registered subscribers.
@@ -51,6 +60,9 @@ class EventDispatcher:
             await self._store.enqueue(event)
             
         handlers = self._subscribers.get(event.name, [])
+        # Add global handlers
+        handlers.extend(self._subscribers.get("all", []))
+        
         if not handlers:
             # If no handlers and stored, we can consider it completed
             if self._store:
