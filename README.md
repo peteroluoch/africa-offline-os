@@ -144,9 +144,27 @@ Each node operates independently and synchronizes opportunistically.
 
 ## 🚦 Project Status
 
-- Phase 0: Kernel Bootstrap (in progress)
-- Phase 1: Event Bus & Adapters (planned)
-- Phase 2+: See CHANGELOG.md
+**Current Phase:** Phase 5 - Vehicle Implementations (30% Complete)
+
+### Completed Phases
+- ✅ **Phase 0**: Kernel Bootstrap (Config, Health, Database)
+- ✅ **Phase 1**: Event Bus & Adapters (Dispatcher, EventStore, Scheduler)
+- ✅ **Phase 2**: Security & Core Components (Ed25519, ChaCha20, JWT, Audit)
+- ✅ **Phase 3**: Database & Persistence (Migrations, Transactions)
+- ✅ **Phase 4**: System Integration (E2E Verification, Performance Benchmarks)
+
+### In Progress
+- 🔜 **Phase 5**: Vehicle Implementations
+  - ✅ Batch 1: Reference Module
+  - ✅ Batch 2: UI Bridge (SSE + HTMX Dashboard)
+  - ✅ Batch 3: Identity & Access Management (IAM)
+    - Argon2id password hashing
+    - Ed25519 JWT authentication
+    - Premium glassmorphism UI
+    - Protected endpoints with RBAC
+  - ⏳ Remaining: Operator Management, USSD, SMS, WhatsApp, Telegram adapters
+
+See [ROADMAP.md](docs/ROADMAP.md) for detailed phase breakdown.
 
 ---
 
