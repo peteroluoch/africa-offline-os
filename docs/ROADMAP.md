@@ -10,10 +10,10 @@
 | Phase | Title | Focus | Progress | Status |
 | :--- | :--- | :--- | :--- | :--- |
 | **0** | **Kernel Bootstrap** | Foundation & Resilience | 100% | ✅ **COMPLETE** |
-| **1** | **Event Bus & Adapters** | Extension & Contracts | 15% | 🔜 **IN BATCH 1** |
+| **1** | **Event Bus & Adapters** | Extension & Contracts | 85% | 🔜 **IN PROGRESS** |
 | **2** | **A-OS Node UI** | Observability (HTMX) | 5% | ⏳ PLANNED |
 | **3** | **Sync & Connectivity** | Intermittent Intelligence | 0% | ⏳ PLANNED |
-| **4** | **Identity & Trust Core** | Decentralized ID | 0% | ⏳ PLANNED |
+| **4** | **Identity & Trust Core** | Decentralized ID | 40% | 🔜 **IN PROGRESS** |
 | **5** | **Vehicle Implementations** | Human Interaction Layers | 0% | ⏳ PLANNED |
 | **6** | **Agri-Module (Lighthouse)**| Harvest & Cold Chain | 0% | ⏳ PLANNED |
 | **7** | **Transport & Mobility** | Rural Navigation & Traffic | 0% | ⏳ PLANNED |
@@ -56,8 +56,9 @@ To prevent "AI Drift" and ensure architectural integrity, execution is batched i
 ### Phase 3: Connectivity & Sync Layer ⏳
 - **Scope**: Smart retries, signed payloads, delta-sync for bandwidth saving.
 
-### Phase 4: Identity & Trust Core ⏳
-- **Scope**: Local registry, Ed25519 signatures, biometric abstraction.
+### Phase 4: Identity & Trust Core 🔜
+- **Scope**: Ed25519 Identity, ChaCha20 encryption, Stateless JWT.
+- **Status**: Batch 1 (Identity/Encryption) HARDENED. Batch 2 (Auth) IN PROGRESS.
 
 ---
 

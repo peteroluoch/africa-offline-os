@@ -40,5 +40,12 @@ class Settings(BaseSettings):
     # Database configuration (mobile-friendly relative path)
     sqlite_path: str = "aos.db"
     
+    # Path configuration
+    data_dir: str = "data"
+    keys_dir: str = "data/keys"
+
     # Security configuration
     jwt_issuer: str = "aos"
+
+
+settings = Settings()
