@@ -1,0 +1,55 @@
+<div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse">
+        <thead>
+            <tr class="border-b border-slate-800/50 bg-slate-800/20">
+                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Farmer</th>
+                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Location</th>
+                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800/30">
+            {% if farmers %}
+            {% for farmer in farmers %}
+            <tr class="hover:bg-white/[0.02] transition-colors group">
+                <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 font-bold border border-blue-500/20">
+                            {{ farmer.name[0] }}
+                        </div>
+                        <div>
+                            <div class="text-white font-medium">{{ farmer.name }}</div>
+                            <div class="text-slate-500 text-xs">{{ farmer.contact }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="text-slate-400 text-sm flex items-center gap-2">
+                        <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
+                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        {{ farmer.location }}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-right">
+                    {% include "components/atoms/EliteButton.html" with label="Record Harvest" size="sm"
+                    variant="outline" attributes='hx-get="/agri/harvest/new?farmer_id=' ~ farmer.id ~ '"
+                    hx-target="#modal-content"
+                    onclick="document.getElementById(\'agri-modal\').classList.remove(\'hidden\')"' %}
+                </td>
+            </tr>
+            {% endfor %}
+            {% else %}
+            <tr>
+                <td colspan="3" class="px-6 py-12 text-center text-slate-500 italic">
+                    No farmers registered yet. Click "Register Farmer" to begin.
+                </td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>

@@ -26,6 +26,7 @@ _boot_time: float | None = None
 _event_store: EventStore | None = None
 _event_dispatcher: EventDispatcher | None = None
 _mesh_manager: 'MeshSyncManager' | None = None
+_agri_module: 'AgriModule' | None = None
 
 from aos.api.state import mesh_state
 
@@ -136,10 +137,19 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     mesh_state.manager = _mesh_manager
     await _mesh_manager.start()
 
-    # Initialize Modules (Phase 5)
+    # Initialize Modules (Phase 5/6)
     from aos.modules.reference import ReferenceModule
+    from aos.modules.agri import AgriModule
+    
     ref_mod = ReferenceModule(_event_dispatcher)
     await ref_mod.initialize()
+    
+    _agri_module = AgriModule(_event_dispatcher, _db_conn)
+    await _agri_module.initialize()
+    
+    # Store for global access if needed
+    from aos.api.state import agri_state
+    agri_state.module = _agri_module
     
     print(f"[A-OS] Started - DB: {settings.sqlite_path}")
     
@@ -158,6 +168,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 from aos.api.routers.auth import router as auth_router
 from aos.api.routers.mesh import router as mesh_router
+from aos.api.routers.agri import router as agri_router
+from aos.api.routers.channels import router as channels_router
 from aos.core.security.auth import get_current_operator
 from fastapi import Depends, Request
 from fastapi.staticfiles import StaticFiles
@@ -180,6 +192,8 @@ def create_app() -> FastAPI:
 
     app.include_router(auth_router)
     app.include_router(mesh_router)
+    app.include_router(agri_router)
+    app.include_router(channels_router)
 
     @app.post("/sys/ping")
     async def sys_ping(current_user: dict = Depends(get_current_operator)) -> dict:

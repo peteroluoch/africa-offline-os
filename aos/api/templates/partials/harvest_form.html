@@ -1,0 +1,57 @@
+<form hx-post="/agri/harvest" hx-swap="outerHTML" class="space-y-6">
+    <input type="hidden" name="farmer_id" value="{{ farmer_id }}">
+
+    <div class="space-y-2">
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Crop Type</label>
+        <select name="crop_id"
+            class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors appearance-none cursor-pointer">
+            {% for crop in crops %}
+            <option value="{{ crop.id }}">{{ crop.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+        {% include "components/molecules/FormField.html" with label="Quantity" name="quantity" type="number"
+        placeholder="50.0" attributes='step="0.1" inputmode="decimal"' %}
+        <div class="space-y-2">
+            <label class="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Unit</label>
+            <select name="unit"
+                class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors appearance-none cursor-pointer">
+                <option value="kg">kg</option>
+                <option value="bags">Bags (50kg)</option>
+                <option value="tonnes">Tonnes</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="space-y-2">
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Quality Grade</label>
+        <div class="grid grid-cols-3 gap-2">
+            <label class="cursor-pointer group">
+                <input type="radio" name="quality_grade" value="A" class="hidden peer" checked>
+                <div
+                    class="bg-slate-950 border border-slate-800 p-3 text-center rounded-xl peer-checked:bg-blue-500/10 peer-checked:border-blue-500 peer-checked:text-blue-400 transition-all text-slate-500">
+                    Grade A</div>
+            </label>
+            <label class="cursor-pointer group">
+                <input type="radio" name="quality_grade" value="B" class="hidden peer">
+                <div
+                    class="bg-slate-950 border border-slate-800 p-3 text-center rounded-xl peer-checked:bg-blue-500/10 peer-checked:border-blue-500 peer-checked:text-blue-400 transition-all text-slate-500">
+                    Grade B</div>
+            </label>
+            <label class="cursor-pointer group">
+                <input type="radio" name="quality_grade" value="C" class="hidden peer">
+                <div
+                    class="bg-slate-950 border border-slate-800 p-3 text-center rounded-xl peer-checked:bg-blue-500/10 peer-checked:border-blue-500 peer-checked:text-blue-400 transition-all text-slate-500">
+                    Grade C</div>
+            </label>
+        </div>
+    </div>
+
+    <div class="pt-4 flex justify-end gap-3">
+        {% include "components/atoms/EliteButton.html" with label="Cancel" variant="outline" type="button"
+        attributes='onclick="document.getElementById(\'agri-modal\').classList.add(\'hidden\')"' %}
+        {% include "components/atoms/EliteButton.html" with label="Record Harvest" variant="primary" type="submit" %}
+    </div>
+</form>

@@ -31,3 +31,31 @@ class ConfigDTO(BaseModel):
     key: str
     value: str
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class FarmerDTO(BaseModel):
+    """Represents a farmer registered in the mesh."""
+    id: str
+    name: str
+    location: str
+    contact: str
+    metadata: dict = {}
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class CropDTO(BaseModel):
+    """Represents a crop type."""
+    id: str
+    name: str
+    crop_type: str
+    growing_season: str
+
+class HarvestDTO(BaseModel):
+    """Represents a harvest record."""
+    id: str
+    farmer_id: str
+    crop_id: str
+    quantity: float
+    unit: str = "kg"
+    quality_grade: str
+    harvest_date: datetime
+    status: str = "stored"
+    created_at: datetime = Field(default_factory=datetime.utcnow)

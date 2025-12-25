@@ -1,5 +1,6 @@
 from __future__ import annotations
 import sqlite3
+import json
 from typing import TypeVar, Generic, List, Type, Any
 from pydantic import BaseModel
 
@@ -16,7 +17,13 @@ class BaseRepository(Generic[T]):
         self.table_name = table_name
 
     def _row_to_model(self, row: sqlite3.Row) -> T:
-        return self.model_class.model_validate(dict(row))
+        data = dict(row)
+        data = self._preprocess_data(data)
+        return self.model_class.model_validate(data)
+
+    def _preprocess_data(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Hook to preprocess database row dict before Pydantic validation."""
+        return data
 
     def get_by_id(self, id: Any) -> T | None:
         """Fetch a single record by its primary key."""
@@ -37,7 +44,7 @@ class BaseRepository(Generic[T]):
         self.conn.commit()
         return cursor.rowcount > 0
 
-from aos.db.models import NodeDTO, OperatorDTO
+from aos.db.models import NodeDTO, OperatorDTO, FarmerDTO, CropDTO, HarvestDTO
 
 class NodeRepository(BaseRepository[NodeDTO]):
     def __init__(self, connection: sqlite3.Connection):
@@ -62,7 +69,58 @@ class OperatorRepository(BaseRepository[OperatorDTO]):
 
     def save(self, operator: OperatorDTO) -> None:
         self.conn.execute("""
-            INSERT OR REPLACE INTO operators (id, sub, role, created_at)
-            VALUES (?, ?, ?, ?)
-        """, (operator.id, operator.sub, operator.role, operator.created_at))
+            INSERT OR REPLACE INTO operators (id, username, password_hash, role_id, created_at, last_login)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (operator.id, operator.username, operator.hashed_password, operator.role_id, operator.created_at, operator.last_login))
+        self.conn.commit()
+
+class FarmerRepository(BaseRepository[FarmerDTO]):
+    def __init__(self, connection: sqlite3.Connection):
+        super().__init__(connection, FarmerDTO, "farmers")
+
+    def _preprocess_data(self, data: dict[str, Any]) -> dict[str, Any]:
+        if data.get("metadata") and isinstance(data["metadata"], str):
+            try:
+                data["metadata"] = json.loads(data["metadata"])
+            except json.JSONDecodeError:
+                data["metadata"] = {}
+        return data
+
+    def save(self, farmer: FarmerDTO) -> None:
+        self.conn.execute("""
+            INSERT OR REPLACE INTO farmers (id, name, location, contact, metadata, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+            farmer.id, 
+            farmer.name, 
+            farmer.location, 
+            farmer.contact, 
+            json.dumps(farmer.metadata), 
+            farmer.created_at
+        ))
+        self.conn.commit()
+
+class CropRepository(BaseRepository[CropDTO]):
+    def __init__(self, connection: sqlite3.Connection):
+        super().__init__(connection, CropDTO, "crops")
+
+class HarvestRepository(BaseRepository[HarvestDTO]):
+    def __init__(self, connection: sqlite3.Connection):
+        super().__init__(connection, HarvestDTO, "harvests")
+
+    def save(self, harvest: HarvestDTO) -> None:
+        self.conn.execute("""
+            INSERT OR REPLACE INTO harvests (id, farmer_id, crop_id, quantity, unit, quality_grade, harvest_date, status, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            harvest.id, 
+            harvest.farmer_id, 
+            harvest.crop_id, 
+            harvest.quantity, 
+            harvest.unit, 
+            harvest.quality_grade, 
+            harvest.harvest_date, 
+            harvest.status, 
+            harvest.created_at
+        ))
         self.conn.commit()

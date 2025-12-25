@@ -1,169 +1,148 @@
-{% from "components/atoms/EliteButton.html" import elite_button %}
-{% from "components/atoms/Badge.html" import badge %}
-{% from "components/atoms/Card.html" import card %}
-{% from "components/molecules/FormField.html" import form_field %}
-{% from "components/molecules/DataCard.html" import data_card %}
-{% from "components/molecules/NodeStatus.html" import node_status %}
+{% extends "dashboard.html" %}
 
-<!DOCTYPE html>
-<html lang="en">
+{% block content %}
+<header class="mb-16">
+    <h1
+        class="aos-text-display text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">
+        A-OS Gallery
+    </h1>
+    <p class="aos-text-mono text-slate-500 uppercase tracking-widest text-sm">
+        Atomic Design System • FAANG-Grade Verification
+    </p>
+</header>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>A-OS | Component Gallery</title>
-
-    <!-- A-OS Design System -->
-    {% include 'partials/design_system.html' %}
-
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-
-<body class="bg-slate-950 text-slate-100 min-h-screen p-10">
-    <header class="mb-16">
-        <h1
-            class="aos-text-display text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">
-            A-OS Gallery
-        </h1>
-        <p class="aos-text-mono text-slate-500 uppercase tracking-widest text-sm">
-            Atomic Design System • FAANG-Grade Verification
-        </p>
-    </header>
-
-    <div class="space-y-20">
-        <!-- --- Atoms: Buttons --- -->
-        <section>
-            <h2 class="text-2xl font-bold mb-8 border-b border-slate-800 pb-2 flex items-center">
-                <span class="w-2 h-2 rounded-full bg-blue-500 mr-3"></span>
-                Atoms: EliteButton
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                {% call card(padding="6") %}
-                <h3 class="text-xs font-bold text-slate-500 mb-6 uppercase tracking-widest">Variants</h3>
-                <div class="space-y-4">
-                    {{ elite_button(text="Primary Action") }}
-                    {{ elite_button(text="Secondary Action", variant="secondary") }}
-                    {{ elite_button(text="Outline Border", variant="outline") }}
-                </div>
-                {% endcall %}
-
-                {% call card(padding="6") %}
-                <h3 class="text-xs font-bold text-slate-500 mb-6 uppercase tracking-widest">Sizes</h3>
-                <div class="space-y-4 flex flex-col items-start">
-                    {{ elite_button(text="Small Action", size="sm") }}
-                    {{ elite_button(text="Medium Action", size="md") }}
-                    {{ elite_button(text="Large Action", size="lg") }}
-                </div>
-                {% endcall %}
-
-                {% call card(padding="6") %}
-                <h3 class="text-xs font-bold text-slate-500 mb-6 uppercase tracking-widest">States</h3>
-                <div class="space-y-4 flex flex-col items-start">
-                    {{ elite_button(text="Disabled State", disabled=True) }}
-                    {{ elite_button(text="Loading State", loading=True) }}
-                </div>
-                {% endcall %}
+<div class="space-y-20">
+    <!-- --- Atoms: Buttons --- -->
+    <section>
+        <h2 class="text-2xl font-bold mb-8 border-b border-slate-800 pb-2 flex items-center">
+            <span class="w-2 h-2 rounded-full bg-blue-500 mr-3"></span>
+            Atoms: EliteButton
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {% call card(padding="6") %}
+            <h3 class="text-xs font-bold text-slate-500 mb-6 uppercase tracking-widest">Variants</h3>
+            <div class="space-y-4">
+                {{ elite_button(text="Primary Action") }}
+                {{ elite_button(text="Secondary Action", variant="secondary") }}
+                {{ elite_button(text="Outline Border", variant="outline") }}
             </div>
-        </section>
+            {% endcall %}
 
-        <!-- --- Atoms: Badges --- -->
-        <section>
-            <h2 class="text-2xl font-bold mb-8 border-b border-slate-800 pb-2 flex items-center">
-                <span class="w-2 h-2 rounded-full bg-green-500 mr-3"></span>
-                Atoms: Badge
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                {% call card(padding="6") %}
-                <h3 class="text-xs font-bold text-slate-500 mb-6 uppercase tracking-widest">Semantic variants</h3>
-                <div class="flex flex-wrap gap-4">
-                    {{ badge(text="Active", variant="success") }}
-                    {{ badge(text="Syncing", variant="info", pulse=True) }}
-                    {{ badge(text="Warning", variant="warning") }}
-                    {{ badge(text="Offline", variant="error") }}
-                </div>
-                {% endcall %}
+            {% call card(padding="6") %}
+            <h3 class="text-xs font-bold text-slate-500 mb-6 uppercase tracking-widest">Sizes</h3>
+            <div class="space-y-4 flex flex-col items-start">
+                {{ elite_button(text="Small Action", size="sm") }}
+                {{ elite_button(text="Medium Action", size="md") }}
+                {{ elite_button(text="Large Action", size="lg") }}
             </div>
-        </section>
+            {% endcall %}
 
-        <!-- --- Molecules: Forms --- -->
-        <section>
-            <h2 class="text-2xl font-bold mb-8 border-b border-slate-800 pb-2 flex items-center">
-                <span class="w-2 h-2 rounded-full bg-amber-500 mr-3"></span>
-                Molecules: FormField
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {% call card(padding="8") %}
-                {{ form_field(label="Operator ID", name="op_id", placeholder="e.g. ALPHA-1", required=True) }}
-                {% endcall %}
-
-                {% call card(padding="8") %}
-                {{ form_field(label="Access Token", name="token", placeholder="••••••••", type="password",
-                error="Invalid authorization key") }}
-                {% endcall %}
-
-                {% call card(padding="8") %}
-                {{ form_field(label="Encryption Salt", name="salt", placeholder="Auto-generated", success=True,
-                help_text="Soverign salt generated successfully") }}
-                {% endcall %}
+            {% call card(padding="6") %}
+            <h3 class="text-xs font-bold text-slate-500 mb-6 uppercase tracking-widest">States</h3>
+            <div class="space-y-4 flex flex-col items-start">
+                {{ elite_button(text="Disabled State", disabled=True) }}
+                {{ elite_button(text="Loading State", loading=True) }}
             </div>
-        </section>
+            {% endcall %}
+        </div>
+    </section>
 
-        <!-- --- Molecules: Metrics --- -->
-        <section>
-            <h2 class="text-2xl font-bold mb-8 border-b border-slate-800 pb-2 flex items-center">
-                <span class="w-2 h-2 rounded-full bg-rose-500 mr-3"></span>
-                Molecules: DataCard
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                {{ data_card(label="Kernel Pulse", value="72", unit="bpm", trend="+1.2%", trend_variant="success",
-                status="info") }}
-                {{ data_card(label="Network Throughput", value="1.2", unit="gbps", trend="-5%", trend_variant="error")
-                }}
-                {{ data_card(label="Queue Depth", value="128", unit="msgs", status="warning") }}
-                {{ data_card(label="Active Sessions", value="14", status="success") }}
+    <!-- --- Atoms: Badges --- -->
+    <section>
+        <h2 class="text-2xl font-bold mb-8 border-b border-slate-800 pb-2 flex items-center">
+            <span class="w-2 h-2 rounded-full bg-green-500 mr-3"></span>
+            Atoms: Badge
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {% call card(padding="6") %}
+            <h3 class="text-xs font-bold text-slate-500 mb-6 uppercase tracking-widest">Semantic variants</h3>
+            <div class="flex flex-wrap gap-4">
+                {{ badge(text="Active", variant="success") }}
+                {{ badge(text="Syncing", variant="info", pulse=True) }}
+                {{ badge(text="Warning", variant="warning") }}
+                {{ badge(text="Offline", variant="error") }}
             </div>
-        </section>
+            {% endcall %}
+        </div>
+    </section>
 
-        <!-- --- Molecules: Node Status --- -->
-        <section>
-            <h2 class="text-2xl font-bold mb-8 border-b border-slate-800 pb-2 flex items-center">
-                <span class="w-2 h-2 rounded-full bg-cyan-500 mr-3"></span>
-                Molecules: NodeStatus
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {{ node_status(name="ED25519 Secure Enclave", id="ENCLAVE-0x1F", status="success", status_text="Active")
-                }}
-                {{ node_status(name="Radio Mesh Adapter", id="RM-MESH-V2", status="info", status_text="Syncing",
-                pulse=True) }}
-                {{ node_status(name="Solar Power Bridge", id="SOL-PWR-U12", status="warning", status_text="Low Flux") }}
-            </div>
-        </section>
+    <!-- --- Molecules: Forms --- -->
+    <section>
+        <h2 class="text-2xl font-bold mb-8 border-b border-slate-800 pb-2 flex items-center">
+            <span class="w-2 h-2 rounded-full bg-amber-500 mr-3"></span>
+            Molecules: FormField
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {% call card(padding="8") %}
+            {{ form_field(label="Operator ID", name="op_id", placeholder="e.g. ALPHA-1", required=True) }}
+            {% endcall %}
 
-        <!-- --- Atoms: Cards --- -->
-        <section>
-            <h2 class="text-2xl font-bold mb-8 border-b border-slate-800 pb-2 flex items-center">
-                <span class="w-2 h-2 rounded-full bg-indigo-500 mr-3"></span>
-                Atoms: Card
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {% call card(padding="8", interactive=True) %}
-                <h3 class="text-xl font-bold mb-2">Interactive Card</h3>
-                <p class="text-slate-400 text-sm">Hover over this card to see the transformation effect ported from
-                    Tenda.</p>
-                {% endcall %}
+            {% call card(padding="8") %}
+            {{ form_field(label="Access Token", name="token", placeholder="••••••••", type="password",
+            error="Invalid authorization key") }}
+            {% endcall %}
 
-                {% call card(padding="8", glass=False, class="bg-slate-900 border-blue-500/20") %}
-                <h3 class="text-xl font-bold mb-2">Solid Surface</h3>
-                <p class="text-slate-400 text-sm">A more rugged surface for field use without transparency.</p>
-                {% endcall %}
-            </div>
-        </section>
-    </div>
+            {% call card(padding="8") %}
+            {{ form_field(label="Encryption Salt", name="salt", placeholder="Auto-generated", success=True,
+            help_text="Soverign salt generated successfully") }}
+            {% endcall %}
+        </div>
+    </section>
 
-    <footer
-        class="mt-20 pt-10 border-t border-slate-900 text-center text-slate-600 aos-text-mono text-[10px] uppercase tracking-widest">
-        A-OS Kernel Design System Verification Suite v0.1.0
-    </footer>
-</body>
+    <!-- --- Molecules: Metrics --- -->
+    <section>
+        <h2 class="text-2xl font-bold mb-8 border-b border-slate-800 pb-2 flex items-center">
+            <span class="w-2 h-2 rounded-full bg-rose-500 mr-3"></span>
+            Molecules: DataCard
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {{ data_card(label="Kernel Pulse", value="72", unit="bpm", trend="+1.2%", trend_variant="success",
+            status="info") }}
+            {{ data_card(label="Network Throughput", value="1.2", unit="gbps", trend="-5%", trend_variant="error")
+            }}
+            {{ data_card(label="Queue Depth", value="128", unit="msgs", status="warning") }}
+            {{ data_card(label="Active Sessions", value="14", status="success") }}
+        </div>
+    </section>
 
-</html>
+    <!-- --- Molecules: Node Status --- -->
+    <section>
+        <h2 class="text-2xl font-bold mb-8 border-b border-slate-800 pb-2 flex items-center">
+            <span class="w-2 h-2 rounded-full bg-cyan-500 mr-3"></span>
+            Molecules: NodeStatus
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {{ node_status(name="ED25519 Secure Enclave", id="ENCLAVE-0x1F", status="success", status_text="Active")
+            }}
+            {{ node_status(name="Radio Mesh Adapter", id="RM-MESH-V2", status="info", status_text="Syncing",
+            pulse=True) }}
+            {{ node_status(name="Solar Power Bridge", id="SOL-PWR-U12", status="warning", status_text="Low Flux") }}
+        </div>
+    </section>
+
+    <!-- --- Atoms: Cards --- -->
+    <section>
+        <h2 class="text-2xl font-bold mb-8 border-b border-slate-800 pb-2 flex items-center">
+            <span class="w-2 h-2 rounded-full bg-indigo-500 mr-3"></span>
+            Atoms: Card
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {% call card(padding="8", interactive=True) %}
+            <h3 class="text-xl font-bold mb-2">Interactive Card</h3>
+            <p class="text-slate-400 text-sm">Hover over this card to see the transformation effect ported from
+                Tenda.</p>
+            {% endcall %}
+
+            {% call card(padding="8", glass=False, class="bg-slate-900 border-blue-500/20") %}
+            <h3 class="text-xl font-bold mb-2">Solid Surface</h3>
+            <p class="text-slate-400 text-sm">A more rugged surface for field use without transparency.</p>
+            {% endcall %}
+        </div>
+    </section>
+</div>
+
+<footer
+    class="mt-20 pt-10 border-t border-slate-900 text-center text-slate-600 aos-text-mono text-[10px] uppercase tracking-widest">
+    A-OS Kernel Design System Verification Suite v0.1.0
+</footer>
+{% endblock %}

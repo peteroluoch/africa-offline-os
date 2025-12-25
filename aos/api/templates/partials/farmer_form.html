@@ -1,0 +1,17 @@
+<form hx-post="/agri/farmer" hx-target="#farmer-list-container" hx-swap="innerHTML" class="space-y-6"
+    onsubmit="setTimeout(() => { document.getElementById('agri-modal').classList.add('hidden') }, 500)">
+    <h3 class="text-sm font-bold text-blue-400 uppercase tracking-widest mb-4">Register New Farmer</h3>
+
+    {% include "components/molecules/FormField.html" with label="Full Name" name="name" placeholder="John Doe"
+    required=True %}
+    {% include "components/molecules/FormField.html" with label="Location / Sub-county" name="location"
+    placeholder="Suba North" required=True %}
+    {% include "components/molecules/FormField.html" with label="Contact Number" name="contact" placeholder="+254..."
+    required=True %}
+
+    <div class="pt-4 flex justify-end gap-3">
+        {% include "components/atoms/EliteButton.html" with label="Cancel" variant="outline" type="button"
+        attributes='onclick="document.getElementById(\'agri-modal\').classList.add(\'hidden\')"' %}
+        {% include "components/atoms/EliteButton.html" with label="Save Farmer" variant="primary" type="submit" %}
+    </div>
+</form>

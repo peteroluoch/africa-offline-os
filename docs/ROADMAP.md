@@ -17,8 +17,8 @@
 | **2** | **Security & Core Components** | Crypto & JWT | 100% | ✅ **COMPLETE** |
 | **3** | **Database & Persistence** | Migrations & Transactions | 100% | ✅ **COMPLETE** |
 | **4** | **System Integration** | E2E Verification | 100% | ✅ **COMPLETE** |
-| **5** | **Vehicle Implementations** | IAM & UI Bridge | 45% | 🔜 **IN PROGRESS** |
-| **6** | **Agri-Module (Lighthouse)**| Harvest & Cold Chain | 0% | ⏳ PLANNED |
+| **5** | **Vehicle Implementations** | IAM & UI Bridge | 50% | 🔜 **IN PROGRESS** |
+| **6** | **Agri-Module (Lighthouse)**| Harvest & Cold Chain | 0% | 🔜 **IN PROGRESS** |
 | **7** | **Transport & Mobility** | Rural Navigation & Traffic | 0% | ⏳ PLANNED |
 | **8** | **Resource Awareness** | Power-Safe Scheduling | 0% | ⏳ PLANNED |
 | **9** | **Regional Aggregation** | Scale Without Cloud | 0% | ⏳ PLANNED |
@@ -89,7 +89,10 @@ To prevent "AI Drift" and ensure architectural integrity, execution is batched i
     - ✅ Atomic Design Registry & Component Gallery
     - ✅ 100% Tokenization & Template Refactor
 - **Current Work**:
-  - 🔜 **Batch 5**: Remote Node Adapter (Mesh Communication)
+  - ✅ **Batch 5**: Remote Node Adapter (Mesh Communication)
+    - Ed25519-signed heartbeats.
+    - Persistent Store-and-Forward MeshQueue.
+    - Real-time P2P Mesh Management UI.
 - **Remaining Work**:
   - Batch 5: Remote Node Adapter (Swapped Priority)
   - Batch 6: USSD Adapter
@@ -101,10 +104,15 @@ To prevent "AI Drift" and ensure architectural integrity, execution is batched i
 - **Artifacts**: Vehicle Adapters, Message Mappers, Retry logic, Premium UI templates, Design System
 - **Rule**: No domain logic inside adapters. Maps signals to Bus Events.
 
-### Phase 6: First Real Module (Agri - Lighthouse) ⏳
+### Phase 6: First Real Module (Agri - Lighthouse) 🔜 IN PROGRESS
 - **Goal**: Direct impact: Reduced food loss.
 - **Focus**: Harvest intake, spoilage prediction (Edge AI), cold-chain alerts, buyer matching.
 - **Artifacts**: Agri-Domain Module, Edge-Ruleset, Farmer-Flow schemas.
+- **Progress**: 3/4 batches complete (75%)
+  - ✅ Batch 1: Agri-Domain & Event Schema
+  - ✅ Batch 2: Harvest Recording UI
+  - ✅ Batch 3: USSD/SMS Channel Infrastructure
+  - ⏳ Batch 4: AgriModule Integration & Real API Setup
 
 ### Phase 7: Transport & Mobility ⏳
 - **Focus**: Rural transit logic, signal processors for crowd-sourced traffic, offline nav-hints.
