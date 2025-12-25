@@ -1,0 +1,99 @@
+{# Spinner Atom - Loading Indicator #}
+{% macro spinner(
+size="md",
+variant="primary",
+class=""
+) %}
+<div class="aos-spinner aos-spinner-{{ size }} aos-spinner-{{ variant }} {{ class }}" role="status"
+    aria-label="Loading">
+    <svg class="aos-spinner-svg" viewBox="0 0 24 24" fill="none">
+        <circle class="aos-spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+        <circle class="aos-spinner-head" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"
+            stroke-linecap="round"></circle>
+    </svg>
+    <span class="sr-only">Loading...</span>
+</div>
+
+<style>
+    .aos-spinner {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .aos-spinner-svg {
+        animation: aos-spin 1s linear infinite;
+    }
+
+    .aos-spinner-sm .aos-spinner-svg {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    .aos-spinner-md .aos-spinner-svg {
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+
+    .aos-spinner-lg .aos-spinner-svg {
+        width: 2rem;
+        height: 2rem;
+    }
+
+    .aos-spinner-track {
+        opacity: 0.25;
+    }
+
+    .aos-spinner-head {
+        stroke-dasharray: 60;
+        stroke-dashoffset: 60;
+        animation: aos-spinner-dash 1.5s ease-in-out infinite;
+    }
+
+    .aos-spinner-primary {
+        color: var(--aos-primary-base);
+    }
+
+    .aos-spinner-secondary {
+        color: var(--aos-secondary-base);
+    }
+
+    .aos-spinner-white {
+        color: #ffffff;
+    }
+
+    @keyframes aos-spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @keyframes aos-spinner-dash {
+        0% {
+            stroke-dashoffset: 60;
+        }
+
+        50% {
+            stroke-dashoffset: 15;
+            transform: rotate(135deg);
+        }
+
+        100% {
+            stroke-dashoffset: 60;
+            transform: rotate(450deg);
+        }
+    }
+
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border-width: 0;
+    }
+</style>
+{% endmacro %}

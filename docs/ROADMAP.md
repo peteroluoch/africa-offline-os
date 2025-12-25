@@ -14,7 +14,7 @@
 | **2** | **Security & Core Components** | Crypto & JWT | 100% | ✅ **COMPLETE** |
 | **3** | **Database & Persistence** | Migrations & Transactions | 100% | ✅ **COMPLETE** |
 | **4** | **System Integration** | E2E Verification | 100% | ✅ **COMPLETE** |
-| **5** | **Vehicle Implementations** | IAM & UI Bridge | 30% | 🔜 **IN PROGRESS** |
+| **5** | **Vehicle Implementations** | IAM & UI Bridge | 45% | 🔜 **IN PROGRESS** |
 | **6** | **Agri-Module (Lighthouse)**| Harvest & Cold Chain | 0% | ⏳ PLANNED |
 | **7** | **Transport & Mobility** | Rural Navigation & Traffic | 0% | ⏳ PLANNED |
 | **8** | **Resource Awareness** | Power-Safe Scheduling | 0% | ⏳ PLANNED |
@@ -76,33 +76,13 @@ To prevent "AI Drift" and ensure architectural integrity, execution is batched i
     - HTTP-only cookie + Bearer auth
     - Premium glassmorphism UI (login + dashboard)
     - Protected endpoints with RBAC foundation
+  - ✅ **Batch 4**: FAANG Design System Port
+    - ✅ Atomic Design Registry & Component Gallery
+    - ✅ 100% Tokenization & Template Refactor
 - **Current Work**:
-  - 🔜 **Batch 4**: FAANG Design System Port (Strategic Infrastructure)
-    - [x] Build Atomic Components
-        - [x] Button (Primary/Secondary/Outline variants)
-        - [x] Input (Base styles)
-        - [x] Typography (Headings/Body/Mono)
-        - [x] Card (Base container)
-        - [x] Badge (Status indicators)
-    - [/] Build Atomic Design Registry (Python/Jinja2)
-        - [ ] Create `aos/api/templates/components/atoms` directory
-        - [ ] Implement `EliteButton.html` partial with variant/size props
-        - [ ] Implement `Badge.html` partial for status indicators
-        - [ ] Implement `Input.html` partial for standardized forms
-    - [ ] Implement A-OS Component Gallery (Storybook Equivalent)
-        - [ ] Create `/sys/gallery` route
-        - [ ] Build interactive preview page for all atoms/molecules
-        - [ ] Add "FAANG Compliance" check labels to components
-    - [ ] Build Molecular Components
-        - [ ] FormField (Label + Input + Error)
-        - [ ] DataCard (Metrics display)
-        - [ ] NodeStatus (Combination of badge + text)
-    - Study Tenda design system (read-only analysis)
-    - Extract design tokens & component patterns
-    - Refactor existing screens to use design system
-    - Establish offline-first design language
+  - 🔜 **Batch 5**: Remote Node Adapter (Mesh Communication)
 - **Remaining Work**:
-  - Batch 5: Operator Management UI
+  - Batch 5: Remote Node Adapter (Swapped Priority)
   - Batch 6: USSD Adapter
   - Batch 7: SMS Gateway Integration
   - Batch 8: WhatsApp Business API

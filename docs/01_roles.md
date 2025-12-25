@@ -749,37 +749,34 @@ As of December 2025, A-OS follows a systematic 5-framework approach to achieve a
 - Loop Blockage Limit: 0ms
 - UI Payload Budget: < 50KB for local fragments
 
-#### **FRAMEWORK B: CODE QUALITY & DESIGN SYSTEM** ⏳ IN PROGRESS
-**Status**: IN PROGRESS (Adapting to HTMX/Tailwind Edge System)
-**Documentation**: `docs/05_code_quality/`
+#### **FRAMEWORK B: CODE QUALITY & DESIGN SYSTEM** ✅ COMPLETE
+**Status**: 100% Complete (December 25, 2025)
+**Documentation**: `aos/ui/tokens.json`, `aos/api/templates/components/`
 
 **Objectives:**
 - Eliminate ALL hardcoded CSS values (colors, spacing, typography).
-- Establish single source of truth via `aos_tokens.css`.
-- Implement Hexagonal (Ports & Adapters) component hierarchy.
-- Ensure 100% design system compliance in HTMX templates.
+- Establish single source of truth via `aos/ui/tokens.json` and `bridge.py`.
+- Implement Atomic Design Registry (Atoms & Molecules) via Jinja2 macros.
+- Mandatory Storybook-equivalent verification via `/sys/gallery`.
 
-**Implementation Structure:**
-- **Phase 1**: Design Tokens Implementation (`aos_tokens.css`).
-- **Phase 2**: Hexagonal Refactor (Adapters for SQLite, Event Bus).
-- **Phase 3**: HTMX Component Standardization (Base templates).
+**Implementation:**
+- **Phase 1**: Tokenization Foundation (`tokens.json` + `bridge.py`).
+- **Phase 2**: Atomic Registry (`aos/api/templates/components/atoms/` - EliteButton, Badge, Card).
+- **Phase 3**: Molecular Composition (`aos/api/templates/components/molecules/` - FormField, DataCard, NodeStatus).
+- **Phase 4**: Component Gallery established at `/sys/gallery` for FAANG-grade audit.
+- **Phase 5**: 100% Template Refactoring (Login & Dashboard).
 
 **Key Deliverables:**
-- ✅ `aos_tokens.css` - Central design token system for edge UI
-- ✅ `COLOR_TOKENS` pattern - Standardized Tailwind/CSS variable mapping
-- ✅ Design token compliance automation (scan, heal, validate)
-- ⏳ Complete Hexagonal isolation for all kernel adapters
-
-**Progress Tracking:**
-- **Hardcoded Values**: Tracking reduction of legacy UI values
-- **Adapter Refactoring**: Tracking conversion of core business logic
-- **Latest Status**: Check `docs/05_code_quality/MASTER_STATUS.md`
+- ✅ `aos/ui/tokens.json` - Professional design tokens (AI Suggestion tier).
+- ✅ `aos/ui/bridge.py` - Token-to-CSS/Python bridge.
+- ✅ `EliteButton`, `Badge`, `Card`, `FormField`, `DataCard`, `NodeStatus` - Core registry.
+- ✅ `/sys/gallery` - Design System Verification Suite.
 
 **Standards Applied:**
-- Zero hardcoded colors, spacing, or typography
-- All values from `aos_tokens.css` via `--aos-` variables
-- Fallback strategy for non-JS low-power environments
-- Architecture: Adapters → Core Logic → Event Bus → API → UI
+- **Zero Hardcoded Values**: Mandatory use of `var(--aos-*)`.
+- **Atomic Hierarchy**: Strict Atoms → Molecules → Organisms flow.
+- **Rugged Aesthetic**: High-contrast, accessibility-first design for edge environments.
+- **Visual Performance**: Glassmorphism with hardware-accelerated transforms.
 
 #### **FRAMEWORK C: TESTING & QA** ✅ ACTIVE
 **Status**: ACTIVE Pass rate 100%

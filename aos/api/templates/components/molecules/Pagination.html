@@ -1,0 +1,133 @@
+{# Pagination Molecule - Page Navigation #}
+{% from "components/atoms/EliteButton.html" import elite_button %}
+
+{% macro pagination(
+current_page=1,
+total_pages=10,
+max_visible=5,
+on_page_change="",
+class=""
+) %}
+{% set half_visible = (max_visible // 2) %}
+{% set start_page = [1, current_page - half_visible]|max %}
+{% set end_page = [total_pages, start_page + max_visible - 1]|min %}
+
+<nav class="aos-pagination {{ class }}" role="navigation" aria-label="Pagination">
+    <div class="aos-pagination-container">
+        <!-- Previous Button -->
+        {{ elite_button(
+        text="Previous",
+        variant="outline",
+        size="sm",
+        disabled=(current_page == 1),
+        onclick=on_page_change ~ "(" ~ (current_page - 1) ~ ")" if on_page_change else "",
+        class="aos-pagination-btn"
+        ) }}
+
+        <!-- Page Numbers -->
+        <div class="aos-pagination-pages">
+            {% if start_page > 1 %}
+            <button class="aos-page-number" onclick="{{ on_page_change }}(1)">1</button>
+            {% if start_page > 2 %}
+            <span class="aos-pagination-ellipsis">...</span>
+            {% endif %}
+            {% endif %}
+
+            {% for page in range(start_page, end_page + 1) %}
+            <button class="aos-page-number {% if page == current_page %}aos-page-active{% endif %}"
+                onclick="{{ on_page_change }}({{ page }})" {% if page==current_page %}aria-current="page" {% endif %}>
+                {{ page }}
+            </button>
+            {% endfor %}
+
+            {% if end_page < total_pages %} {% if end_page < total_pages - 1 %} <span class="aos-pagination-ellipsis">
+                ...</span>
+                {% endif %}
+                <button class="aos-page-number" onclick="{{ on_page_change }}({{ total_pages }})">{{ total_pages
+                    }}</button>
+                {% endif %}
+        </div>
+
+        <!-- Next Button -->
+        {{ elite_button(
+        text="Next",
+        variant="outline",
+        size="sm",
+        disabled=(current_page == total_pages),
+        onclick=on_page_change ~ "(" ~ (current_page + 1) ~ ")" if on_page_change else "",
+        class="aos-pagination-btn"
+        ) }}
+    </div>
+</nav>
+
+<style>
+    .aos-pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: var(--aos-spacing-4) 0;
+    }
+
+    .aos-pagination-container {
+        display: flex;
+        align-items: center;
+        gap: var(--aos-spacing-2);
+    }
+
+    .aos-pagination-pages {
+        display: flex;
+        align-items: center;
+        gap: var(--aos-spacing-1);
+    }
+
+    .aos-page-number {
+        min-width: 2.5rem;
+        height: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--aos-radius-lg);
+        border: 1px solid var(--aos-surface-border);
+        background: transparent;
+        color: var(--aos-neutral-400);
+        font-size: var(--aos-size-sm);
+        font-weight: var(--aos-weight-medium);
+        cursor: pointer;
+        transition: all var(--aos-duration-base) var(--aos-easing-out);
+    }
+
+    .aos-page-number:hover:not(.aos-page-active) {
+        background: var(--aos-surface-elevated);
+        color: var(--aos-neutral-200);
+        border-color: var(--aos-primary-base);
+    }
+
+    .aos-page-active {
+        background: var(--aos-primary-base);
+        color: var(--aos-primary-text);
+        border-color: var(--aos-primary-base);
+        cursor: default;
+    }
+
+    .aos-pagination-ellipsis {
+        color: var(--aos-neutral-600);
+        padding: 0 var(--aos-spacing-2);
+        font-weight: var(--aos-weight-bold);
+    }
+
+    @media (max-width: 640px) {
+        .aos-pagination-btn span {
+            display: none;
+        }
+
+        .aos-pagination-btn::after {
+            content: '‹';
+            font-size: 1.25rem;
+        }
+
+        .aos-pagination-btn:last-child::after {
+            content: '›';
+        }
+    }
+</style>
+{% endmacro %}

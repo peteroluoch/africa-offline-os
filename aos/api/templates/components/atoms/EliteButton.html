@@ -1,4 +1,4 @@
-{# 💎 EliteButton Atom #}
+{# EliteButton Atom - FAANG-Grade Component #}
 {% macro elite_button(
 text,
 id=None,
@@ -9,13 +9,15 @@ disabled=False,
 onclick=None,
 class="",
 icon=None,
-loading=False
+loading=False,
+full_width=False
 ) %}
 <button {% if id %}id="{{ id }}" {% endif %} type="{{ type }}" {% if disabled or loading %}disabled{% endif %} {% if
     onclick %}onclick="{{ onclick }}" {% endif %}
-    class="aos-btn aos-btn-{{ variant }} aos-size-{{ size }} {{ class }} {% if loading %}aos-btn-loading{% endif %}">
+    class="aos-btn aos-btn-{{ variant }} aos-size-{{ size }} {{ class }} {% if loading %}aos-btn-loading{% endif %} {% if full_width %}aos-btn-full{% endif %}"
+    {% if disabled %}aria-disabled="true" {% endif %}>
     {% if loading %}
-    <svg class="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+    <svg class="aos-btn-spinner" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
         <path class="opacity-75" fill="currentColor"
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
@@ -28,15 +30,53 @@ loading=False
 </button>
 
 <style>
+    .aos-btn {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--aos-spacing-2);
+        font-weight: var(--aos-weight-semibold);
+        border-radius: var(--aos-radius-lg);
+        border: 1px solid transparent;
+        transition: all var(--aos-duration-base) var(--aos-easing-out);
+        cursor: pointer;
+        font-family: var(--aos-font-sans);
+        white-space: nowrap;
+    }
+
+    /* Focus State (Accessibility) */
+    .aos-btn:focus-visible {
+        outline: 2px solid var(--aos-primary-base);
+        outline-offset: 2px;
+    }
+
+    /* Disabled State */
+    .aos-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    /* Loading State */
     .aos-btn-loading {
         cursor: wait;
         opacity: 0.8;
     }
 
-    .aos-btn-loading .aos-btn-text {
-        opacity: 0.7;
+    .aos-btn-spinner {
+        width: 1rem;
+        height: 1rem;
+        animation: aos-spin 1s linear infinite;
     }
 
+    @keyframes aos-spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Sizes */
     .aos-size-sm {
         padding: var(--aos-spacing-1) var(--aos-spacing-3);
         font-size: var(--aos-size-xs);
@@ -50,6 +90,66 @@ loading=False
     .aos-size-lg {
         padding: var(--aos-spacing-3) var(--aos-spacing-8);
         font-size: var(--aos-size-base);
+    }
+
+    /* Full Width */
+    .aos-btn-full {
+        width: 100%;
+    }
+
+    /* Variants */
+    .aos-btn-primary {
+        background: var(--aos-primary-base);
+        color: var(--aos-primary-text);
+        border-color: var(--aos-primary-base);
+    }
+
+    .aos-btn-primary:hover:not(:disabled) {
+        background: var(--aos-primary-hover);
+        border-color: var(--aos-primary-hover);
+        transform: translateY(-1px);
+        box-shadow: var(--aos-shadow-lg);
+    }
+
+    .aos-btn-primary:active:not(:disabled) {
+        background: var(--aos-primary-active);
+        transform: translateY(0);
+    }
+
+    .aos-btn-secondary {
+        background: var(--aos-secondary-base);
+        color: var(--aos-secondary-text);
+        border-color: var(--aos-secondary-base);
+    }
+
+    .aos-btn-secondary:hover:not(:disabled) {
+        background: var(--aos-secondary-hover);
+        border-color: var(--aos-secondary-hover);
+        transform: translateY(-1px);
+        box-shadow: var(--aos-shadow-lg);
+    }
+
+    .aos-btn-outline {
+        background: transparent;
+        color: var(--aos-neutral-300);
+        border-color: var(--aos-surface-border);
+    }
+
+    .aos-btn-outline:hover:not(:disabled) {
+        background: var(--aos-surface-elevated);
+        border-color: var(--aos-primary-base);
+        color: var(--aos-primary-base);
+    }
+
+    .aos-btn-ghost {
+        background: transparent;
+        color: var(--aos-neutral-400);
+        border-color: transparent;
+    }
+
+    .aos-btn-ghost:hover:not(:disabled) {
+        background: var(--aos-surface-elevated);
+        color: var(--aos-neutral-200);
     }
 </style>
 {% endmacro %}

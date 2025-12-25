@@ -1,0 +1,82 @@
+{# ProgressBar Atom - Linear Progress Indicator #}
+{% macro progress_bar(
+value=0,
+max=100,
+variant="primary",
+size="md",
+show_label=False,
+class=""
+) %}
+<div class="aos-progress aos-progress-{{ size }} {{ class }}" role="progressbar" aria-valuenow="{{ value }}"
+    aria-valuemin="0" aria-valuemax="{{ max }}">
+    <div class="aos-progress-track">
+        <div class="aos-progress-fill aos-progress-{{ variant }}" style="width: {{ (value / max * 100) }}%"></div>
+    </div>
+    {% if show_label %}
+    <span class="aos-progress-label">{{ (value / max * 100)|int }}%</span>
+    {% endif %}
+</div>
+
+<style>
+    .aos-progress {
+        display: flex;
+        align-items: center;
+        gap: var(--aos-spacing-2);
+        width: 100%;
+    }
+
+    .aos-progress-track {
+        flex: 1;
+        background: var(--aos-neutral-800);
+        border-radius: var(--aos-radius-full);
+        overflow: hidden;
+    }
+
+    .aos-progress-sm .aos-progress-track {
+        height: 0.25rem;
+    }
+
+    .aos-progress-md .aos-progress-track {
+        height: 0.5rem;
+    }
+
+    .aos-progress-lg .aos-progress-track {
+        height: 0.75rem;
+    }
+
+    .aos-progress-fill {
+        height: 100%;
+        transition: width var(--aos-duration-base) var(--aos-easing-out);
+        border-radius: var(--aos-radius-full);
+    }
+
+    .aos-progress-primary {
+        background: var(--aos-primary-base);
+    }
+
+    .aos-progress-secondary {
+        background: var(--aos-secondary-base);
+    }
+
+    .aos-progress-success {
+        background: var(--aos-success-base);
+    }
+
+    .aos-progress-warning {
+        background: var(--aos-warning-base);
+    }
+
+    .aos-progress-error {
+        background: var(--aos-error-base);
+    }
+
+    .aos-progress-label {
+        font-size: var(--aos-size-xs);
+        font-weight: var(--aos-weight-semibold);
+        color: var(--aos-neutral-400);
+        font-family: var(--aos-font-mono);
+        min-width: 3rem;
+        text-align: right;
+    }
+</style>
+{% endmacro %}
