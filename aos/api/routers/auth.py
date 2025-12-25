@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Form
+from fastapi import APIRouter, Depends, HTTPException, status, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
 import sqlite3
@@ -11,14 +12,12 @@ from aos.core.security.password import verify_password
 from aos.db.models import OperatorDTO # Actually we query raw DB for now or need Repo
 
 router = APIRouter(tags=["auth"])
+templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
 
 @router.get("/login", response_class=HTMLResponse)
-async def login_page():
+async def login_page(request: Request):
     """Serve login page."""
-    template_path = Path(__file__).parent.parent / "templates" / "login.html"
-    if not template_path.exists():
-        return HTMLResponse("Login template not found", status_code=404)
-    return HTMLResponse(template_path.read_text(encoding="utf-8"))
+    return templates.TemplateResponse("login.html", {"request": request})
 
 @router.post("/auth/login")
 async def login(

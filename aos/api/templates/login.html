@@ -5,45 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>A-OS | Secure Gateway</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Outfit:wght@400;600;800&display=swap"
-        rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        outfit: ['Outfit', 'sans-serif'],
-                    },
-                    animation: {
-                        'mesh': 'mesh 15s ease infinite',
-                        'float': 'float 6s ease-in-out infinite',
-                    },
-                    keyframes: {
-                        mesh: {
-                            '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
-                            '33%': { transform: 'translate(10%, -10%) scale(1.1)' },
-                            '66%': { transform: 'translate(-10%, 10%) scale(0.95)' },
-                        },
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-20px)' },
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body {
-            background: #020617;
-            overflow: hidden;
-        }
 
+    <!-- A-OS Design System -->
+    {% include 'partials/design_system.html' %}
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
         .mesh-bg {
             position: fixed;
             top: -50%;
@@ -57,24 +24,45 @@
                 radial-gradient(circle at 50% 50%, #1e3a8a 0%, transparent 60%);
             filter: blur(80px);
             opacity: 0.6;
+            animation: mesh 15s ease infinite;
         }
 
-        .glass {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        @keyframes mesh {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            33% {
+                transform: translate(10%, -10%) scale(1.1)
+            }
+
+            66% {
+                transform: translate(-10%, 10%) scale(0.95)
+            }
         }
 
-        .input-glow:focus {
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
-            border-color: rgba(59, 130, 246, 0.5);
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0)
+            }
+
+            50% {
+                transform: translateY(-20px)
+            }
         }
     </style>
 </head>
 
 <body class="min-h-screen flex items-center justify-center p-6 relative">
-    <div class="mesh-bg animate-mesh"></div>
+    <div class="mesh-bg"></div>
 
     <!-- Floating background elements -->
     <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl animate-float"></div>
@@ -82,37 +70,40 @@
         style="animation-delay: -2s"></div>
 
     <main class="w-full max-w-md relative">
-        <div class="text-center mb-10">
+        <div class="text-center mb-12">
             <h1
-                class="font-outfit text-5xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500 mb-2">
+                class="aos-text-display text-5xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500 mb-2">
                 A-OS KERNEL
             </h1>
-            <p class="text-slate-400 font-medium tracking-wide text-sm opacity-80 uppercase">Offline Sovereign Operating
-                System</p>
+            <p class="text-slate-400 font-medium tracking-widest text-[10px] opacity-70 uppercase aos-text-mono">
+                Offline Sovereign Operating System
+            </p>
         </div>
 
-        <div class="glass p-10 rounded-3xl">
-            <h2 class="text-xl font-semibold text-white mb-8">Secure Login</h2>
+        <div class="aos-card p-10 aos-glass">
+            <h2 class="aos-h2 text-white mb-8">Secure Login</h2>
 
             <form action="/auth/login" method="POST" class="space-y-6">
-                <div class="group">
+                <div>
                     <label
-                        class="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2 transition-colors group-focus-within:text-blue-400">Username</label>
+                        class="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3 aos-text-mono">
+                        Operator Identity
+                    </label>
                     <input type="text" name="username" required placeholder="operator_identity"
-                        class="w-full bg-slate-900/50 border border-slate-700/50 rounded-xl px-5 py-3.5 text-white placeholder-slate-600 outline-none transition-all input-glow font-mono">
+                        class="aos-input aos-text-mono">
                 </div>
 
-                <div class="group">
+                <div>
                     <label
-                        class="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2 transition-colors group-focus-within:text-blue-400">Authorization
-                        Key</label>
+                        class="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3 aos-text-mono">
+                        Authorization Key
+                    </label>
                     <input type="password" name="password" required placeholder="••••••••"
-                        class="w-full bg-slate-900/50 border border-slate-700/50 rounded-xl px-5 py-3.5 text-white placeholder-slate-600 outline-none transition-all input-glow font-mono">
+                        class="aos-input aos-text-mono">
                 </div>
 
                 <div class="pt-4">
-                    <button type="submit"
-                        class="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold tracking-tight text-lg shadow-lg shadow-blue-900/40 transform active:scale-[0.98] transition-all">
+                    <button type="submit" class="aos-btn aos-btn-primary w-full py-4 text-lg aos-glow-primary">
                         Initialize Kernel Access
                     </button>
                 </div>
@@ -127,7 +118,8 @@
             </div>
         </div>
 
-        <footer class="mt-8 text-center text-[10px] text-slate-600 uppercase tracking-[0.2em] font-medium opacity-50">
+        <footer
+            class="mt-8 text-center text-[10px] text-slate-600 uppercase tracking-[0.2em] font-medium opacity-50 aos-text-mono">
             &copy; 2025 Africa Offline OS. All Rights Reserved.
         </footer>
     </main>

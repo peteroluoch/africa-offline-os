@@ -1,0 +1,63 @@
+{# 💎 Badge Atom #}
+{% macro badge(
+text,
+variant="info",
+dot=True,
+pulse=False,
+class=""
+) %}
+<span class="aos-badge aos-badge-{{ variant }} {{ class }}">
+    {% if dot %}
+    <span class="aos-badge-dot aos-bg-{{ variant }} {% if pulse %}animate-pulse-slow{% endif %}"></span>
+    {% endif %}
+    {{ text }}
+</span>
+
+<style>
+    .aos-badge-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: var(--aos-radius-full);
+        margin-right: 6px;
+        display: inline-block;
+    }
+
+    .aos-bg-success {
+        background: #10b981;
+        box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+    }
+
+    .aos-bg-warning {
+        background: #f59e0b;
+        box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+    }
+
+    .aos-bg-error {
+        background: #ef4444;
+        box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+    }
+
+    .aos-bg-info {
+        background: #3b82f6;
+        box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+    }
+
+    .animate-pulse-slow {
+        animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse-slow {
+
+        0%,
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        50% {
+            opacity: 0.5;
+            transform: scale(1.2);
+        }
+    }
+</style>
+{% endmacro %}

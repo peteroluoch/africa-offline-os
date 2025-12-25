@@ -1,0 +1,53 @@
+<!-- 💎 A-OS Sovereign Design System -->
+<style>
+    /* Typography Imports */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono&display=swap');
+</style>
+
+<!-- Base Tokens (Generated) -->
+<link rel="stylesheet" href="/static/ui/base.css">
+
+<!-- Atomic Components -->
+<link rel="stylesheet" href="/static/ui/components.css">
+
+<style>
+    /* Global Overrides & Animations */
+    body {
+        margin: 0;
+        scroll-behavior: smooth;
+        -webkit-font-smoothing: antialiased;
+        background: var(--aos-surface-base);
+        color: var(--aos-neutral-50);
+        font-family: var(--aos-font-sans);
+    }
+
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--aos-surface-base);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--aos-surface-border);
+        border-radius: var(--aos-radius-full);
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--aos-neutral-600);
+    }
+
+    /* Performance-Grade Utilities */
+    .aos-glass {
+        background: var(--aos-surface-glass);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--aos-surface-border);
+    }
+
+    /* AI Glow Effects */
+    .aos-glow-primary {
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    }
+</style>

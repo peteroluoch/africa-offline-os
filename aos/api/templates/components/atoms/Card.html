@@ -1,0 +1,26 @@
+{# 💎 Card Atom #}
+{% macro card(
+padding="6",
+glass=True,
+interactive=False,
+class="",
+id=None
+) %}
+<div {% if id %}id="{{ id }}" {% endif %}
+    class="aos-card {% if glass %}aos-glass{% endif %} {% if interactive %}aos-card-interactive{% endif %} p-{{ padding }} {{ class }}">
+    {{ caller() }}
+</div>
+
+<style>
+    .aos-card-interactive {
+        transition: all var(--aos-duration-base) var(--aos-easing-out);
+        cursor: pointer;
+    }
+
+    .aos-card-interactive:hover {
+        transform: translateY(-4px);
+        border-color: var(--aos-primary-base);
+        box-shadow: var(--aos-shadow-xl);
+    }
+</style>
+{% endmacro %}

@@ -1,0 +1,146 @@
+/* 💎 A-OS Atomic Components */
+
+/* --- Typography --- */
+.aos-text-display {
+    font-family: var(--aos-font-display);
+}
+
+.aos-text-mono {
+    font-family: var(--aos-font-mono);
+}
+
+.aos-h1 {
+    font-size: var(--aos-size-4xl);
+    font-weight: var(--aos-font-bold);
+    line-height: 1.2;
+}
+
+.aos-h2 {
+    font-size: var(--aos-size-3xl);
+    font-weight: var(--aos-font-bold);
+}
+
+.aos-body {
+    font-size: var(--aos-size-base);
+    color: var(--aos-neutral-300);
+}
+
+/* --- Buttons --- */
+.aos-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--aos-spacing-2) var(--aos-spacing-6);
+    border-radius: var(--aos-radius-lg);
+    font-weight: var(--aos-font-semibold);
+    transition: all var(--aos-duration-base) var(--aos-easing-in-out);
+    cursor: pointer;
+    border: 1px solid transparent;
+    gap: var(--aos-spacing-2);
+}
+
+.aos-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.aos-btn-primary {
+    background: var(--aos-primary-base);
+    color: var(--aos-primary-text);
+}
+
+.aos-btn-primary:hover:not(:disabled) {
+    background: var(--aos-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--aos-shadow-lg);
+}
+
+.aos-btn-primary:active:not(:disabled) {
+    background: var(--aos-primary-active);
+    transform: translateY(0);
+}
+
+.aos-btn-secondary {
+    background: var(--aos-secondary-base);
+    color: var(--aos-secondary-text);
+}
+
+.aos-btn-secondary:hover:not(:disabled) {
+    background: var(--aos-secondary-hover);
+    transform: translateY(-2px);
+}
+
+.aos-btn-outline {
+    background: transparent;
+    border-color: var(--aos-surface-border);
+    color: var(--aos-neutral-100);
+}
+
+.aos-btn-outline:hover:not(:disabled) {
+    background: var(--aos-surface-elevated);
+    border-color: var(--aos-primary-base);
+}
+
+/* --- Inputs --- */
+.aos-input {
+    width: 100%;
+    background: var(--aos-surface-elevated);
+    border: 1px solid var(--aos-surface-border);
+    border-radius: var(--aos-radius-md);
+    padding: var(--aos-spacing-3) var(--aos-spacing-4);
+    color: var(--aos-neutral-50);
+    transition: all var(--aos-duration-fast) var(--aos-easing-in-out);
+}
+
+.aos-input:focus {
+    outline: none;
+    border-color: var(--aos-primary-base);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* --- Cards & Surfaces --- */
+.aos-card {
+    background: var(--aos-surface-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--aos-surface-border);
+    border-radius: var(--aos-radius-2xl);
+    padding: var(--aos-spacing-6);
+    box-shadow: var(--aos-shadow-md);
+}
+
+.aos-card-elevated {
+    background: var(--aos-surface-elevated);
+    border: 1px solid var(--aos-surface-border);
+    box-shadow: var(--aos-shadow-lg);
+}
+
+/* --- Badges --- */
+.aos-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--aos-spacing-1) var(--aos-spacing-3);
+    border-radius: var(--aos-radius-full);
+    font-size: var(--aos-size-xs);
+    font-weight: var(--aos-font-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.aos-badge-success {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.aos-badge-error {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.aos-badge-offline {
+    background: rgba(100, 116, 139, 0.2);
+    color: #94a3b8;
+    border: 1px solid rgba(100, 116, 139, 0.3);
+}

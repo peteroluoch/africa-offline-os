@@ -78,10 +78,27 @@ To prevent "AI Drift" and ensure architectural integrity, execution is batched i
     - Protected endpoints with RBAC foundation
 - **Current Work**:
   - 🔜 **Batch 4**: FAANG Design System Port (Strategic Infrastructure)
+    - [x] Build Atomic Components
+        - [x] Button (Primary/Secondary/Outline variants)
+        - [x] Input (Base styles)
+        - [x] Typography (Headings/Body/Mono)
+        - [x] Card (Base container)
+        - [x] Badge (Status indicators)
+    - [/] Build Atomic Design Registry (Python/Jinja2)
+        - [ ] Create `aos/api/templates/components/atoms` directory
+        - [ ] Implement `EliteButton.html` partial with variant/size props
+        - [ ] Implement `Badge.html` partial for status indicators
+        - [ ] Implement `Input.html` partial for standardized forms
+    - [ ] Implement A-OS Component Gallery (Storybook Equivalent)
+        - [ ] Create `/sys/gallery` route
+        - [ ] Build interactive preview page for all atoms/molecules
+        - [ ] Add "FAANG Compliance" check labels to components
+    - [ ] Build Molecular Components
+        - [ ] FormField (Label + Input + Error)
+        - [ ] DataCard (Metrics display)
+        - [ ] NodeStatus (Combination of badge + text)
     - Study Tenda design system (read-only analysis)
     - Extract design tokens & component patterns
-    - Build A-OS atomic components (Button, Input, Badge, etc.)
-    - Build molecular components (FormField, DataCard, etc.)
     - Refactor existing screens to use design system
     - Establish offline-first design language
 - **Remaining Work**:

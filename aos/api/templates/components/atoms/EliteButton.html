@@ -1,0 +1,55 @@
+{# 💎 EliteButton Atom #}
+{% macro elite_button(
+text,
+id=None,
+type="button",
+variant="primary",
+size="md",
+disabled=False,
+onclick=None,
+class="",
+icon=None,
+loading=False
+) %}
+<button {% if id %}id="{{ id }}" {% endif %} type="{{ type }}" {% if disabled or loading %}disabled{% endif %} {% if
+    onclick %}onclick="{{ onclick }}" {% endif %}
+    class="aos-btn aos-btn-{{ variant }} aos-size-{{ size }} {{ class }} {% if loading %}aos-btn-loading{% endif %}">
+    {% if loading %}
+    <svg class="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+        <path class="opacity-75" fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+        </path>
+    </svg>
+    {% elif icon %}
+    <span class="aos-icon-wrapper">{{ icon | safe }}</span>
+    {% endif %}
+    <span class="aos-btn-text">{{ text }}</span>
+</button>
+
+<style>
+    .aos-btn-loading {
+        cursor: wait;
+        opacity: 0.8;
+    }
+
+    .aos-btn-loading .aos-btn-text {
+        opacity: 0.7;
+    }
+
+    .aos-size-sm {
+        padding: var(--aos-spacing-1) var(--aos-spacing-3);
+        font-size: var(--aos-size-xs);
+    }
+
+    .aos-size-md {
+        padding: var(--aos-spacing-2) var(--aos-spacing-6);
+        font-size: var(--aos-size-sm);
+    }
+
+    .aos-size-lg {
+        padding: var(--aos-spacing-3) var(--aos-spacing-8);
+        font-size: var(--aos-size-base);
+    }
+</style>
+{% endmacro %}

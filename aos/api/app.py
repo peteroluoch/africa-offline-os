@@ -36,10 +36,10 @@ class EventStream:
         # Create HTMX-ready HTML fragment with Premium Styling
         payload_str = json.dumps(event.payload)
         html = f"""
-        <tr class="fade-in hover:bg-white/5 transition-colors group border-b border-slate-800/30">
-            <td class="px-6 py-4 text-slate-500 font-mono">{event.timestamp.strftime('%H:%M:%S')}</td>
-            <td class="px-6 py-4 font-bold text-blue-400">{event.name}</td>
-            <td class="px-6 py-4 text-slate-400 max-w-4xl truncate group-hover:whitespace-normal">{payload_str}</td>
+        <tr class="fade-in hover:bg-white/5 transition-all group border-b border-slate-800/20">
+            <td class="px-8 py-4 text-slate-500 font-mono text-[10px]">{event.timestamp.strftime('%H:%M:%S')}</td>
+            <td class="px-8 py-4 font-bold text-blue-400 aos-text-mono text-[11px] uppercase tracking-wider">{event.name}</td>
+            <td class="px-8 py-4 text-slate-400 max-w-4xl truncate group-hover:whitespace-normal aos-text-mono text-[11px] opacity-80">{payload_str}</td>
         </tr>
         """
         # SSE format: data: <content>\n\n
@@ -138,7 +138,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 from aos.api.routers.auth import router as auth_router
 from aos.core.security.auth import get_current_operator
-from fastapi import Depends
+from fastapi import Depends, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 def create_app() -> FastAPI:
     app = FastAPI(
@@ -147,6 +149,14 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
     
+    # Static files for Design System
+    static_path = Path(__file__).parent / "static"
+    if static_path.exists():
+        app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
+
+    # Templates for Design System
+    templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
+
     app.include_router(auth_router)
 
     @app.post("/sys/ping")
@@ -193,11 +203,19 @@ def create_app() -> FastAPI:
         )
         
     @app.get("/dashboard")
-    async def dashboard(current_user: dict = Depends(get_current_operator)) -> HTMLResponse:
+    async def dashboard(request: Request, current_user: dict = Depends(get_current_operator)):
         """Render the kernel dashboard (Protected)."""
-        template_path = Path(__file__).parent / "templates" / "dashboard.html"
-        if not template_path.exists():
-            return HTMLResponse("Dashboard template not found", status_code=404)
-        return HTMLResponse(template_path.read_text(encoding="utf-8"))
+        return templates.TemplateResponse(
+            "dashboard.html", 
+            {"request": request, "user": current_user}
+        )
+
+    @app.get("/sys/gallery")
+    async def ui_gallery(request: Request, current_user: dict = Depends(get_current_operator)):
+        """Render the A-OS Design System Gallery (Protected)."""
+        return templates.TemplateResponse(
+            "gallery.html",
+            {"request": request, "user": current_user}
+        )
 
     return app
