@@ -50,4 +50,87 @@
     .aos-glow-primary {
         box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
     }
+
+    /* Responsive Grid System */
+    .aos-container {
+        width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+        padding-left: var(--aos-spacing-4);
+        padding-right: var(--aos-spacing-4);
+    }
+
+    @media (min-width: 640px) {
+        .aos-container {
+            max-width: 640px;
+        }
+    }
+
+    @media (min-width: 768px) {
+        .aos-container {
+            max-width: 768px;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .aos-container {
+            max-width: 1024px;
+        }
+    }
+
+    @media (min-width: 1280px) {
+        .aos-container {
+            max-width: 1280px;
+        }
+    }
+
+    /* Responsive Utilities */
+    .aos-hidden-mobile {
+        display: none;
+    }
+
+    @media (min-width: 768px) {
+        .aos-hidden-mobile {
+            display: block;
+        }
+    }
+
+    .aos-hidden-desktop {
+        display: block;
+    }
+
+    @media (min-width: 768px) {
+        .aos-hidden-desktop {
+            display: none;
+        }
+    }
+
+    /* Flex Utilities */
+    .aos-flex {
+        display: flex;
+    }
+
+    .aos-flex-col {
+        flex-direction: column;
+    }
+
+    .aos-items-center {
+        align-items: center;
+    }
+
+    .aos-justify-between {
+        justify-content: space-between;
+    }
+
+    .aos-gap-2 {
+        gap: var(--aos-spacing-2);
+    }
+
+    .aos-gap-4 {
+        gap: var(--aos-spacing-4);
+    }
+
+    .aos-gap-6 {
+        gap: var(--aos-spacing-6);
+    }
 </style>
