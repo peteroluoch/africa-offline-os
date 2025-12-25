@@ -25,6 +25,9 @@ _db_conn: sqlite3.Connection | None = None
 _boot_time: float | None = None
 _event_store: EventStore | None = None
 _event_dispatcher: EventDispatcher | None = None
+_mesh_manager: 'MeshSyncManager' | None = None
+
+from aos.api.state import mesh_state
 
 class EventStream:
     """Manages Server-Sent Events (SSE) connections."""
@@ -118,6 +121,21 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Hook up the Stream
     _event_dispatcher.subscribe_all(_event_stream.broadcast)
 
+    # Initialize Mesh System (Batch 5)
+    from aos.adapters.remote_node import RemoteNodeAdapter
+    from aos.core.mesh.queue import MeshQueue
+    from aos.core.mesh.manager import MeshSyncManager
+    from aos.core.security.identity import NodeIdentityManager
+    
+    identity_mgr = NodeIdentityManager()
+    remote_adapter = RemoteNodeAdapter(identity_mgr)
+    mesh_db_path = str(Path(settings.sqlite_path).parent / "mesh_queue.db")
+    mesh_queue = MeshQueue(mesh_db_path)
+    
+    _mesh_manager = MeshSyncManager(remote_adapter, mesh_queue)
+    mesh_state.manager = _mesh_manager
+    await _mesh_manager.start()
+
     # Initialize Modules (Phase 5)
     from aos.modules.reference import ReferenceModule
     ref_mod = ReferenceModule(_event_dispatcher)
@@ -131,12 +149,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         # Shutdown
         if _event_store:
             await _event_store.shutdown()
+        if _mesh_manager:
+            await _mesh_manager.stop()
         if _db_conn:
             _db_conn.close()
             print("[A-OS] Shutdown complete")
 
 
 from aos.api.routers.auth import router as auth_router
+from aos.api.routers.mesh import router as mesh_router
 from aos.core.security.auth import get_current_operator
 from fastapi import Depends, Request
 from fastapi.staticfiles import StaticFiles
@@ -158,6 +179,7 @@ def create_app() -> FastAPI:
     templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
     app.include_router(auth_router)
+    app.include_router(mesh_router)
 
     @app.post("/sys/ping")
     async def sys_ping(current_user: dict = Depends(get_current_operator)) -> dict:
@@ -177,6 +199,9 @@ def create_app() -> FastAPI:
         
         # Determine kernel metrics
         events_processed = 0
+        mesh_peers_online = 0
+        if _mesh_manager:
+            mesh_peers_online = sum(1 for p in _mesh_manager.adapter.peers.values() if p.status == "ONLINE")
         
         status = HealthStatus(
             status="ok",
@@ -191,6 +216,7 @@ def create_app() -> FastAPI:
             "metrics": {
                 "disk_mb": status.disk_free_mb,
                 "uptime_s": status.uptime_seconds,
+                "mesh_peers_online": mesh_peers_online
             }
         }
 
@@ -216,6 +242,18 @@ def create_app() -> FastAPI:
         return templates.TemplateResponse(
             "gallery.html",
             {"request": request, "user": current_user}
+        )
+
+    @app.get("/sys/mesh")
+    async def mesh_management(request: Request, current_user: dict = Depends(get_current_operator)):
+        """Render the A-OS Mesh Management page (Protected)."""
+        peers = []
+        if mesh_state.manager:
+            peers = list(mesh_state.manager.adapter.peers.values())
+            
+        return templates.TemplateResponse(
+            "mesh.html",
+            {"request": request, "user": current_user, "peers": peers}
         )
 
     return app
