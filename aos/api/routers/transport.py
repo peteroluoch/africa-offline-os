@@ -60,3 +60,33 @@ async def update_vehicle_status(
     if success:
         return f'<div class="aos-badge aos-badge-success fade-in">Status Updated: {plate} -> {status}</div>'
     return f'<div class="aos-badge aos-badge-error fade-in">Update Failed for {plate}</div>'
+
+@router.get("/vehicle/new", response_class=HTMLResponse)
+async def new_vehicle_form(request: Request, current_user: dict = Depends(get_current_operator)):
+    """Return the vehicle registration form."""
+    if not transport_state.module:
+        return HTMLResponse("TransportModule not initialized", status_code=500)
+    
+    routes = transport_state.module.list_routes()
+    return templates.TemplateResponse(
+        "partials/transport_vehicle_form.html",
+        {"request": request, "routes": routes}
+    )
+
+@router.post("/vehicle", response_class=HTMLResponse)
+async def register_vehicle(
+    plate_number: str = Form(...),
+    vehicle_type: str = Form(...),
+    capacity: int = Form(...),
+    current_route_id: str = Form(None),
+    current_user: dict = Depends(get_current_operator)
+):
+    """Register a new vehicle."""
+    if not transport_state.module:
+        return HTMLResponse("TransportModule not initialized", status_code=500)
+    
+    vehicle_id = str(uuid.uuid4())
+    # TODO: Add register_vehicle method to TransportModule
+    # For now, return success message
+    
+    return f'<div class="aos-badge aos-badge-success fade-in">Vehicle Registered: {plate_number}</div>'

@@ -9,11 +9,15 @@
             <p class="text-slate-400 text-sm mt-1">Real-time Route & Vehicle Management</p>
         </div>
         <div class="flex space-x-4">
-            {{ elite_button(text="Add Vehicle", variant="primary", icon='<svg class="w-4 h-4" fill="none"
-                stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m0-0H6">
-                </path>
-            </svg>') }}
+            <button class="aos-btn aos-btn-primary aos-size-md" hx-get="/transport/vehicle/new"
+                hx-target="#transport-modal-content"
+                onclick="document.getElementById('transport-modal').classList.remove('hidden')">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m0-0H6">
+                    </path>
+                </svg>
+                <span>Add Vehicle</span>
+            </button>
         </div>
     </div>
 
@@ -65,4 +69,46 @@
         {% endcall %}
     </div>
 </div>
+
+<!-- Vehicle Registration Modal -->
+<div id="transport-modal"
+    class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-6">
+    <div
+        class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
+        <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-800/20">
+            <h3 class="text-lg font-bold text-white uppercase tracking-widest">Add Vehicle</h3>
+            <button onclick="document.getElementById('transport-modal').classList.add('hidden')"
+                class="text-slate-500 hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+        </div>
+        <div id="transport-modal-content" class="p-6">
+            <!-- Content loaded via HTMX -->
+            <div class="flex justify-center py-12">
+                <div class="aos-spinner"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes slide-up {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .animate-slide-up {
+        animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+</style>
 {% endblock %}
