@@ -63,8 +63,14 @@ class MigrationManager:
                 
                 if hasattr(migration, 'apply'):
                     migration.apply(self.conn)
-                else:
+                elif hasattr(migration, 'up'):
+                    migration.up(self.conn)
+                elif hasattr(migration, 'migrate'):
+                    migration.migrate(self.conn)
+                elif isinstance(migration, str):
                     self.conn.execute(migration)
+                else:
+                    raise TypeError(f"Migration version {version_id} is not an applicable type: {type(migration)}")
                     
                 self.conn.execute(
                     "INSERT INTO schema_migrations (version_id, migration_hash) VALUES (?, ?)",

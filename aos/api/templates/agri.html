@@ -1,58 +1,64 @@
 {% extends "dashboard.html" %}
 
 {% block content %}
-<div class="aos-container py-8 max-w-7xl mx-auto">
+<div class="space-y-10 fade-in">
     <!-- Header Section -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
         <div>
-            <h1 class="text-4xl font-black text-white tracking-tight mb-2">Agri-Lighthouse</h1>
+            <h1 class="aos-text-display text-4xl font-black text-white tracking-tight mb-2">Agri-Lighthouse</h1>
             <p class="text-slate-400 text-lg">Lighthouse Patient Zero: Sovereign Agricultural Intelligence.</p>
         </div>
 
         <div class="flex items-center gap-4">
-            {% include "components/atoms/EliteButton.html" with label="Register Farmer" variant="primary" icon="plus"
-            attributes='hx-get="/agri/farmer/new" hx-target="#modal-content"
-            onclick="document.getElementById(\'agri-modal\').classList.remove(\'hidden\')"' %}
+            <button class="aos-btn aos-btn-primary aos-size-md" hx-get="/agri/farmer/new" hx-target="#modal-content"
+                onclick="document.getElementById('agri-modal').classList.remove('hidden')">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m0-0H6">
+                    </path>
+                </svg>
+                <span>Register Farmer</span>
+            </button>
         </div>
     </div>
 
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        {% include "components/molecules/DataCard.html" with title="Active Farmers" value=farmers|length icon="users"
-        color="blue" %}
-        {% include "components/molecules/DataCard.html" with title="Crop Varieties" value=crops|length icon="seedling"
-        color="green" %}
-        {% include "components/molecules/DataCard.html" with title="Node Status" value="Online" icon="shield-check"
-        color="purple" %}
+        {{ data_card(label="Active Farmers", value=farmers|length, trend="Verified", status="info") }}
+        {{ data_card(label="Crop Varieties", value=crops|length, trend="Seasonal", status="success") }}
+        {{ data_card(label="Node Status", value="Online", trend="Sovereign", status="success") }}
     </div>
 
     <!-- Main Content Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Farmers List -->
         <div class="lg:col-span-2">
-            {% include "components/atoms/Card.html" with title="Registered Farmers" body_class="p-0" content='
+            {% call card(padding="0") %}
+            <div class="p-6 border-b border-slate-800/50 bg-slate-900/30">
+                <h3 class="text-lg font-bold text-white">Registered Farmers</h3>
+            </div>
             <div id="farmer-list-container">
                 {% include "partials/farmer_list.html" %}
             </div>
-            ' %}
+            {% endcall %}
         </div>
 
         <!-- Right Side: Recent Activity or Info -->
         <div class="space-y-6">
-            {% include "components/atoms/Card.html" with title="Lighthouse Intel" content='
+            {% call card() %}
+            <h3 class="text-lg font-bold text-white mb-4">Lighthouse Intel</h3>
             <div class="space-y-4 text-sm text-slate-400 leading-relaxed">
                 <p>This module demonstrates <strong>Offline-First</strong> harvest aggregation. Every record saved here
                     is cryptographically signed and queued for regional mesh synchronization.</p>
                 <div class="pt-4 border-t border-slate-800">
-                    <h4 class="text-white font-bold mb-2">Supported Crops</h4>
+                    <h4 class="text-white font-bold mb-2 text-xs uppercase tracking-widest">Supported Crops</h4>
                     <div class="flex flex-wrap gap-2">
                         {% for crop in crops %}
-                        <span class="aos-badge aos-badge-outline">{{ crop.name }}</span>
+                        {{ badge(text=crop.name, variant="outline") }}
                         {% endfor %}
                     </div>
                 </div>
             </div>
-            ' %}
+            {% endcall %}
         </div>
     </div>
 </div>
@@ -75,7 +81,7 @@
         <div id="modal-content" class="p-6">
             <!-- Content loaded via HTMX -->
             <div class="flex justify-center py-12">
-                {% include "components/atoms/Spinner.html" %}
+                <div class="aos-spinner"></div>
             </div>
         </div>
     </div>

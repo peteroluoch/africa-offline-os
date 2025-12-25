@@ -140,6 +140,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Initialize Modules (Phase 5/6)
     from aos.modules.reference import ReferenceModule
     from aos.modules.agri import AgriModule
+    from aos.modules.transport import TransportModule
     
     ref_mod = ReferenceModule(_event_dispatcher)
     await ref_mod.initialize()
@@ -147,9 +148,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     _agri_module = AgriModule(_event_dispatcher, _db_conn)
     await _agri_module.initialize()
     
+    _transport_module = TransportModule(_event_dispatcher, _db_conn)
+    await _transport_module.initialize()
+    
     # Store for global access if needed
-    from aos.api.state import agri_state
+    from aos.api.state import agri_state, transport_state
     agri_state.module = _agri_module
+    transport_state.module = _transport_module
     
     print(f"[A-OS] Started - DB: {settings.sqlite_path}")
     
@@ -169,6 +174,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 from aos.api.routers.auth import router as auth_router
 from aos.api.routers.mesh import router as mesh_router
 from aos.api.routers.agri import router as agri_router
+from aos.api.routers.transport import router as transport_router
 from aos.api.routers.channels import router as channels_router
 from aos.core.security.auth import get_current_operator
 from fastapi import Depends, Request
@@ -193,6 +199,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router)
     app.include_router(mesh_router)
     app.include_router(agri_router)
+    app.include_router(transport_router)
     app.include_router(channels_router)
 
     @app.post("/sys/ping")
@@ -268,6 +275,22 @@ def create_app() -> FastAPI:
         return templates.TemplateResponse(
             "mesh.html",
             {"request": request, "user": current_user, "peers": peers}
+        )
+
+    @app.get("/operators")
+    async def operators_management(request: Request, current_user: dict = Depends(get_current_operator)):
+        """Placeholder for Operator management."""
+        return templates.TemplateResponse(
+            "dashboard.html",
+            {"request": request, "user": current_user, "view": "operators"}
+        )
+
+    @app.get("/security")
+    async def security_policy(request: Request, current_user: dict = Depends(get_current_operator)):
+        """Placeholder for Security policy."""
+        return templates.TemplateResponse(
+            "dashboard.html",
+            {"request": request, "user": current_user, "view": "security"}
         )
 
     return app

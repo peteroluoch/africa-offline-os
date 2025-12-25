@@ -3,7 +3,7 @@ from typing import Any
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import uuid
-from aos.adapters.channel import ChannelGateway
+from aos.core.channels.base import ChannelGateway
 
 
 @dataclass

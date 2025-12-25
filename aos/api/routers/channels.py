@@ -2,23 +2,68 @@ from __future__ import annotations
 from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.responses import PlainTextResponse, JSONResponse
 from typing import Any
-from aos.adapters.ussd import USSDAdapter, USSDSessionManager
+from aos.adapters.ussd import USSDAdapter
 from aos.adapters.sms import SMSAdapter
 from aos.adapters.mocks.mock_ussd_gateway import MockUSSDGateway
 from aos.adapters.mocks.mock_sms_gateway import MockSMSGateway
+from aos.modules.agri_ussd import AgriUSSDHandler
+from aos.modules.agri_sms import AgriSMSHandler
+from aos.modules.transport_ussd import TransportUSSDHandler
+from aos.modules.transport_sms import TransportSMSHandler
+from aos.api.state import agri_state, transport_state
+from aos.core.channels.base import ChannelResponse
 from aos.core.security.auth import get_current_operator
-from aos.api.state import agri_state
 
 router = APIRouter(prefix="/channels", tags=["channels"])
 
-# Initialize mock gateways (will be replaced with real APIs via config)
+# Initialize mock gateways
 _ussd_gateway = MockUSSDGateway()
 _sms_gateway = MockSMSGateway()
 
 # Initialize adapters
-_ussd_session_manager = USSDSessionManager()
-_ussd_adapter = USSDAdapter(_ussd_gateway, _ussd_session_manager)
+_ussd_adapter = USSDAdapter(_ussd_gateway)
 _sms_adapter = SMSAdapter(_sms_gateway)
+
+# Multi-Vehicle Router (Internal Mock)
+class MultiVehicleUSSDHandler:
+    def __init__(self):
+        self.agri = AgriUSSDHandler()
+        # Note: transport_state.module might be None during router init, 
+        # so we'll init handler inside process if needed or use lazy loading
+        self.transport = None 
+
+    def process(self, session, user_input):
+        if not self.transport and transport_state.module:
+            self.transport = TransportUSSDHandler(transport_state.module)
+            
+        # Logic: If session already has a vehicle, use it
+        vehicle = session.data.get("vehicle")
+        
+        if not vehicle:
+            if not user_input:
+                return ChannelResponse("[A-OS Central]\n1. Agri-Lighthouse\n2. Transport-Mobile", True)
+            if user_input == "1":
+                session.data["vehicle"] = "agri"
+                session.state = "START"
+                return self.agri.process(session, "")
+            if user_input == "2":
+                session.data["vehicle"] = "transport"
+                session.state = "START"
+                if self.transport:
+                    return self.transport.process(session, "")
+                return ChannelResponse("Transport module starting...", False)
+            return ChannelResponse("Invalid selection.", False)
+            
+        if vehicle == "agri":
+            return self.agri.process(session, user_input)
+        if vehicle == "transport":
+            if self.transport:
+                return self.transport.process(session, user_input)
+            
+        return ChannelResponse("Error: Vehicle not found.", False)
+
+_ussd_adapter.set_flow_handler(MultiVehicleUSSDHandler())
+_sms_adapter.set_command_handler(AgriSMSHandler())
 
 
 @router.post("/ussd", response_class=PlainTextResponse)
@@ -113,11 +158,11 @@ async def get_ussd_sessions(current_user: dict = Depends(get_current_operator)):
     Protected - requires authentication.
     """
     sessions = []
-    for session_id, session in _ussd_session_manager._sessions.items():
+    for session_id, session in _ussd_adapter.session_manager._sessions.items():
         sessions.append({
             "session_id": session.session_id,
             "phone_number": session.phone_number,
-            "state": session.state.value,
+            "state": session.state,
             "data": session.data,
             "created_at": session.created_at.isoformat(),
             "updated_at": session.updated_at.isoformat()

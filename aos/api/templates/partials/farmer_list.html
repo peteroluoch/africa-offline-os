@@ -36,10 +36,11 @@
                     </span>
                 </td>
                 <td class="px-6 py-4 text-right">
-                    {% include "components/atoms/EliteButton.html" with label="Record Harvest" size="sm"
-                    variant="outline" attributes='hx-get="/agri/harvest/new?farmer_id=' ~ farmer.id ~ '"
-                    hx-target="#modal-content"
-                    onclick="document.getElementById(\'agri-modal\').classList.remove(\'hidden\')"' %}
+                    <button class="aos-btn aos-btn-outline aos-size-sm"
+                        hx-get="/agri/harvest/new?farmer_id={{ farmer.id }}" hx-target="#modal-content"
+                        onclick="document.getElementById('agri-modal').classList.remove('hidden')">
+                        <span>Record Harvest</span>
+                    </button>
                 </td>
             </tr>
             {% endfor %}
