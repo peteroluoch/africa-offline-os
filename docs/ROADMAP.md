@@ -1,4 +1,7 @@
-# A-OS — MASTER DEVELOPMENT ROADMAP (V1.1)
+# A-OS — MASTER DEVELOPMENT ROADMAP (V1.2)
+
+> [!CAUTION]
+> **BINDING CONTRACT**: All development work on this roadmap MUST strictly adhere to `docs/01_roles.md`. This is not optional. The A-OS Kernel is critical infrastructure for Africa—every line of code must meet FAANG-grade standards.
 
 **Vision**: The foundational operating layer for the next 100M+ edge-connected users in Africa.  
 **Standard**: FAANG-grade Production (TDD, Zero-Bug, Offline-First, Power-Safe).  
@@ -40,6 +43,9 @@ To prevent "AI Drift" and ensure architectural integrity, execution is batched i
 
 ## 🎯 Phase Detail: Foundation (0-4)
 
+> [!IMPORTANT]
+> **Compliance Mandate**: All work in Phases 0-4 must follow `docs/01_roles.md` - Zero Tolerance Policy.
+
 ### Phase 0: Kernel Bootstrap (Foundation) 🔒
 - **Scope**: Core Process, SQLite WAL-Engine, Health Telemetry.
 - **Artifacts**: `aos.api.app`, `aos.db.engine`, `docs/01_roles.md`.
@@ -63,6 +69,9 @@ To prevent "AI Drift" and ensure architectural integrity, execution is batched i
 ---
 
 ## 🎨 Phase Detail: Human Interaction & Domain (5-7)
+
+> [!IMPORTANT]
+> **Compliance Mandate**: All work in Phases 5-7 must follow `docs/01_roles.md` - Zero Tolerance Policy.
 
 ### Phase 5: Vehicle Implementations (Adapters) 🔜 IN PROGRESS
 - **Concept**: "Vehicles are thin, Infra is thick."
@@ -104,6 +113,9 @@ To prevent "AI Drift" and ensure architectural integrity, execution is batched i
 ---
 
 ## 🔋 Phase Detail: Sustainability & Scale (8-10)
+
+> [!IMPORTANT]
+> **Compliance Mandate**: All work in Phases 8-10 must follow `docs/01_roles.md` - Zero Tolerance Policy.
 
 ### Phase 8: Power & Resource Awareness ⏳
 - **Critical For**: Edge survival on solar/battery.
