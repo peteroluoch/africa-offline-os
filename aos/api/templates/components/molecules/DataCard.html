@@ -1,0 +1,75 @@
+{# 💎 DataCard Molecule #}
+{% from "components/atoms/Card.html" import card %}
+{% from "components/atoms/Badge.html" import badge %}
+
+{% macro data_card(
+label,
+value,
+unit="",
+trend=None,
+trend_variant="info",
+icon=None,
+status="success",
+class=""
+) %}
+{% call card(padding="6", interactive=True, class="aos-data-card " + class) %}
+<div class="flex items-start justify-between mb-4">
+    <div>
+        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest aos-text-mono mb-1">
+            {{ label }}
+        </p>
+        <div class="flex items-baseline gap-1">
+            <span class="text-2xl font-bold text-slate-100 tracking-tight">
+                {{ value }}
+            </span>
+            {% if unit %}
+            <span class="text-xs font-medium text-slate-500 aos-text-mono uppercase">
+                {{ unit }}
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if icon %}
+    <div class="p-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-slate-400">
+        {{ icon | safe }}
+    </div>
+    {% elif status %}
+    {{ badge(text="", variant=status, dot=True, pulse=(status == 'info'), class="scale-125") }}
+    {% endif %}
+</div>
+
+{% if trend %}
+<div class="flex items-center gap-2 mt-auto">
+    <span class="text-[10px] font-bold aos-text-mono text-{{ trend_variant }}-400 uppercase tracking-wider">
+        {{ trend }}
+    </span>
+    <span class="text-[10px] text-slate-600 aos-text-mono uppercase tracking-widest font-medium">
+        vs last cycle
+    </span>
+</div>
+{% endif %}
+{% endcall %}
+
+<style>
+    .aos-data-card:hover .aos-text-mono {
+        color: var(--aos-primary-base);
+    }
+
+    .text-success-400 {
+        color: #4ade80;
+    }
+
+    .text-warning-400 {
+        color: #fbbf24;
+    }
+
+    .text-error-400 {
+        color: #f87171;
+    }
+
+    .text-info-400 {
+        color: #60a5fa;
+    }
+</style>
+{% endmacro %}

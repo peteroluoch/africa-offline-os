@@ -2,6 +2,8 @@
 {% from "components/atoms/Badge.html" import badge %}
 {% from "components/atoms/Card.html" import card %}
 {% from "components/molecules/FormField.html" import form_field %}
+{% from "components/molecules/DataCard.html" import data_card %}
+{% from "components/molecules/NodeStatus.html" import node_status %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -103,6 +105,37 @@
                 {{ form_field(label="Encryption Salt", name="salt", placeholder="Auto-generated", success=True,
                 help_text="Soverign salt generated successfully") }}
                 {% endcall %}
+            </div>
+        </section>
+
+        <!-- --- Molecules: Metrics --- -->
+        <section>
+            <h2 class="text-2xl font-bold mb-8 border-b border-slate-800 pb-2 flex items-center">
+                <span class="w-2 h-2 rounded-full bg-rose-500 mr-3"></span>
+                Molecules: DataCard
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                {{ data_card(label="Kernel Pulse", value="72", unit="bpm", trend="+1.2%", trend_variant="success",
+                status="info") }}
+                {{ data_card(label="Network Throughput", value="1.2", unit="gbps", trend="-5%", trend_variant="error")
+                }}
+                {{ data_card(label="Queue Depth", value="128", unit="msgs", status="warning") }}
+                {{ data_card(label="Active Sessions", value="14", status="success") }}
+            </div>
+        </section>
+
+        <!-- --- Molecules: Node Status --- -->
+        <section>
+            <h2 class="text-2xl font-bold mb-8 border-b border-slate-800 pb-2 flex items-center">
+                <span class="w-2 h-2 rounded-full bg-cyan-500 mr-3"></span>
+                Molecules: NodeStatus
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {{ node_status(name="ED25519 Secure Enclave", id="ENCLAVE-0x1F", status="success", status_text="Active")
+                }}
+                {{ node_status(name="Radio Mesh Adapter", id="RM-MESH-V2", status="info", status_text="Syncing",
+                pulse=True) }}
+                {{ node_status(name="Solar Power Bridge", id="SOL-PWR-U12", status="warning", status_text="Low Flux") }}
             </div>
         </section>
 

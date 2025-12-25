@@ -1,0 +1,22 @@
+{# 💎 SidebarItem Molecule #}
+
+{% macro sidebar_item(
+text,
+href="#",
+icon=None,
+active=False,
+class=""
+) %}
+<a href="{{ href }}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all border border-transparent 
+    {% if active %}
+        bg-blue-600/10 text-blue-400 border-blue-500/20 shadow-lg shadow-blue-500/10 font-semibold
+    {% else %}
+        text-slate-400 hover:bg-white/5 hover:text-slate-200 font-medium
+    {% endif %} 
+    {{ class }}">
+    {% if icon %}
+    <span class="aos-icon-wrapper">{{ icon | safe }}</span>
+    {% endif %}
+    <span class="text-sm">{{ text }}</span>
+</a>
+{% endmacro %}
