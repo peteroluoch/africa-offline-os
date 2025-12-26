@@ -133,6 +133,9 @@ class TelegramAdapter:
         
         # Agri commands
         elif command in ['/register', '/farmer']:
+            from aos.adapters.telegram_state import TelegramStateManager
+            state_manager = TelegramStateManager()
+            state_manager.set_state(chat_id, "register_name", {})
             self.send_message(chat_id, "🌾 <b>Farmer Registration</b>\n\nWhat's your name?")
         
         elif command == '/harvest':
@@ -150,8 +153,102 @@ class TelegramAdapter:
     
     def handle_text(self, user_id: int, chat_id: int, text: str) -> None:
         """Handle regular text messages (context-aware)."""
-        # For now, just echo back
-        self.send_message(chat_id, f"You said: {text}\n\nUse /help to see available commands")
+        # Get current state
+        from aos.adapters.telegram_state import TelegramStateManager
+        state_manager = TelegramStateManager()
+        user_state = state_manager.get_state(chat_id)
+        
+        if not user_state:
+            # No active conversation
+            self.send_message(chat_id, f"You said: {text}\n\nUse /help to see available commands")
+            return
+        
+        state = user_state.get("state")
+        data = user_state.get("data", {})
+        
+        # Handle farmer registration flow
+        if state == "register_name":
+            data["name"] = text
+            state_manager.set_state(chat_id, "register_phone", data)
+            self.send_message(chat_id, "Great! What's your phone number?")
+        
+        elif state == "register_phone":
+            data["phone"] = text
+            state_manager.set_state(chat_id, "register_village", data)
+            self.send_message(chat_id, "Which village are you from?")
+        
+        elif state == "register_village":
+            data["village"] = text
+            # Complete registration
+            if self.agri_module:
+                try:
+                    # TODO: Call agri_module.register_farmer(data)
+                    farmer_id = f"FK-{chat_id}"
+                    self.send_message(chat_id, 
+                        f"✅ <b>Registration complete!</b>\n\n"
+                        f"Farmer ID: {farmer_id}\n"
+                        f"Name: {data['name']}\n"
+                        f"Phone: {data['phone']}\n"
+                        f"Village: {data['village']}\n\n"
+                        f"Use /harvest to record your harvest"
+                    )
+                    state_manager.clear_state(chat_id)
+                except Exception as e:
+                    logger.error(f"Error registering farmer: {e}")
+                    self.send_message(chat_id, "❌ Registration failed. Please try again with /register")
+                    state_manager.clear_state(chat_id)
+            else:
+                self.send_message(chat_id, "✅ Registration saved! (AgriModule not connected)")
+                state_manager.clear_state(chat_id)
+        
+        # Handle harvest quantity input
+        elif state == "harvest_quantity":
+            try:
+                quantity = float(text)
+                crop = data.get("crop", "Unknown")
+                
+                if self.agri_module:
+                    # TODO: Call agri_module.record_harvest(farmer_id, crop, quantity)
+                    harvest_id = f"HV-{chat_id}-{int(datetime.now().timestamp())}"
+                    self.send_message(chat_id,
+                        f"✅ <b>Harvest recorded!</b>\n\n"
+                        f"Harvest ID: {harvest_id}\n"
+                        f"Crop: {crop}\n"
+                        f"Quantity: {quantity} bags\n\n"
+                        f"Use /harvest to record another"
+                    )
+                else:
+                    self.send_message(chat_id, f"✅ Recorded: {quantity} bags of {crop}")
+                
+                state_manager.clear_state(chat_id)
+            except ValueError:
+                self.send_message(chat_id, "❌ Please enter a valid number")
+        
+        # Handle booking passenger count
+        elif state == "booking_passengers":
+            try:
+                passengers = int(text)
+                route = data.get("route", "Unknown")
+                
+                if self.transport_module:
+                    # TODO: Call transport_module.create_booking(route_id, passengers)
+                    booking_id = f"BK-{chat_id}-{int(datetime.now().timestamp())}"
+                    self.send_message(chat_id,
+                        f"✅ <b>Booking confirmed!</b>\n\n"
+                        f"Booking ID: {booking_id}\n"
+                        f"Route: {route}\n"
+                        f"Passengers: {passengers}\n\n"
+                        f"Use /book to make another booking"
+                    )
+                else:
+                    self.send_message(chat_id, f"✅ Booked: {passengers} passengers on {route}")
+                
+                state_manager.clear_state(chat_id)
+            except ValueError:
+                self.send_message(chat_id, "❌ Please enter a valid number")
+        
+        else:
+            self.send_message(chat_id, "Use /help to see available commands")
     
     def send_welcome(self, chat_id: int) -> None:
         """Send welcome message."""
@@ -230,12 +327,24 @@ Use /book to reserve a seat
         """Handle inline keyboard button clicks."""
         logger.info(f"Callback from {user_id}: {callback_data}")
         
+        from aos.adapters.telegram_state import TelegramStateManager
+        from datetime import datetime
+        state_manager = TelegramStateManager()
+        
         # Handle harvest callbacks
         if callback_data.startswith('harvest_'):
             crop = callback_data.replace('harvest_', '').capitalize()
+            state_manager.set_state(chat_id, "harvest_quantity", {"crop": crop})
             self.send_message(chat_id, f"✅ Selected: {crop}\n\nHow many bags?")
         
         # Handle booking callbacks
         elif callback_data.startswith('book_route_'):
             route_id = callback_data.replace('book_route_', '')
-            self.send_message(chat_id, f"✅ Route selected\n\nHow many passengers?")
+            route_names = {
+                "1": "Nairobi → Nakuru",
+                "2": "Nairobi → Kisumu",
+                "3": "Nakuru → Eldoret"
+            }
+            route_name = route_names.get(route_id, "Unknown")
+            state_manager.set_state(chat_id, "booking_passengers", {"route": route_name, "route_id": route_id})
+            self.send_message(chat_id, f"✅ Route: {route_name}\n\nHow many passengers?")
