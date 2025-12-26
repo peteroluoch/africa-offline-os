@@ -21,7 +21,7 @@
 | **6** | **Agri-Module (Lighthouse)**| Harvest & Cold Chain | 75% | 🔜 **IN PROGRESS** |
 | **7** | **Transport & Mobility** | Rural Navigation & Traffic | 100% | ✅ **COMPLETE** |
 | **8** | **Resource Awareness** | Power-Safe Scheduling | 100% | ✅ **COMPLETE** |
-| **9** | **Regional Aggregation** | Scale Without Cloud | 33% | 🔜 **IN PROGRESS** |
+| **9** | **Regional Aggregation** | Scale Without Cloud | 100% | ✅ **COMPLETE** |
 | **10**| **Governance & Quality** | Enterprise Hardening | 0% | ⏳ FINAL |
 
 ---
@@ -172,10 +172,10 @@ To prevent "AI Drift" and ensure architectural integrity, execution is batched i
   - `ResourceWidget.html` (UI component)
 - **Verification**: Real-world tested with battery 14-23%, power profiles auto-switching correctly
 
-### Phase 9: Regional Aggregation (Sync-Nodes) 🔜 IN PROGRESS
+### Phase 9: Regional Aggregation (Sync-Nodes) ✅ COMPLETE
 - **Scope**: Peer-to-peer sync between nodes, governance dashboards for regional managers.
 - **Goal**: Scaling to 100M+ users without a centralized US/EU cloud dependency.
-- **Progress**: 33% (1/3 batches complete)
+- **Progress**: 100% (3/3 batches complete)
   - ✅ **Batch 1**: Sync Protocol & Conflict Resolution
     - Vector clock implementation for causality tracking
     - Conflict resolution strategies (LastWriteWins, ManualResolution)
@@ -183,18 +183,21 @@ To prevent "AI Drift" and ensure architectural integrity, execution is batched i
     - SyncEngine with delta computation and conflict detection
     - Sync state persistence (per-peer tracking)
     - Unresolved conflict storage for manual review
-  - ⏳ **Batch 2**: Regional Aggregation
+  - ✅ **Batch 2**: Regional Aggregation
     - RegionalAggregator for cross-village analytics
     - Harvest aggregation queries (30-day rollups)
     - Transport utilization queries (7-day rollups)
     - Village summary statistics
-  - ⏳ **Batch 3**: Regional Dashboard (Planned)
+  - ✅ **Batch 3**: Regional Dashboard
     - Manager dashboard for aggregated data
-    - Village status cards (online/offline/syncing)
-    - Sync health monitoring
+    - Village status cards and summary metrics
+    - Harvest and transport aggregation tables
+    - Sync health monitoring placeholder
 - **Artifacts**:
   - `aos.core.sync` (vector_clock, protocol, engine)
   - `aos.core.aggregation` (aggregator)
+  - `aos.api.routers.regional` (dashboard endpoints)
+  - `regional.html` (dashboard UI)
 
 ### Phase 10: Hardening & Governance ⏳
 - **Scope**: Full audit, encrypted upgrade paths, data retention compliance, multi-region registry rules.
