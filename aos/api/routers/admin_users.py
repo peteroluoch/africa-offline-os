@@ -50,6 +50,7 @@ async def users_list(request: Request, current_user: dict = Depends(get_current_
     
     return templates.TemplateResponse("admin_users.html", {
         "request": request,
+        "user": current_user,  # Dashboard template expects 'user'
         "users": users,
         "total_users": total_users,
         "roles_count": roles_count,
@@ -67,7 +68,8 @@ async def user_detail(request: Request, chat_id: int, current_user: dict = Depen
     
     return templates.TemplateResponse("admin_user_detail.html", {
         "request": request,
-        "user": user,
+        "user": current_user,  # Dashboard template expects 'user' object
+        "telegram_user": user,  # Rename to avoid confusion
         "username": current_user["username"],
         "available_roles": user_service.VALID_ROLES
     })

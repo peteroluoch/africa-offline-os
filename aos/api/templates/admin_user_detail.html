@@ -1,6 +1,117 @@
 {% extends "dashboard.html" %}
 
-{% block title %}{{ user.name }} - User Detail{% endblock %}
+{% block title %}{{ telegram_user.name }} - User Detail{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Back Button -->
+    <div class="mb-3">
+        <a href="/dashboard/users" class="btn btn-secondary">← Back to Users</a>
+    </div>
+
+    <!-- User Profile Card -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">👤 User Profile</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th width="40%">Name:</th>
+                            <td><strong>{{ telegram_user.name }}</strong></td>
+                        </tr>
+                        <tr>
+                            <th>Phone:</th>
+                            <td>{{ telegram_user.phone }}</td>
+                        </tr>
+                        <tr>
+                            <th>Town:</th>
+                            <td>{{ telegram_user.town }}</td>
+                        </tr>
+                        <tr>
+                            <th>Chat ID:</th>
+                            <td><code>{{ telegram_user.chat_id }}</code></td>
+                        </tr>
+                        <tr>
+                            <th>Registered:</th>
+                            <td>{{ telegram_user.created_at }}</td>
+                        </tr>
+                        <tr>
+                            <th>Last Updated:</th>
+                            <td>{{ telegram_user.updated_at }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <!-- Edit Roles Card -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">🎗️ Edit Roles</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="/dashboard/users/{{ telegram_user.chat_id }}/roles">
+                        {% for role in available_roles %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="roles" value="{{ role }}"
+                                id="role_{{ role }}" {% if role in telegram_user.roles %}checked{% endif %}>
+                            <label class="form-check-label" for="role_{{ role }}">
+                                {{ role.capitalize() }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                        <button type="submit" class="btn btn-primary mt-3">Save Roles</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Set Active Domain Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📂 Active Domain</h5>
+                </div>
+                <div class="card-body">
+                    <p>Current:
+                        {% if telegram_user.active_domain %}
+                        <span class="badge bg-success">{{ telegram_user.active_domain }}</span>
+                        {% else %}
+                        <span class="badge bg-warning">None</span>
+                        {% endif %}
+                    </p>
+                    <form method="POST" action="/dashboard/users/{{ telegram_user.chat_id }}/domain">
+                        <select name="domain" class="form-select mb-2">
+                            <option value="">-- Select Domain --</option>
+                            <option value="agriculture">🌾 Agriculture</option>
+                            <option value="transport">🚌 Transport</option>
+                            <option value="health">🏥 Health</option>
+                            <option value="religion">⛪ Religion</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary">Set Domain</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Roles Display -->
+    <div class="card mt-3">
+        <div class="card-header">
+            <h5 class="mb-0">Current Roles</h5>
+        </div>
+        <div class="card-body">
+            {% for role in telegram_user.roles %}
+            <span class="badge bg-primary me-2">{{ role }}</span>
+            {% endfor %}
+            {% if not telegram_user.roles %}
+            <em class="text-muted">No roles assigned</em>
+            {% endif %}
+        </div>
+    </div>
+</div>
 
 {% block content %}
 <div class="container-fluid">

@@ -34,6 +34,7 @@ async def regional_dashboard(
 
     return templates.TemplateResponse("regional.html", {
         "request": request,
+        "user": operator,  # Dashboard template expects 'user'
         "operator": operator,
         "summary": summary,
         "harvests": harvests,
