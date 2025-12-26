@@ -5,6 +5,7 @@ from aos.core.resource.monitor import ResourceMonitor, ResourceSnapshot, Battery
 from aos.core.resource.profiles import PowerProfile, PowerPolicy, PowerProfileManager, POWER_POLICIES
 from aos.core.resource.scheduler import Task, TaskPriority, TaskState, ResourceAwareScheduler
 from aos.core.resource.manager import ResourceManager
+from aos.core.resource.power_aware import power_aware, should_run_task
 
 __all__ = [
     "ResourceMonitor",
@@ -20,4 +21,6 @@ __all__ = [
     "TaskState",
     "ResourceAwareScheduler",
     "ResourceManager",
+    "power_aware",
+    "should_run_task",
 ]

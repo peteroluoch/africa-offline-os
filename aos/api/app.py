@@ -145,16 +145,17 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     ref_mod = ReferenceModule(_event_dispatcher)
     await ref_mod.initialize()
     
-    _agri_module = AgriModule(_event_dispatcher, _db_conn)
-    await _agri_module.initialize()
-    
-    _transport_module = TransportModule(_event_dispatcher, _db_conn)
-    await _transport_module.initialize()
-    
-    # Initialize Resource Manager (Phase 8)
+    # Initialize Resource Manager (Phase 8) - BEFORE modules so they can use it
     from aos.core.resource import ResourceManager
     _resource_manager = ResourceManager(event_bus=_event_dispatcher, check_interval=30)
     await _resource_manager.start()
+    
+    # Initialize Modules with ResourceManager (Phase 5/6/7) - Power-aware
+    _agri_module = AgriModule(_event_dispatcher, _db_conn, _resource_manager)
+    await _agri_module.initialize()
+    
+    _transport_module = TransportModule(_event_dispatcher, _db_conn, _resource_manager)
+    await _transport_module.initialize()
     
     # Store for global access if needed
     from aos.api.state import agri_state, transport_state, resource_state

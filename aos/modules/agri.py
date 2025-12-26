@@ -19,12 +19,13 @@ class AgriModule(Module):
     Business logic for the Agricultural domain.
     """
     
-    def __init__(self, dispatcher: EventDispatcher, db_conn: sqlite3.Connection):
+    def __init__(self, dispatcher: EventDispatcher, db_conn: sqlite3.Connection, resource_manager: Optional['ResourceManager'] = None):
         self._dispatcher = dispatcher
         self._db = db_conn
         self._farmers = FarmerRepository(db_conn)
         self._harvests = HarvestRepository(db_conn)
         self._crops = CropRepository(db_conn)
+        self.resource_manager = resource_manager  # Power awareness
 
     @property
     def name(self) -> str:

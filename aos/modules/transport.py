@@ -1,10 +1,13 @@
 from __future__ import annotations
 import sqlite3
 import logging
-from typing import List
+from typing import List, Optional, TYPE_CHECKING
 from aos.core.module import Module
 from aos.bus.dispatcher import EventDispatcher
 from aos.bus.events import Event
+
+if TYPE_CHECKING:
+    from aos.core.resource import ResourceManager
 
 logger = logging.getLogger("aos.transport")
 
@@ -14,9 +17,10 @@ class TransportModule(Module):
     Handles route status, vehicle availability, and bookings.
     """
     
-    def __init__(self, dispatcher: EventDispatcher, db_conn: sqlite3.Connection):
+    def __init__(self, dispatcher: EventDispatcher, db_conn: sqlite3.Connection, resource_manager: Optional['ResourceManager'] = None):
         self._dispatcher = dispatcher
         self._db = db_conn
+        self.resource_manager = resource_manager  # Power awareness
 
     @property
     def name(self) -> str:
