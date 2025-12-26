@@ -1,0 +1,111 @@
+{# CollapsibleMenuGroup Molecule - FAANG-Grade Component #}
+{% macro collapsible_menu_group(
+title,
+icon,
+items,
+group_id,
+is_expanded=False
+) %}
+<div class="collapsible-group" data-group-id="{{ group_id }}">
+    <!-- Group Header -->
+    <button
+        class="group-header w-full flex items-center justify-between px-3 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800/50 rounded-lg transition-all duration-200 {% if is_expanded %}expanded{% endif %}"
+        onclick="toggleGroup('{{ group_id }}')" aria-expanded="{{ 'true' if is_expanded else 'false' }}"
+        aria-controls="group-content-{{ group_id }}">
+        <div class="flex items-center space-x-3">
+            <div class="w-5 h-5 text-slate-400 group-hover:text-blue-400 transition-colors">
+                {{ icon | safe }}
+            </div>
+            <span>{{ title }}</span>
+        </div>
+        <svg class="chevron w-4 h-4 text-slate-500 transition-transform duration-200 {% if is_expanded %}rotate-90{% endif %}"
+            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+    </button>
+
+    <!-- Group Content -->
+    <div id="group-content-{{ group_id }}"
+        class="group-content overflow-hidden transition-all duration-300 {% if is_expanded %}max-h-screen{% else %}max-h-0{% endif %}">
+        <div class="pl-8 pr-3 py-1 space-y-1">
+            {% for item in items %}
+            <a href="{{ item.href }}" data-nav-item data-search-text="{{ item.text | lower }}"
+                class="flex items-center space-x-3 px-3 py-2 text-sm text-slate-400 hover:text-slate-200 hover:bg-slate-800/30 rounded-lg transition-all duration-150 group {% if item.active %}active-nav-item{% endif %}">
+                <div class="w-4 h-4 text-slate-500 group-hover:text-blue-400 transition-colors">
+                    {{ item.icon | safe }}
+                </div>
+                <span>{{ item.text }}</span>
+                {% if item.badge %}
+                <span
+                    class="ml-auto px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                    {{ item.badge }}
+                </span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .active-nav-item {
+        background: rgba(59, 130, 246, 0.1);
+        color: #60a5fa;
+        border-left: 3px solid #3b82f6;
+        padding-left: 9px;
+    }
+
+    .group-header.expanded {
+        background: rgba(30, 41, 59, 0.5);
+    }
+
+    .collapsible-group {
+        margin-bottom: 0.5rem;
+    }
+</style>
+
+<script>
+    function toggleGroup(groupId) {
+        const group = document.querySelector(`[data-group-id="${groupId}"]`);
+        const header = group.querySelector('.group-header');
+        const content = group.querySelector('.group-content');
+        const chevron = header.querySelector('.chevron');
+
+        const isExpanded = header.classList.contains('expanded');
+
+        if (isExpanded) {
+            // Collapse
+            header.classList.remove('expanded');
+            header.setAttribute('aria-expanded', 'false');
+            chevron.classList.remove('rotate-90');
+            content.classList.remove('max-h-screen');
+            content.classList.add('max-h-0');
+        } else {
+            // Expand
+            header.classList.add('expanded');
+            header.setAttribute('aria-expanded', 'true');
+            chevron.classList.add('rotate-90');
+            content.classList.remove('max-h-0');
+            content.classList.add('max-h-screen');
+        }
+
+        // Save state to localStorage
+        const states = JSON.parse(localStorage.getItem('nav_states') || '{}');
+        states[groupId] = !isExpanded;
+        localStorage.setItem('nav_states', JSON.stringify(states));
+    }
+
+    // Restore states on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        const states = JSON.parse(localStorage.getItem('nav_states') || '{}');
+        Object.keys(states).forEach(groupId => {
+            if (states[groupId]) {
+                const group = document.querySelector(`[data-group-id="${groupId}"]`);
+                if (group && !group.querySelector('.group-header').classList.contains('expanded')) {
+                    toggleGroup(groupId);
+                }
+            }
+        });
+    });
+</script>
+{% endmacro %}
