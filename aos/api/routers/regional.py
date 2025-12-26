@@ -10,7 +10,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from aos.api.app import get_db
-from aos.api.security import get_current_operator
+from aos.core.security.auth import get_current_operator
 from aos.core.aggregation import RegionalAggregator
 
 router = APIRouter(prefix="/regional", tags=["regional"])

@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}User Management - A-OS Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📱 Telegram User Management</h2>
+        <div>
+            <span class="badge bg-primary">Total Users: {{ total_users }}</span>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Users</h5>
+                    <h2>{{ total_users }}</h2>
+                </div>
+            </div>
+        </div>
+        {% for role, count in roles_count.items() %}
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ role.capitalize() }}s</h5>
+                    <h2>{{ count }}</h2>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Users Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">All Users</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Town</th>
+                            <th>Roles</th>
+                            <th>Active Domain</th>
+                            <th>Registered</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td><strong>{{ user.name }}</strong></td>
+                            <td>{{ user.phone }}</td>
+                            <td>{{ user.town }}</td>
+                            <td>
+                                {% for role in user.roles %}
+                                <span class="badge bg-secondary">{{ role }}</span>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {% if user.active_domain %}
+                                <span class="badge bg-success">{{ user.active_domain }}</span>
+                                {% else %}
+                                <span class="badge bg-warning">None</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.created_at[:10] }}</td>
+                            <td>
+                                <a href="/dashboard/users/{{ user.chat_id }}" class="btn btn-sm btn-primary">
+                                    View/Edit
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        margin-bottom: 1rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .table-responsive {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .badge {
+        margin-right: 0.25rem;
+    }
+</style>
+{% endblock %}
