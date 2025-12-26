@@ -212,10 +212,29 @@ This document serves as the persistent memory for the AI Architect. It records l
    - **Observation**: Telegram adapter imports `requests`; leaving it undeclared violates the “implicit dependencies forbidden” rule.
    - **Protocol**: Keep `pyproject.toml` and `requirements.txt` in sync with runtime imports.
 
-### Implementation Summary
-- Added Framework C docs scaffold: `docs/frameworks/framework_c/`.
-- Added fault injection utility: `aos/testing/fault_injection.py` + tests.
-- Added Telegram adapter channel tests (network mocked): `aos/tests/test_channels/test_telegram_adapter.py`.
-- Declared `requests` dependency in `pyproject.toml` and `requirements.txt`.
+---
+
+## 2025-12-26 — Framework C (Testing & QA) Integration Complete
+
+### What was done
+- Created `docs/frameworks/framework_c/README.md` with canonical Framework C definition and A‑OS implementation plan.
+- Implemented fault injection utilities in `aos/testing/fault_injection.py` for SQLite/EventStore crash-recovery testing.
+- Added fault injection tests in `aos/tests/test_fault_injection.py` (2 tests passed).
+- Added Telegram adapter unit tests with network mocking in `aos/tests/test_channels/test_telegram_adapter.py` (5 tests passed).
+- Declared `requests` dependency explicitly in `pyproject.toml` and `requirements.txt`.
+- Staged, committed, and pushed Framework C deliverables to origin/main (commit 6c7ccec).
+
+### Verification
+- `pytest` on Framework C files: all tests pass.
+- `ruff` and `mypy` still show pre-existing issues in the broader codebase; Framework C files are clean.
+
+### Lessons learned
+- A‑OS binding contracts require explicit dependency declaration; otherwise implicit imports break offline-first guarantees.
+- Fault injection must target A‑OS native primitives (SQLite WAL, EventStore) to be meaningful.
+- Documentation-sync is enforced: all framework work must be logged in this journal.
+
+### Next steps
+- Framework D (Observability) and E (Security) can now be integrated using the same pattern.
+- Consider expanding fault injection to simulate disk/network failures for deeper resilience testing.
 
 ---

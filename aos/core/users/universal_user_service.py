@@ -6,7 +6,7 @@ Follows FAANG standards and 01_roles.md principles.
 import json
 import logging
 import sqlite3
-from typing import Any
+from typing import Any, Optional, List, Dict
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +26,9 @@ class UniversalUserService:
         chat_id: int,
         phone: str,
         name: str,
-        village: str | None = None,
-        roles: list[str] | None = None
-    ) -> dict[str, Any] | None:
+        town: Optional[str] = None,
+        roles: Optional[List[str]] = None
+    ) -> Optional[Dict[str, Any]]:
         """
         Register a new user.
         
@@ -36,7 +36,7 @@ class UniversalUserService:
             chat_id: Telegram chat ID
             phone: User phone number (unique identifier)
             name: User full name
-            village: User village/location
+            town: User town/location
             roles: List of roles (farmer, driver, etc.)
         
         Returns:
@@ -56,9 +56,9 @@ class UniversalUserService:
             cursor = conn.cursor()
 
             cursor.execute("""
-                INSERT INTO telegram_users (chat_id, phone, name, village, roles)
+                INSERT INTO telegram_users (chat_id, phone, name, town, roles)
                 VALUES (?, ?, ?, ?, ?)
-            """, (chat_id, phone, name, village, roles_json))
+            """, (chat_id, phone, name, town, roles_json))
 
             user_id = cursor.lastrowid
             conn.commit()
@@ -75,7 +75,7 @@ class UniversalUserService:
             logger.error(f"Error registering user: {e}")
             return None
 
-    def get_user_by_chat_id(self, chat_id: int) -> dict[str, Any] | None:
+    def get_user_by_chat_id(self, chat_id: int) -> Optional[Dict[str, Any]]:
         """Get user by Telegram chat ID."""
         try:
             conn = sqlite3.connect(self.db_path)
@@ -99,7 +99,7 @@ class UniversalUserService:
             logger.error(f"Error getting user: {e}")
             return None
 
-    def get_user_by_phone(self, phone: str) -> dict[str, Any] | None:
+    def get_user_by_phone(self, phone: str) -> Optional[Dict[str, Any]]:
         """Get user by phone number."""
         try:
             conn = sqlite3.connect(self.db_path)
@@ -194,11 +194,47 @@ class UniversalUserService:
             return False
         return role in user['roles']
 
+    def set_active_domain(self, chat_id: int, domain: str) -> bool:
+        """Set the current active domain for a user."""
+        import time
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                conn = sqlite3.connect(self.db_path, timeout=10.0)
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    UPDATE telegram_users 
+                    SET active_domain = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE chat_id = ?
+                """, (domain, chat_id))
+                
+                conn.commit()
+                conn.close()
+                
+                logger.info(f"Set active domain to {domain} for user {chat_id}")
+                return True
+            except sqlite3.OperationalError as e:
+                if "locked" in str(e) and attempt < max_retries - 1:
+                    time.sleep(0.1 * (attempt + 1))  # Exponential backoff
+                    continue
+                logger.error(f"Error setting active domain: {e}")
+                return False
+            except Exception as e:
+                logger.error(f"Error setting active domain: {e}")
+                return False
+        return False
+
+    def get_active_domain(self, chat_id: int) -> Optional[str]:
+        """Get the current active domain for a user."""
+        user = self.get_user_by_chat_id(chat_id)
+        return user.get("active_domain") if user else None
+
     def update_user(
         self,
         chat_id: int,
-        name: str | None = None,
-        village: str | None = None
+        name: Optional[str] = None,
+        town: Optional[str] = None
     ) -> bool:
         """Update user information."""
         try:
@@ -209,9 +245,9 @@ class UniversalUserService:
                 updates.append("name = ?")
                 params.append(name)
 
-            if village:
-                updates.append("village = ?")
-                params.append(village)
+            if town:
+                updates.append("town = ?")
+                params.append(town)
 
             if not updates:
                 return True

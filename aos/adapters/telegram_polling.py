@@ -90,7 +90,7 @@ class TelegramPollingService:
             List of update objects
         """
         try:
-            token = self.adapter.get_bot_token()
+            token = self.adapter.bot_token
             if not token:
                 logger.error("Bot token not configured")
                 return []
@@ -129,9 +129,6 @@ class TelegramPollingService:
     def process_update(self, update):
         """
         Process single Telegram update.
-        
-        Args:
-            update: Telegram update object
         """
         try:
             # Handle message updates
@@ -145,11 +142,8 @@ class TelegramPollingService:
                     logger.info(f"Message from {user_id}: {text[:50]}...")
                     self.stats['messages_processed'] += 1
 
-                    # Send typing indicator
-                    self.adapter.send_typing_action(str(chat_id))
-
-                    # Handle message
-                    self.adapter.handle_message(user_id, chat_id, text, update)
+                    # Handle message using the new unified signature
+                    self.adapter.handle_message(message)
 
             # Handle callback queries (button clicks)
             elif 'callback_query' in update:
