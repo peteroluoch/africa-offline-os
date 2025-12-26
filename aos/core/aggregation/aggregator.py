@@ -61,7 +61,7 @@ class RegionalAggregator:
                 r.id as route_id,
                 r.name as route_name,
                 COUNT(b.id) as booking_count,
-                SUM(b.passengers) as total_passengers
+                SUM(b.seats) as total_passengers
             FROM routes r
             LEFT JOIN bookings b ON r.id = b.route_id AND b.created_at >= ?
             GROUP BY r.id, r.name
