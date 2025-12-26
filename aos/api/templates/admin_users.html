@@ -6,31 +6,20 @@
 <div class="aos-container">
     <!-- Page Header -->
     <div class="aos-page-header">
-        <h1 class="aos-h1">📱 Telegram User Management</h1>
+        <h1 class="aos-h1">Telegram User Management</h1>
         <p class="aos-text-muted">Manage users, roles, and domain access</p>
     </div>
 
-    <!-- Stats Cards -->
+    <!-- Stats Cards - Matching Regional Dashboard Style -->
     <div class="aos-grid aos-grid-cols-4 aos-gap-4 aos-mb-6">
-        <div style="backdrop-filter: blur(20px); background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05)); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px; padding: 1.5rem; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1); transition: all 0.3s ease; cursor: pointer;"
-            onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 12px 48px rgba(59, 130, 246, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)'; this.style.borderColor='rgba(59, 130, 246, 0.4)'"
-            onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'; this.style.borderColor='rgba(59, 130, 246, 0.2)'">
-            <div class="aos-text-muted aos-text-sm aos-mb-2"
-                style="font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;">Total Users</div>
-            <div class="aos-h2 aos-text-primary"
-                style="font-size: 2.5rem; font-weight: 800; background: linear-gradient(135deg, #60a5fa, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                {{ total_users }}</div>
+        <div class="aos-glass aos-p-4 aos-rounded-lg">
+            <div class="aos-text-muted aos-text-sm aos-mb-2">Total Users</div>
+            <div class="aos-h2 aos-text-primary">{{ total_users }}</div>
         </div>
         {% for role, count in roles_count.items() %}
-        <div style="backdrop-filter: blur(20px); background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.05)); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 12px; padding: 1.5rem; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1); transition: all 0.3s ease; cursor: pointer;"
-            onmouseover="this.style.transform='translateY(-4px) scale(1.02)'; this.style.boxShadow='0 12px 48px rgba(34, 197, 94, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)'; this.style.borderColor='rgba(34, 197, 94, 0.4)'"
-            onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'; this.style.borderColor='rgba(34, 197, 94, 0.2)'">
-            <div class="aos-text-muted aos-text-sm aos-mb-2"
-                style="font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;">{{ role.capitalize() }}s
-            </div>
-            <div class="aos-h2 aos-text-success"
-                style="font-size: 2.5rem; font-weight: 800; background: linear-gradient(135deg, #4ade80, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                {{ count }}</div>
+        <div class="aos-glass aos-p-4 aos-rounded-lg">
+            <div class="aos-text-muted aos-text-sm aos-mb-2">{{ role.capitalize() }}s</div>
+            <div class="aos-h2 aos-text-success">{{ count }}</div>
         </div>
         {% endfor %}
     </div>
@@ -102,30 +91,4 @@
         </div>
     </div>
 </div>
-
-<style>
-    /* Premium hover effects */
-    .aos-table tbody tr {
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .aos-table tbody tr:hover {
-        background: rgba(255, 255, 255, 0.03);
-        transform: translateX(2px);
-    }
-
-    /* Glassmorphism enhancement */
-    .aos-glass {
-        backdrop-filter: blur(12px);
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .aos-glass:hover {
-        background: rgba(255, 255, 255, 0.04);
-        border-color: rgba(255, 255, 255, 0.1);
-        box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
-    }
-</style>
 {% endblock %}
