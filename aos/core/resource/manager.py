@@ -11,7 +11,7 @@ from typing import Optional
 from aos.core.resource.monitor import ResourceMonitor, ResourceSnapshot
 from aos.core.resource.profiles import PowerProfile, PowerProfileManager
 from aos.core.resource.scheduler import ResourceAwareScheduler, Task, TaskPriority
-from aos.core.events import EventBus, Event
+from aos.bus.events import EventBus, Event
 
 logger = logging.getLogger(__name__)
 
