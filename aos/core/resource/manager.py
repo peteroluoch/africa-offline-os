@@ -6,12 +6,15 @@ from __future__ import annotations
 import asyncio
 import logging
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from aos.core.resource.monitor import ResourceMonitor, ResourceSnapshot
 from aos.core.resource.profiles import PowerProfile, PowerProfileManager
 from aos.core.resource.scheduler import ResourceAwareScheduler, Task, TaskPriority
-from aos.bus.events import EventBus, Event
+from aos.bus.events import Event
+
+if TYPE_CHECKING:
+    from aos.bus.dispatcher import EventDispatcher
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +26,7 @@ class ResourceManager:
     
     def __init__(
         self,
-        event_bus: Optional[EventBus] = None,
+        event_bus: Optional['EventDispatcher'] = None,
         check_interval: int = 30
     ):
         self.monitor = ResourceMonitor()
@@ -82,11 +85,11 @@ class ResourceManager:
         if changed:
             logger.warning(f"Power profile changed to {new_profile.value} (Battery: {battery_percent:.1f}%)")
             
-            # Publish profile change event
+            # Dispatch profile change event
             if self.event_bus:
-                await self.event_bus.publish(Event(
-                    type="resource.power_profile_changed",
-                    data={
+                await self.event_bus.dispatch(Event(
+                    name="resource.power_profile_changed",
+                    payload={
                         "profile": new_profile.value,
                         "battery_percent": battery_percent,
                         "timestamp": datetime.now(timezone.utc).isoformat()
