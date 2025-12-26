@@ -299,18 +299,18 @@ def create_app() -> FastAPI:
 
     @app.get("/operators")
     async def operators_management(request: Request, current_user: dict = Depends(get_current_operator)):
-        """Placeholder for Operator management."""
+        """Operator management page."""
         return templates.TemplateResponse(
-            "dashboard.html",
-            {"request": request, "user": current_user, "view": "operators"}
+            "operators.html",
+            {"request": request, "user": current_user}
         )
 
     @app.get("/security")
     async def security_policy(request: Request, current_user: dict = Depends(get_current_operator)):
-        """Placeholder for Security policy."""
+        """Security policy page."""
         return templates.TemplateResponse(
-            "dashboard.html",
-            {"request": request, "user": current_user, "view": "security"}
+            "security.html",
+            {"request": request, "user": current_user}
         )
 
     return app
