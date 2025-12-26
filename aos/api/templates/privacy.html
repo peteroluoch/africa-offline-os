@@ -1,0 +1,84 @@
+{% extends "dashboard.html" %}
+
+{% block title %}Privacy Policy - A-OS{% endblock %}
+
+{% block content %}
+<div class="aos-container max-w-4xl">
+    <div class="aos-page-header">
+        <h1 class="aos-h1">Privacy Policy</h1>
+        <p class="aos-text-muted">Last updated: January 2025</p>
+    </div>
+
+    <div class="aos-glass aos-p-6 aos-rounded-lg space-y-6">
+        <section>
+            <h2 class="aos-h3 aos-mb-4">1. Information We Collect</h2>
+            <p class="aos-text-muted aos-mb-3">
+                A-OS Kernel collects minimal data necessary for system operation:
+            </p>
+            <ul class="list-disc list-inside space-y-2 aos-text-muted ml-4">
+                <li>Operator authentication credentials (username, hashed passwords)</li>
+                <li>System event logs and kernel metrics</li>
+                <li>Mesh node synchronization data</li>
+                <li>Agricultural and transport domain data (when applicable)</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 class="aos-h3 aos-mb-4">2. How We Use Your Data</h2>
+            <p class="aos-text-muted aos-mb-3">
+                Your data is used exclusively for:
+            </p>
+            <ul class="list-disc list-inside space-y-2 aos-text-muted ml-4">
+                <li>System authentication and authorization</li>
+                <li>Event monitoring and system health tracking</li>
+                <li>Cross-village data synchronization</li>
+                <li>Domain-specific operations (agriculture, transport, health, religion)</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 class="aos-h3 aos-mb-4">3. Data Storage</h2>
+            <p class="aos-text-muted">
+                All data is stored locally in SQLite databases on your sovereign node.
+                No data is transmitted to external servers unless explicitly configured for mesh synchronization.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="aos-h3 aos-mb-4">4. Data Sharing</h2>
+            <p class="aos-text-muted">
+                A-OS operates on a sovereign architecture. Your data remains on your node and is only shared
+                with explicitly configured mesh peers for synchronization purposes.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="aos-h3 aos-mb-4">5. Your Rights</h2>
+            <p class="aos-text-muted aos-mb-3">
+                As a sovereign system operator, you have full control over your data:
+            </p>
+            <ul class="list-disc list-inside space-y-2 aos-text-muted ml-4">
+                <li>Access all stored data via the dashboard</li>
+                <li>Export data in standard formats</li>
+                <li>Delete data at any time</li>
+                <li>Control mesh synchronization settings</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 class="aos-h3 aos-mb-4">6. Security</h2>
+            <p class="aos-text-muted">
+                A-OS implements enterprise-grade security measures including JWT authentication,
+                encrypted mesh communication, and role-based access control (RBAC).
+            </p>
+        </section>
+
+        <section>
+            <h2 class="aos-h3 aos-mb-4">7. Contact</h2>
+            <p class="aos-text-muted">
+                For privacy-related inquiries, contact your system administrator or the A-OS development team.
+            </p>
+        </section>
+    </div>
+</div>
+{% endblock %}

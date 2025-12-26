@@ -1,0 +1,86 @@
+{% extends "dashboard.html" %}
+
+{% block title %}Terms & Conditions - A-OS{% endblock %}
+
+{% block content %}
+<div class="aos-container max-w-4xl">
+    <div class="aos-page-header">
+        <h1 class="aos-h1">Terms & Conditions</h1>
+        <p class="aos-text-muted">Last updated: January 2025</p>
+    </div>
+
+    <div class="aos-glass aos-p-6 aos-rounded-lg space-y-6">
+        <section>
+            <h2 class="aos-h3 aos-mb-4">1. Acceptance of Terms</h2>
+            <p class="aos-text-muted">
+                By accessing and using the A-OS Kernel system, you agree to be bound by these Terms and Conditions.
+                If you do not agree to these terms, please discontinue use immediately.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="aos-h3 aos-mb-4">2. System Usage</h2>
+            <p class="aos-text-muted aos-mb-3">
+                A-OS is designed for sovereign, offline-first operations. Users must:
+            </p>
+            <ul class="list-disc list-inside space-y-2 aos-text-muted ml-4">
+                <li>Maintain proper authentication credentials</li>
+                <li>Use the system in accordance with assigned roles and permissions</li>
+                <li>Not attempt to bypass security measures or access unauthorized data</li>
+                <li>Report security vulnerabilities to system administrators</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 class="aos-h3 aos-mb-4">3. Operator Responsibilities</h2>
+            <p class="aos-text-muted aos-mb-3">
+                System operators are responsible for:
+            </p>
+            <ul class="list-disc list-inside space-y-2 aos-text-muted ml-4">
+                <li>Maintaining system backups and data integrity</li>
+                <li>Configuring mesh synchronization appropriately</li>
+                <li>Managing user roles and permissions</li>
+                <li>Ensuring compliance with local regulations</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 class="aos-h3 aos-mb-4">4. Data Ownership</h2>
+            <p class="aos-text-muted">
+                All data stored in A-OS remains the property of the sovereign node operator.
+                The A-OS development team claims no ownership over user data.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="aos-h3 aos-mb-4">5. Limitations of Liability</h2>
+            <p class="aos-text-muted">
+                A-OS is provided "as is" without warranties of any kind. The development team is not liable for
+                data loss, system downtime, or any damages arising from system use.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="aos-h3 aos-mb-4">6. Modifications</h2>
+            <p class="aos-text-muted">
+                These terms may be updated periodically. Continued use of the system constitutes acceptance of modified
+                terms.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="aos-h3 aos-mb-4">7. Governing Law</h2>
+            <p class="aos-text-muted">
+                These terms are governed by the laws of the jurisdiction in which the sovereign node operates.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="aos-h3 aos-mb-4">8. Contact</h2>
+            <p class="aos-text-muted">
+                For questions regarding these terms, contact your system administrator or the A-OS development team.
+            </p>
+        </section>
+    </div>
+</div>
+{% endblock %}

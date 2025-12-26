@@ -1,0 +1,98 @@
+{% extends "dashboard.html" %}
+
+{% block title %}Cookie Policy - A-OS{% endblock %}
+
+{% block content %}
+<div class="aos-container max-w-4xl">
+    <div class="aos-page-header">
+        <h1 class="aos-h1">Cookie Policy</h1>
+        <p class="aos-text-muted">Last updated: January 2025</p>
+    </div>
+
+    <div class="aos-glass aos-p-6 aos-rounded-lg space-y-6">
+        <section>
+            <h2 class="aos-h3 aos-mb-4">1. What Are Cookies?</h2>
+            <p class="aos-text-muted">
+                Cookies are small text files stored on your device by web applications. A-OS uses minimal cookies
+                for essential system functionality.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="aos-h3 aos-mb-4">2. Cookies We Use</h2>
+            <p class="aos-text-muted aos-mb-3">
+                A-OS uses the following types of cookies:
+            </p>
+
+            <div class="space-y-4">
+                <div class="aos-glass aos-p-4 aos-rounded-lg">
+                    <h3 class="font-semibold text-blue-400 aos-mb-2">Essential Cookies</h3>
+                    <p class="aos-text-muted aos-text-sm">
+                        <strong>Purpose:</strong> Authentication and session management<br>
+                        <strong>Duration:</strong> Session-based (cleared on logout)<br>
+                        <strong>Data Stored:</strong> JWT authentication tokens
+                    </p>
+                </div>
+
+                <div class="aos-glass aos-p-4 aos-rounded-lg">
+                    <h3 class="font-semibold text-green-400 aos-mb-2">Functional Cookies</h3>
+                    <p class="aos-text-muted aos-text-sm">
+                        <strong>Purpose:</strong> Remember user preferences<br>
+                        <strong>Duration:</strong> 30 days<br>
+                        <strong>Data Stored:</strong> Dashboard layout preferences, theme settings
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="aos-h3 aos-mb-4">3. Third-Party Cookies</h2>
+            <p class="aos-text-muted">
+                A-OS does not use third-party cookies. All cookies are first-party and essential for system operation.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="aos-h3 aos-mb-4">4. Managing Cookies</h2>
+            <p class="aos-text-muted aos-mb-3">
+                You can manage cookies through your browser settings:
+            </p>
+            <ul class="list-disc list-inside space-y-2 aos-text-muted ml-4">
+                <li>View and delete existing cookies</li>
+                <li>Block all cookies (note: this will prevent system login)</li>
+                <li>Configure cookie preferences per-site</li>
+            </ul>
+            <p class="aos-text-muted mt-3">
+                <strong>Note:</strong> Disabling essential cookies will prevent you from using A-OS.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="aos-h3 aos-mb-4">5. Cookie Security</h2>
+            <p class="aos-text-muted">
+                All cookies used by A-OS are:
+            </p>
+            <ul class="list-disc list-inside space-y-2 aos-text-muted ml-4 mt-3">
+                <li><strong>HttpOnly:</strong> Not accessible via JavaScript</li>
+                <li><strong>Secure:</strong> Transmitted only over HTTPS (when available)</li>
+                <li><strong>SameSite:</strong> Protected against CSRF attacks</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 class="aos-h3 aos-mb-4">6. Updates to This Policy</h2>
+            <p class="aos-text-muted">
+                This Cookie Policy may be updated to reflect changes in system functionality.
+                Check this page periodically for updates.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="aos-h3 aos-mb-4">7. Contact</h2>
+            <p class="aos-text-muted">
+                For questions about our cookie usage, contact your system administrator or the A-OS development team.
+            </p>
+        </section>
+    </div>
+</div>
+{% endblock %}
