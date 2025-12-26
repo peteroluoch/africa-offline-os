@@ -31,6 +31,15 @@ To prevent "AI Drift" and ensure architectural integrity, execution is batched i
 1.  **Compile & Pass CI**: Zero broken builds between batches.
 2.  **Pass TDD Mandate**: 90% coverage for all new logic.
 3.  **Be Atomic**: Mergeable and reversible.
+4.  **Update Documentation**: ALL docs (ROADMAP, CHANGELOG, task.md, relevant guides) MUST be updated, committed, and pushed with every batch. NO EXCEPTIONS.
+
+> [!IMPORTANT]
+> **Documentation Enforcement**: Every code change MUST include corresponding documentation updates. This includes:
+> - `docs/02_ROADMAP.md` - Phase progress updates
+> - `CHANGELOG.md` - Feature additions/changes
+> - `task.md` - Task completion tracking
+> - Relevant technical docs (e.g., `06_TELEGRAM_BOT_INTEGRATION.md`)
+> - This rule is BINDING per `01_roles.md` and must be followed without user reminders.
 
 | Phase | Est. Batches | Target Style |
 | :--- | :--- | :--- |

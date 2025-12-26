@@ -179,27 +179,31 @@ class TelegramAdapter:
         
         elif state == "register_village":
             data["village"] = text
-            # Complete registration
-            if self.agri_module:
-                try:
-                    # TODO: Call agri_module.register_farmer(data)
-                    farmer_id = f"FK-{chat_id}"
-                    self.send_message(chat_id, 
-                        f"✅ <b>Registration complete!</b>\n\n"
-                        f"Farmer ID: {farmer_id}\n"
-                        f"Name: {data['name']}\n"
-                        f"Phone: {data['phone']}\n"
-                        f"Village: {data['village']}\n\n"
-                        f"Use /harvest to record your harvest"
-                    )
-                    state_manager.clear_state(chat_id)
-                except Exception as e:
-                    logger.error(f"Error registering farmer: {e}")
-                    self.send_message(chat_id, "❌ Registration failed. Please try again with /register")
-                    state_manager.clear_state(chat_id)
-            else:
-                self.send_message(chat_id, "✅ Registration saved! (AgriModule not connected)")
-                state_manager.clear_state(chat_id)
+            state_manager.set_state(chat_id, "register_roles", data)
+            
+            # Show role selection keyboard
+            keyboard = {
+                "inline_keyboard": [
+                    [
+                        {"text": "🌾 Farmer", "callback_data": "role_farmer"},
+                        {"text": "🚌 Driver", "callback_data": "role_driver"}
+                    ],
+                    [
+                        {"text": "👤 Passenger", "callback_data": "role_passenger"},
+                        {"text": "🛒 Buyer", "callback_data": "role_buyer"}
+                    ],
+                    [
+                        {"text": "✅ Done", "callback_data": "role_done"}
+                    ]
+                ]
+            }
+            
+            self.send_message(chat_id,
+                f"<b>Select your roles</b>\n\n"
+                f"You can select multiple roles.\n"
+                f"Click ✅ Done when finished.",
+                reply_markup=keyboard
+            )
         
         # Handle harvest quantity input
         elif state == "harvest_quantity":
@@ -328,8 +332,85 @@ Use /book to reserve a seat
         logger.info(f"Callback from {user_id}: {callback_data}")
         
         from aos.adapters.telegram_state import TelegramStateManager
+        from aos.core.users import UniversalUserService
         from datetime import datetime
         state_manager = TelegramStateManager()
+        user_service = UniversalUserService()
+        
+        # Handle role selection during registration
+        if callback_data.startswith('role_'):
+            user_state = state_manager.get_state(chat_id)
+            if user_state and user_state.get("state") == "register_roles":
+                data = user_state.get("data", {})
+                
+                if callback_data == "role_done":
+                    # Complete registration
+                    roles = data.get("roles", [])
+                    if not roles:
+                        self.send_message(chat_id, "❌ Please select at least one role")
+                        return
+                    
+                    user = user_service.register_user(
+                        chat_id=chat_id,
+                        phone=data["phone"],
+                        name=data["name"],
+                        village=data.get("village"),
+                        roles=roles
+                    )
+                    
+                    if user:
+                        role_names = {
+                            "farmer": "🌾 Farmer",
+                            "driver": "🚌 Driver",
+                            "passenger": "👤 Passenger",
+                            "buyer": "🛒 Buyer"
+                        }
+                        roles_text = ", ".join([role_names.get(r, r) for r in roles])
+                        
+                        self.send_message(chat_id,
+                            f"✅ <b>Registration Complete!</b>\n\n"
+                            f"Name: {user['name']}\n"
+                            f"Phone: {user['phone']}\n"
+                            f"Village: {user['village']}\n"
+                            f"Roles: {roles_text}\n\n"
+                            f"<b>Available Commands:</b>\n"
+                            f"{'/harvest - Record harvest' if 'farmer' in roles else ''}\n"
+                            f"{'/routes - View routes' if 'driver' in roles or 'passenger' in roles else ''}\n"
+                            f"{'/book - Book transport' if 'passenger' in roles else ''}\n"
+                            f"/profile - View/edit your profile"
+                        )
+                        state_manager.clear_state(chat_id)
+                    else:
+                        self.send_message(chat_id, "❌ Registration failed. Phone number may already be registered.")
+                        state_manager.clear_state(chat_id)
+                else:
+                    # Toggle role
+                    role = callback_data.replace('role_', '')
+                    roles = data.get("roles", [])
+                    
+                    if role in roles:
+                        roles.remove(role)
+                    else:
+                        roles.append(role)
+                    
+                    data["roles"] = roles
+                    state_manager.set_state(chat_id, "register_roles", data)
+                    
+                    # Update message with selected roles
+                    role_names = {
+                        "farmer": "🌾 Farmer",
+                        "driver": "🚌 Driver",
+                        "passenger": "👤 Passenger",
+                        "buyer": "🛒 Buyer"
+                    }
+                    selected = [role_names.get(r, r) for r in roles]
+                    selected_text = ", ".join(selected) if selected else "None"
+                    
+                    self.send_message(chat_id,
+                        f"<b>Selected roles:</b> {selected_text}\n\n"
+                        f"Click more roles or ✅ Done to finish"
+                    )
+                return
         
         # Handle harvest callbacks
         if callback_data.startswith('harvest_'):
