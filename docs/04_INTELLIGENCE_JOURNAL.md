@@ -194,3 +194,28 @@ This document serves as the persistent memory for the AI Architect. It records l
 
 ---
 *End of Entry - Phase 3*
+
+---
+
+## 📅 Framework C (Testing & QA) — Enforcement Scaffolding (Dec 26, 2025)
+
+### Lessons Learned
+1. **Framework docs must match repo reality**:
+   - **Observation**: Framework C references must point to actual A-OS locations (e.g., `aos/tests/`).
+   - **Protocol**: Treat framework docs as executable contracts; update them when structure changes.
+
+2. **Fault injection should be small and composable**:
+   - **Observation**: A minimal helper that forces SQLite connection closure is enough to simulate crash-style failure modes for many kernel components.
+   - **Protocol**: Prefer tiny fault actions used by tests over large harnesses.
+
+3. **Dependencies must be explicit**:
+   - **Observation**: Telegram adapter imports `requests`; leaving it undeclared violates the “implicit dependencies forbidden” rule.
+   - **Protocol**: Keep `pyproject.toml` and `requirements.txt` in sync with runtime imports.
+
+### Implementation Summary
+- Added Framework C docs scaffold: `docs/frameworks/framework_c/`.
+- Added fault injection utility: `aos/testing/fault_injection.py` + tests.
+- Added Telegram adapter channel tests (network mocked): `aos/tests/test_channels/test_telegram_adapter.py`.
+- Declared `requests` dependency in `pyproject.toml` and `requirements.txt`.
+
+---
