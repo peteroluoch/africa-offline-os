@@ -5,6 +5,10 @@ Run this script to start the Telegram bot in polling mode (no webhook needed).
 """
 import os
 import sys
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
