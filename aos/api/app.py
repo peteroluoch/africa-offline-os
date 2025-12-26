@@ -151,10 +151,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     _transport_module = TransportModule(_event_dispatcher, _db_conn)
     await _transport_module.initialize()
     
+    # Initialize Resource Manager (Phase 8)
+    from aos.core.resource import ResourceManager
+    _resource_manager = ResourceManager(event_bus=_event_dispatcher, check_interval=30)
+    await _resource_manager.start()
+    
     # Store for global access if needed
-    from aos.api.state import agri_state, transport_state
+    from aos.api.state import agri_state, transport_state, resource_state
     agri_state.module = _agri_module
     transport_state.module = _transport_module
+    resource_state.manager = _resource_manager
     
     print(f"[A-OS] Started - DB: {settings.sqlite_path}")
     
@@ -162,6 +168,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         yield
     finally:
         # Shutdown
+        if _resource_manager:
+            await _resource_manager.stop()
         if _event_store:
             await _event_store.shutdown()
         if _mesh_manager:
@@ -176,6 +184,7 @@ from aos.api.routers.mesh import router as mesh_router
 from aos.api.routers.agri import router as agri_router
 from aos.api.routers.transport import router as transport_router
 from aos.api.routers.channels import router as channels_router
+from aos.api.routers.resource import router as resource_router
 from aos.core.security.auth import get_current_operator
 from fastapi import Depends, Request
 from fastapi.staticfiles import StaticFiles
@@ -201,6 +210,7 @@ def create_app() -> FastAPI:
     app.include_router(agri_router)
     app.include_router(transport_router)
     app.include_router(channels_router)
+    app.include_router(resource_router)
 
     @app.post("/sys/ping")
     async def sys_ping(current_user: dict = Depends(get_current_operator)) -> dict:
