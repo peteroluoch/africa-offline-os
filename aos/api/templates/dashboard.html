@@ -4,6 +4,7 @@
 {% from "components/molecules/DataCard.html" import data_card %}
 {% from "components/molecules/NodeStatus.html" import node_status %}
 {% from "components/molecules/SidebarItem.html" import sidebar_item %}
+{% from "components/molecules/ResourceWidget.html" import resource_widget %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -127,6 +128,12 @@
             </svg>') }}
         </nav>
 
+        <!-- Resource Widget -->
+        <div class="px-6 py-4">
+            {{ resource_widget() }}
+        </div>
+
+        <!-- Footer -->
         <div class="mt-auto">
             {{ node_status(name="Kernel Health", status="success", status_text="NOMINAL") }}
         </div>
