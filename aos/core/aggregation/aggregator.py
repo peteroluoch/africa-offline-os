@@ -27,13 +27,14 @@ class RegionalAggregator:
 
         cursor = self.db.execute("""
             SELECT 
-                crop_type,
-                SUM(quantity) as total_quantity,
-                COUNT(DISTINCT farmer_id) as farmer_count,
+                COALESCE(c.name, h.crop_id) as crop_name,
+                SUM(h.quantity) as total_quantity,
+                COUNT(DISTINCT h.farmer_id) as farmer_count,
                 COUNT(*) as harvest_count
-            FROM harvests
-            WHERE created_at >= ?
-            GROUP BY crop_type
+            FROM harvests h
+            LEFT JOIN crops c ON h.crop_id = c.id
+            WHERE h.created_at >= ?
+            GROUP BY h.crop_id
             ORDER BY total_quantity DESC
         """, (since,))
 
