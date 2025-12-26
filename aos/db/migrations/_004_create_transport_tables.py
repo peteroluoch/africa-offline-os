@@ -2,16 +2,14 @@
 Migration 004: Create Transport Tables.
 Defines tables for vehicles, routes, and bookings.
 """
-import sqlite3
 import logging
-import uuid
-import json
+import sqlite3
 
 logger = logging.getLogger("aos.db.migrations")
 
 def migrate(conn: sqlite3.Connection):
     cursor = conn.cursor()
-    
+
     # Routes Table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS routes (
@@ -23,7 +21,7 @@ def migrate(conn: sqlite3.Connection):
         metadata TEXT
     )
     """)
-    
+
     # Vehicles Table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS vehicles (
@@ -38,7 +36,7 @@ def migrate(conn: sqlite3.Connection):
         FOREIGN KEY (current_route_id) REFERENCES routes (id)
     )
     """)
-    
+
     # Bookings/Status Reports Table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS bookings (
@@ -53,19 +51,19 @@ def migrate(conn: sqlite3.Connection):
         FOREIGN KEY (route_id) REFERENCES routes (id)
     )
     """)
-    
+
     # Bootstrap some data
     routes = [
         ("r-46", "Route 46 (Town - Kawangware)", "Town", "Kawangware", 50.0),
         ("r-23", "Route 23 (Town - Rongai)", "Town", "Rongai", 100.0),
         ("r-1", "Route 1 (Town - Kibera)", "Town", "Kibera", 30.0)
     ]
-    
+
     for rid, name, start, end, price in routes:
         cursor.execute(
             "INSERT OR IGNORE INTO routes (id, name, start_point, end_point, base_price) VALUES (?, ?, ?, ?, ?)",
             (rid, name, start, end, price)
         )
-    
+
     conn.commit()
     logger.info("Migration 004: Transport tables created.")

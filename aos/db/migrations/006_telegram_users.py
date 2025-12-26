@@ -6,7 +6,7 @@ Creates telegram_users table for unified user management across all modules.
 def upgrade(conn):
     """Create telegram_users table."""
     cursor = conn.cursor()
-    
+
     # Create telegram_users table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS telegram_users (
@@ -20,19 +20,19 @@ def upgrade(conn):
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    
+
     # Create index on phone for fast lookups
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_telegram_users_phone 
         ON telegram_users(phone)
     """)
-    
+
     # Create index on chat_id for fast lookups
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_telegram_users_chat_id 
         ON telegram_users(chat_id)
     """)
-    
+
     conn.commit()
     print("✅ Created telegram_users table with indexes")
 

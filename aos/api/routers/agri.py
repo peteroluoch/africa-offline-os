@@ -1,13 +1,16 @@
 from __future__ import annotations
+
 import uuid
-from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, Request, Form
+from datetime import UTC, datetime
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+
 from aos.api.state import agri_state
 from aos.core.security.auth import get_current_operator
 from aos.db.models import FarmerDTO, HarvestDTO
-from fastapi.templating import Jinja2Templates
-from pathlib import Path
 
 router = APIRouter(prefix="/agri", tags=["agri"])
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
@@ -17,10 +20,10 @@ async def agri_root(request: Request, current_user: dict = Depends(get_current_o
     """Main Agricultural Dashboard."""
     if not agri_state.module:
         return HTMLResponse("AgriModule not initialized", status_code=500)
-    
+
     farmers = agri_state.module.list_all_farmers()
     crops = agri_state.module.list_crops()
-    
+
     return templates.TemplateResponse(
         "agri.html",
         {
@@ -42,16 +45,16 @@ async def register_farmer(
     """Register a new farmer."""
     if not agri_state.module:
          return HTMLResponse("AgriModule not initialized", status_code=500)
-    
+
     farmer = FarmerDTO(
         id=str(uuid.uuid4()),
         name=name,
         location=location,
         contact=contact
     )
-    
+
     await agri_state.module.register_farmer(farmer)
-    
+
     # Return HTMX snippet - redirected or just updated list
     # For now, let's refresh the page via HTMX header or return a simple fragment
     return templates.TemplateResponse(
@@ -72,7 +75,7 @@ async def new_harvest_form(request: Request, farmer_id: str, current_user: dict 
     """Return the harvest recording form."""
     if not agri_state.module:
          return HTMLResponse("AgriModule not initialized", status_code=500)
-    
+
     crops = agri_state.module.list_crops()
     return templates.TemplateResponse(
         "partials/harvest_form.html",
@@ -92,7 +95,7 @@ async def record_harvest(
     """Record a harvest."""
     if not agri_state.module:
          return HTMLResponse("AgriModule not initialized", status_code=500)
-    
+
     harvest = HarvestDTO(
         id=str(uuid.uuid4()),
         farmer_id=farmer_id,
@@ -100,10 +103,10 @@ async def record_harvest(
         quantity=quantity,
         unit=unit,
         quality_grade=quality_grade,
-        harvest_date=datetime.now(timezone.utc),
+        harvest_date=datetime.now(UTC),
         status="stored"
     )
-    
+
     await agri_state.module.record_harvest(harvest)
-    
+
     return f'<div class="aos-badge aos-badge-success fade-in">Harvest Recorded: {quantity}{unit}</div>'

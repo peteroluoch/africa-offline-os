@@ -27,7 +27,7 @@ class Settings(BaseSettings):
         sqlite_path: Path to SQLite database (relative by default)
         jwt_issuer: JWT token issuer identifier
     """
-    
+
     model_config = SettingsConfigDict(
         env_prefix="AOS_",
         extra="ignore",
@@ -36,10 +36,10 @@ class Settings(BaseSettings):
 
     # Runtime environment
     environment: str = "development"
-    
+
     # Database configuration (mobile-friendly relative path)
     sqlite_path: str = "aos.db"
-    
+
     # Path configuration
     data_dir: str = "data"
     keys_dir: str = "data/keys"

@@ -3,17 +3,18 @@ Mesh Queue - Persistent store-and-forward for mesh events.
 Ensures zero data loss during network partitions.
 """
 from __future__ import annotations
-import sqlite3
+
 import json
+import sqlite3
 import time
-from typing import List, Dict, Any, Optional
-from pathlib import Path
+from typing import Any
+
 
 class MeshQueue:
     """
     Persistent SQLite-backed queue for outbound mesh events.
     """
-    
+
     def __init__(self, db_path: str):
         self.db_path = db_path
         self._initialize_db()
@@ -35,7 +36,7 @@ class MeshQueue:
             """)
             conn.execute("CREATE INDEX IF NOT EXISTS idx_mesh_target ON mesh_queue(target_node_id)")
 
-    def enqueue(self, target_node_id: str, event_type: str, payload: Dict[str, Any], priority: int = 1) -> int:
+    def enqueue(self, target_node_id: str, event_type: str, payload: dict[str, Any], priority: int = 1) -> int:
         """Add an event to the outbound queue."""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.execute(
@@ -44,18 +45,18 @@ class MeshQueue:
             )
             return cursor.lastrowid
 
-    def get_pending(self, target_node_id: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_pending(self, target_node_id: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
         """Get pending events for synchronization."""
         query = "SELECT id, target_node_id, event_type, payload, attempts, priority FROM mesh_queue"
         params = []
-        
+
         if target_node_id:
             query += " WHERE target_node_id = ?"
             params.append(target_node_id)
-            
+
         query += " ORDER BY priority DESC, created_at ASC LIMIT ?"
         params.append(limit)
-        
+
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.execute(query, params)

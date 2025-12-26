@@ -1,7 +1,8 @@
 import uuid
-from datetime import datetime, timezone
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Any, Mapping
+from datetime import UTC, datetime
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -10,6 +11,6 @@ class Event:
     payload: Mapping[str, Any]
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     correlation_id: str | None = None
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     source_node: str | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)

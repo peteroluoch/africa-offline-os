@@ -1,19 +1,22 @@
 from __future__ import annotations
-import os
+
 from pathlib import Path
+
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
+
 from aos.core.config import settings
+
 
 class NodeIdentityManager:
     """
     Manages the cryptographic identity of an A-OS Node.
     Uses Ed25519 for high-performance, compact signatures.
     """
-    
+
     SEED_FILE = "node_id.seed"
     PUB_FILE = "node_id.pub"
-    
+
     def __init__(self, keys_dir: str | Path | None = None):
         self.keys_dir = Path(keys_dir or settings.keys_dir)
         self._private_key: ed25519.Ed25519PrivateKey | None = None
@@ -23,7 +26,7 @@ class NodeIdentityManager:
         """Ensure node keys exist. Loads if present, generates if missing."""
         self.keys_dir.mkdir(parents=True, exist_ok=True)
         seed_path = self.keys_dir / self.SEED_FILE
-        
+
         if seed_path.exists():
             self._load_keys()
         else:
@@ -32,7 +35,7 @@ class NodeIdentityManager:
     def _generate_keys(self) -> None:
         """Generate new Ed25519 keys and save to disk."""
         private_key = ed25519.Ed25519PrivateKey.generate()
-        
+
         # Save private seed (unencrypted for kernel-level auto-boot)
         # In a real "GENIUS" level scenario, we might use HW-backed storage.
         seed_bytes = private_key.private_bytes(
@@ -40,9 +43,9 @@ class NodeIdentityManager:
             format=serialization.PrivateFormat.Raw,
             encryption_algorithm=serialization.NoEncryption()
         )
-        
+
         (self.keys_dir / self.SEED_FILE).write_bytes(seed_bytes)
-        
+
         # Save public key
         public_key = private_key.public_key()
         pub_bytes = public_key.public_bytes(
@@ -50,7 +53,7 @@ class NodeIdentityManager:
             format=serialization.PublicFormat.Raw
         )
         (self.keys_dir / self.PUB_FILE).write_bytes(pub_bytes)
-        
+
         self._private_key = private_key
         self._public_key = public_key
 

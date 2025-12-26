@@ -1,7 +1,9 @@
 from __future__ import annotations
-import sqlite3
+
 import json
-from typing import TypeVar, Generic, List, Type, Any
+import sqlite3
+from typing import Any, Generic, TypeVar
+
 from pydantic import BaseModel
 
 T = TypeVar("T", bound=BaseModel)
@@ -10,8 +12,8 @@ class BaseRepository(Generic[T]):
     """
     Base Repository using Pydantic DTOs for type safety.
     """
-    
-    def __init__(self, connection: sqlite3.Connection, model_class: Type[T], table_name: str):
+
+    def __init__(self, connection: sqlite3.Connection, model_class: type[T], table_name: str):
         self.conn = connection
         self.model_class = model_class
         self.table_name = table_name
@@ -32,7 +34,7 @@ class BaseRepository(Generic[T]):
         row = cursor.fetchone()
         return self._row_to_model(row) if row else None
 
-    def list_all(self) -> List[T]:
+    def list_all(self) -> list[T]:
         """Fetch all records from the table."""
         self.conn.row_factory = sqlite3.Row
         cursor = self.conn.execute(f"SELECT * FROM {self.table_name}")
@@ -44,7 +46,8 @@ class BaseRepository(Generic[T]):
         self.conn.commit()
         return cursor.rowcount > 0
 
-from aos.db.models import NodeDTO, OperatorDTO, FarmerDTO, CropDTO, HarvestDTO
+from aos.db.models import CropDTO, FarmerDTO, HarvestDTO, NodeDTO, OperatorDTO
+
 
 class NodeRepository(BaseRepository[NodeDTO]):
     def __init__(self, connection: sqlite3.Connection):
@@ -91,11 +94,11 @@ class FarmerRepository(BaseRepository[FarmerDTO]):
             INSERT OR REPLACE INTO farmers (id, name, location, contact, metadata, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
         """, (
-            farmer.id, 
-            farmer.name, 
-            farmer.location, 
-            farmer.contact, 
-            json.dumps(farmer.metadata), 
+            farmer.id,
+            farmer.name,
+            farmer.location,
+            farmer.contact,
+            json.dumps(farmer.metadata),
             farmer.created_at
         ))
         self.conn.commit()
@@ -113,14 +116,14 @@ class HarvestRepository(BaseRepository[HarvestDTO]):
             INSERT OR REPLACE INTO harvests (id, farmer_id, crop_id, quantity, unit, quality_grade, harvest_date, status, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            harvest.id, 
-            harvest.farmer_id, 
-            harvest.crop_id, 
-            harvest.quantity, 
-            harvest.unit, 
-            harvest.quality_grade, 
-            harvest.harvest_date, 
-            harvest.status, 
+            harvest.id,
+            harvest.farmer_id,
+            harvest.crop_id,
+            harvest.quantity,
+            harvest.unit,
+            harvest.quality_grade,
+            harvest.harvest_date,
+            harvest.status,
             harvest.created_at
         ))
         self.conn.commit()

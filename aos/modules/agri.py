@@ -3,14 +3,15 @@ AgriModule - Agricultural Management Lighthouse.
 Handles farmer registration, harvest recording, and inventory tracking.
 """
 from __future__ import annotations
-import sqlite3
+
 import logging
-from typing import List, Optional
-from aos.core.module import Module
+import sqlite3
+
 from aos.bus.dispatcher import EventDispatcher
 from aos.bus.events import Event
-from aos.db.repository import FarmerRepository, HarvestRepository, CropRepository
-from aos.db.models import FarmerDTO, HarvestDTO, CropDTO
+from aos.core.module import Module
+from aos.db.models import CropDTO, FarmerDTO, HarvestDTO
+from aos.db.repository import CropRepository, FarmerRepository, HarvestRepository
 
 logger = logging.getLogger("aos.agri")
 
@@ -18,8 +19,8 @@ class AgriModule(Module):
     """
     Business logic for the Agricultural domain.
     """
-    
-    def __init__(self, dispatcher: EventDispatcher, db_conn: sqlite3.Connection, resource_manager: Optional['ResourceManager'] = None):
+
+    def __init__(self, dispatcher: EventDispatcher, db_conn: sqlite3.Connection, resource_manager: ResourceManager | None = None):
         self._dispatcher = dispatcher
         self._db = db_conn
         self._farmers = FarmerRepository(db_conn)
@@ -67,17 +68,17 @@ class AgriModule(Module):
         ))
         logger.info(f"Harvest recorded for farmer {harvest.farmer_id}: {harvest.quantity}{harvest.unit}")
 
-    def get_farmer_harvests(self, farmer_id: str) -> List[HarvestDTO]:
+    def get_farmer_harvests(self, farmer_id: str) -> list[HarvestDTO]:
         """Retrieve all harvests for a specific farmer."""
-        # This is a bit inefficient if we have millions of harvests, 
+        # This is a bit inefficient if we have millions of harvests,
         # but suitable for an A-OS Edge Node.
         all_harvests = self._harvests.list_all()
         return [h for h in all_harvests if h.farmer_id == farmer_id]
 
-    def list_all_farmers(self) -> List[FarmerDTO]:
+    def list_all_farmers(self) -> list[FarmerDTO]:
         """List all farmers registered on this node."""
         return self._farmers.list_all()
 
-    def list_crops(self) -> List[CropDTO]:
+    def list_crops(self) -> list[CropDTO]:
         """List supported crop types."""
         return self._crops.list_all()

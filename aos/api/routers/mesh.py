@@ -3,12 +3,14 @@ Mesh API Router - Inbound P2P Communication.
 Handles signed heartbeats and delta-sync delivery from remote nodes.
 """
 from __future__ import annotations
-from fastapi import APIRouter, Depends, HTTPException, status, Body, Form
-from typing import Dict, Any
+
+from typing import Any
+
+from fastapi import APIRouter, Form, HTTPException, status
 from pydantic import BaseModel
-from aos.core.security.identity import NodeIdentityManager
-from aos.core.config import Settings
+
 from aos.api.state import mesh_state
+from aos.core.security.identity import NodeIdentityManager
 
 router = APIRouter(tags=["mesh"])
 
@@ -24,7 +26,7 @@ class HeartbeatPayload(BaseModel):
 class SyncEnvelope(BaseModel):
     origin_id: str
     event_type: str
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
     timestamp: float
 
 class SyncRequest(BaseModel):
@@ -42,13 +44,13 @@ async def receive_heartbeat(payload: HeartbeatPayload):
         signature=bytes.fromhex(payload.signature),
         public_key_bytes=bytes.fromhex(payload.public_key)
     )
-    
+
     if not is_valid:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid node signature"
         )
-    
+
     # 2. Logic to update mesh registry goes here
     # For now, we just acknowledge
     return {"status": "ok", "message": f"Heartbeat verified from {payload.node_id}"}
@@ -62,13 +64,13 @@ async def receive_sync(request: SyncRequest):
     # Note: Must match RemoteNodeAdapter.send_delta logic
     envelope = request.envelope
     sign_data = f"{envelope.origin_id}:{envelope.timestamp}:{envelope.event_type}".encode()
-    
+
     # 2. In a real scenario, we'd lookup the public key for origin_id in our Peer DB
-    # For this batch, we assume the peer must have performed a heartbeat first 
+    # For this batch, we assume the peer must have performed a heartbeat first
     # and we have their public key.
     # TEMPORARY: Assume we have their key from a registry (Stubbed for now)
     # is_valid = _identity_manager.verify(sign_data, ...)
-    
+
     # 3. Process the event (dispatch to local event bus)
     return {"status": "accepted", "origin": envelope.origin_id}
 
@@ -84,9 +86,9 @@ async def register_peer_ui(
     """
     if not mesh_state.manager:
         raise HTTPException(status_code=500, detail="Mesh Manager not initialized")
-    
+
     mesh_state.manager.register_peer(node_id, base_url, public_key)
-    
+
     # Return HTMX fragment for the new peer row
     return f"""
     <div class="fade-in bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between hover:bg-white/[0.08] transition-all">

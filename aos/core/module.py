@@ -33,7 +33,7 @@ class Module(ABC):
                 if event.name == "user.created":
                     await self.send_welcome_email(event.payload)
     """
-    
+
     @property
     @abstractmethod
     def name(self) -> str:
@@ -44,7 +44,7 @@ class Module(ABC):
             Module name (e.g., "user.module", "payment.module")
         """
         pass
-    
+
     @abstractmethod
     async def initialize(self) -> None:
         """
@@ -60,7 +60,7 @@ class Module(ABC):
             RuntimeError: If initialization fails
         """
         pass
-    
+
     @abstractmethod
     async def shutdown(self) -> None:
         """
@@ -75,7 +75,7 @@ class Module(ABC):
         should be safe and not raise errors.
         """
         pass
-    
+
     @abstractmethod
     async def handle_event(self, event: Event) -> None:
         """

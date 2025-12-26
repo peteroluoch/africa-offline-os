@@ -2,9 +2,15 @@
 Sync package initialization.
 Provides peer-to-peer synchronization with conflict resolution.
 """
-from aos.core.sync.vector_clock import VectorClock, ConflictResolutionStrategy, LastWriteWins, ManualResolution, Conflict
-from aos.core.sync.protocol import SyncChange, SyncRequest, SyncResponse, SyncAck
 from aos.core.sync.engine import SyncEngine
+from aos.core.sync.protocol import SyncAck, SyncChange, SyncRequest, SyncResponse
+from aos.core.sync.vector_clock import (
+    Conflict,
+    ConflictResolutionStrategy,
+    LastWriteWins,
+    ManualResolution,
+    VectorClock,
+)
 
 __all__ = [
     "VectorClock",

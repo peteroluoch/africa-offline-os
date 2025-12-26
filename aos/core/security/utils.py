@@ -1,6 +1,9 @@
 from __future__ import annotations
+
 import uuid
+
 from aos.core.security.auth import auth_manager
+
 
 def generate_root_token(expires_in_days: int = 30) -> str:
     """

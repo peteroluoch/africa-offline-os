@@ -1,12 +1,14 @@
 from __future__ import annotations
+
 from typing import Any
+
 from aos.core.channels.base import ChannelResponse
 from aos.core.channels.ussd import USSDSession
 
 
 class TransportUSSDHandler:
     """Menu flow handler for the Transport vehicle."""
-    
+
     def __init__(self, transport_module: Any):
         self.transport = transport_module
 
@@ -17,7 +19,7 @@ class TransportUSSDHandler:
         if state == "START":
             if not user_input:
                 return ChannelResponse("[A-OS Transport]\n1. Check Route\n2. Report Status (Driver)", True)
-            
+
             if user_input == "1":
                 session.update("SELECT_ROUTE")
                 routes = self.transport.list_routes()
@@ -26,7 +28,7 @@ class TransportUSSDHandler:
                     menu += f"{i}. {r['name']}\n"
                 session.data["routes_map"] = {str(i): r['id'] for i, r in enumerate(routes, 1)}
                 return ChannelResponse(menu, True)
-            
+
             if user_input == "2":
                 session.update("DRIVER_PLATE")
                 return ChannelResponse("Enter Vehicle Plate:", True)

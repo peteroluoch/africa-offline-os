@@ -6,8 +6,9 @@ Following TDD: These tests define the enhanced /health endpoint requirements.
 """
 from __future__ import annotations
 
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
+
 from aos.api.app import create_app, reset_globals
 
 
@@ -28,7 +29,7 @@ class TestHealthDiskSpaceMonitoring:
         with TestClient(app) as client:
             resp = client.get("/health")
             assert resp.status_code == 200
-            
+
             data = resp.json()
             assert "disk_free_mb" in data, "Health must report free disk space"
             assert isinstance(data["disk_free_mb"], (int, float))
@@ -51,7 +52,7 @@ class TestHealthUptimeTracking:
         with TestClient(app) as client:
             resp = client.get("/health")
             assert resp.status_code == 200
-            
+
             data = resp.json()
             assert "uptime_seconds" in data, "Health must report uptime"
             assert isinstance(data["uptime_seconds"], (int, float))
@@ -71,7 +72,7 @@ class TestHealthDatabaseStatus:
         with TestClient(app) as client:
             resp = client.get("/health")
             assert resp.status_code == 200
-            
+
             data = resp.json()
             assert "db_status" in data, "Health must report DB status"
             assert data["db_status"] in ["healthy", "degraded", "unavailable"]
@@ -82,7 +83,7 @@ class TestHealthDatabaseStatus:
         with TestClient(app) as client:
             resp = client.get("/health")
             data = resp.json()
-            
+
             assert data["db_status"] == "healthy", \
                 "DB must be healthy with WAL mode enabled"
 
@@ -103,6 +104,6 @@ class TestHealthBasicFunctionality:
         with TestClient(app) as client:
             resp = client.get("/health")
             data = resp.json()
-            
+
             assert "status" in data
             assert data["status"] == "ok"

@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 
 from aos.bus.event_store import EventStore
-from aos.testing.fault_injection import force_close_event_store_connection
 from aos.bus.events import Event
+from aos.testing.fault_injection import force_close_event_store_connection
 
 
 class TestFaultInjection:

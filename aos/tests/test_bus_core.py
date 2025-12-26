@@ -1,8 +1,11 @@
 import asyncio
+from datetime import datetime
+
 import pytest
-from datetime import datetime, timezone
-from aos.bus.events import Event
+
 from aos.bus.dispatcher import EventDispatcher
+from aos.bus.events import Event
+
 
 @pytest.mark.asyncio
 async def test_event_dispatch_to_single_subscriber():
@@ -14,13 +17,13 @@ async def test_event_dispatch_to_single_subscriber():
         received_events.append(event)
 
     dispatcher.subscribe("test.event", handler)
-    
+
     event = Event(name="test.event", payload={"key": "value"})
     await dispatcher.dispatch(event)
-    
+
     # Wait a tiny bit for the async task to process
     await asyncio.sleep(0.01)
-    
+
     assert len(received_events) == 1
     assert received_events[0].name == "test.event"
     assert received_events[0].payload["key"] == "value"
@@ -38,10 +41,10 @@ async def test_event_dispatch_to_multiple_subscribers():
 
     dispatcher.subscribe("multi.event", h1)
     dispatcher.subscribe("multi.event", h2)
-    
+
     await dispatcher.dispatch(Event(name="multi.event", payload={}))
     await asyncio.sleep(0.01)
-    
+
     assert calls["h1"] == 1
     assert calls["h2"] == 1
 
@@ -59,10 +62,10 @@ async def test_error_isolation():
 
     dispatcher.subscribe("isolate.event", failing_handler)
     dispatcher.subscribe("isolate.event", succeeding_handler)
-    
+
     await dispatcher.dispatch(Event(name="isolate.event", payload={}))
     await asyncio.sleep(0.01)
-    
+
     assert len(received) == 1
 
 @pytest.mark.asyncio
@@ -84,17 +87,17 @@ async def test_high_concurrency_dispatch():
         count += 1
 
     dispatcher.subscribe("load.test", handler)
-    
+
     tasks = [
         dispatcher.dispatch(Event(name="load.test", payload={"i": i}))
         for i in range(total_events)
     ]
     await asyncio.gather(*tasks)
-    
+
     # Wait for queue depletion
     for _ in range(10):
         if count == total_events:
             break
         await asyncio.sleep(0.05)
-        
+
     assert count == total_events

@@ -25,7 +25,7 @@ class Adapter(ABC):
             async def health_check(self) -> bool:
                 return self.conn.is_alive()
     """
-    
+
     @abstractmethod
     async def connect(self) -> None:
         """
@@ -38,7 +38,7 @@ class Adapter(ABC):
             ConnectionError: If connection fails
         """
         pass
-    
+
     @abstractmethod
     async def disconnect(self) -> None:
         """
@@ -48,7 +48,7 @@ class Adapter(ABC):
         should be safe and not raise errors.
         """
         pass
-    
+
     @abstractmethod
     async def health_check(self) -> bool:
         """

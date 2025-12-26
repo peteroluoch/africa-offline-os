@@ -1,5 +1,6 @@
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
+
 from aos.api.app import create_app, reset_globals
 
 

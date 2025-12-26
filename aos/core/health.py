@@ -13,7 +13,6 @@ import shutil
 import sqlite3
 import time
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Literal
 
 
@@ -28,7 +27,7 @@ class HealthStatus:
         uptime_seconds: System uptime (power-safe, persisted)
         db_status: Database health status
     """
-    
+
     status: str = "ok"
     disk_free_mb: float = 0.0
     uptime_seconds: float = 0.0
@@ -79,19 +78,19 @@ def check_db_health(conn: sqlite3.Connection | None) -> Literal["healthy", "degr
     """
     if conn is None:
         return "unavailable"
-    
+
     try:
         # Check if connection is alive
         conn.execute("SELECT 1")
-        
+
         # Check WAL mode (critical for power-loss safety)
         cursor = conn.execute("PRAGMA journal_mode")
         mode = cursor.fetchone()
-        
+
         if mode and mode[0].lower() == "wal":
             return "healthy"
         else:
             return "degraded"  # WAL mode disabled
-            
+
     except sqlite3.Error:
         return "unavailable"

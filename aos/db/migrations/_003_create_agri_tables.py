@@ -1,5 +1,6 @@
 from sqlite3 import Connection
 
+
 def up(conn: Connection) -> None:
     """Create agri-domain tables."""
     conn.execute("""
@@ -12,7 +13,7 @@ def up(conn: Connection) -> None:
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    
+
     conn.execute("""
         CREATE TABLE IF NOT EXISTS crops (
             id TEXT PRIMARY KEY,
@@ -21,7 +22,7 @@ def up(conn: Connection) -> None:
             growing_season TEXT NOT NULL
         )
     """)
-    
+
     conn.execute("""
         CREATE TABLE IF NOT EXISTS harvests (
             id TEXT PRIMARY KEY,
@@ -37,13 +38,13 @@ def up(conn: Connection) -> None:
             FOREIGN KEY (crop_id) REFERENCES crops(id)
         )
     """)
-    
+
     # Create some default crops for the Lighthouse module
-    conn.execute("INSERT OR IGNORE INTO crops (id, name, crop_type, growing_season) VALUES (?, ?, ?, ?)", 
+    conn.execute("INSERT OR IGNORE INTO crops (id, name, crop_type, growing_season) VALUES (?, ?, ?, ?)",
                  ("maize-01", "Yellow Maize", "Cereal", "Long Rains"))
-    conn.execute("INSERT OR IGNORE INTO crops (id, name, crop_type, growing_season) VALUES (?, ?, ?, ?)", 
+    conn.execute("INSERT OR IGNORE INTO crops (id, name, crop_type, growing_season) VALUES (?, ?, ?, ?)",
                  ("beans-01", "Rosecoco Beans", "Legume", "Short Rains"))
-    conn.execute("INSERT OR IGNORE INTO crops (id, name, crop_type, growing_season) VALUES (?, ?, ?, ?)", 
+    conn.execute("INSERT OR IGNORE INTO crops (id, name, crop_type, growing_season) VALUES (?, ?, ?, ?)",
                  ("coffee-01", "Arabica Coffee", "Cash Crop", "Perennial"))
 
 def down(conn: Connection) -> None:

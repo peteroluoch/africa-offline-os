@@ -2,8 +2,9 @@
 Template Syntax Verification Script
 Checks all templates for Jinja2 syntax errors without running the server.
 """
-from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError
 from pathlib import Path
+
+from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError
 
 templates_dir = Path("aos/api/templates")
 env = Environment(loader=FileSystemLoader(str(templates_dir)))

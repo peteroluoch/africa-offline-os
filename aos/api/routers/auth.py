@@ -1,15 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
-from fastapi.security import OAuth2PasswordRequestForm
-from typing import Annotated
 import sqlite3
 from pathlib import Path
+
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
 
 from aos.api.app import get_db
 from aos.core.security.auth import auth_manager
 from aos.core.security.password import verify_password
-from aos.db.models import OperatorDTO # Actually we query raw DB for now or need Repo
 
 router = APIRouter(tags=["auth"])
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
@@ -21,7 +19,7 @@ async def login_page(request: Request):
 
 @router.post("/auth/login")
 async def login(
-    username: str = Form(...), 
+    username: str = Form(...),
     password: str = Form(...),
     db: sqlite3.Connection = Depends(get_db)
 ):
@@ -32,27 +30,27 @@ async def login(
     try:
         print(f"[Auth] Attempting login for: {username}")
         cursor = db.execute(
-            "SELECT id, username, password_hash, role_id FROM operators WHERE username=?", 
+            "SELECT id, username, password_hash, role_id FROM operators WHERE username=?",
             (username,)
         )
         row = cursor.fetchone()
-        
+
         if not row:
             print(f"[Auth] User not found: {username}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect username or password",
             )
-            
+
         op_id, op_username, op_hash, op_role = row
-        
+
         if not verify_password(password, op_hash):
             print(f"[Auth] Invalid password for: {username}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect username or password",
             )
-            
+
         print(f"[Auth] Success for {username}. Issuing token...")
         # Generate Token
         token = auth_manager.issue_token(payload={
@@ -60,8 +58,8 @@ async def login(
             "username": op_username,
             "role": op_role
         })
-        
-        print(f"[Auth] Token issued. Setting cookie and redirecting...")
+
+        print("[Auth] Token issued. Setting cookie and redirecting...")
         # Return JSON with token
         response = RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
         response.set_cookie(

@@ -1,18 +1,18 @@
 from __future__ import annotations
-from fastapi import APIRouter, Request, HTTPException, Depends
-from fastapi.responses import PlainTextResponse, JSONResponse
-from typing import Any
-from aos.adapters.ussd import USSDAdapter
-from aos.adapters.sms import SMSAdapter
-from aos.adapters.mocks.mock_ussd_gateway import MockUSSDGateway
+
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import JSONResponse, PlainTextResponse
+
 from aos.adapters.mocks.mock_sms_gateway import MockSMSGateway
-from aos.modules.agri_ussd import AgriUSSDHandler
-from aos.modules.agri_sms import AgriSMSHandler
-from aos.modules.transport_ussd import TransportUSSDHandler
-from aos.modules.transport_sms import TransportSMSHandler
-from aos.api.state import agri_state, transport_state
+from aos.adapters.mocks.mock_ussd_gateway import MockUSSDGateway
+from aos.adapters.sms import SMSAdapter
+from aos.adapters.ussd import USSDAdapter
+from aos.api.state import transport_state
 from aos.core.channels.base import ChannelResponse
 from aos.core.security.auth import get_current_operator
+from aos.modules.agri_sms import AgriSMSHandler
+from aos.modules.agri_ussd import AgriUSSDHandler
+from aos.modules.transport_ussd import TransportUSSDHandler
 
 router = APIRouter(prefix="/channels", tags=["channels"])
 
@@ -28,17 +28,17 @@ _sms_adapter = SMSAdapter(_sms_gateway)
 class MultiVehicleUSSDHandler:
     def __init__(self):
         self.agri = AgriUSSDHandler()
-        # Note: transport_state.module might be None during router init, 
+        # Note: transport_state.module might be None during router init,
         # so we'll init handler inside process if needed or use lazy loading
-        self.transport = None 
+        self.transport = None
 
     def process(self, session, user_input):
         if not self.transport and transport_state.module:
             self.transport = TransportUSSDHandler(transport_state.module)
-            
+
         # Logic: If session already has a vehicle, use it
         vehicle = session.data.get("vehicle")
-        
+
         if not vehicle:
             if not user_input:
                 return ChannelResponse("[A-OS Central]\n1. Agri-Lighthouse\n2. Transport-Mobile", True)
@@ -53,13 +53,13 @@ class MultiVehicleUSSDHandler:
                     return self.transport.process(session, "")
                 return ChannelResponse("Transport module starting...", False)
             return ChannelResponse("Invalid selection.", False)
-            
+
         if vehicle == "agri":
             return self.agri.process(session, user_input)
         if vehicle == "transport":
             if self.transport:
                 return self.transport.process(session, user_input)
-            
+
         return ChannelResponse("Error: Vehicle not found.", False)
 
 _ussd_adapter.set_flow_handler(MultiVehicleUSSDHandler())
@@ -87,19 +87,19 @@ async def ussd_webhook(request: Request):
     try:
         # Parse incoming webhook
         payload = await request.json()
-        
+
         # Parse request using adapter
         channel_request = _ussd_adapter.parse_request(payload)
-        
+
         # Handle the request (state machine processing)
         channel_response = _ussd_adapter.handle_request(channel_request)
-        
+
         # Format response for Africa's Talking
         formatted_response = _ussd_adapter.format_response(channel_response)
-        
+
         # Return plain text response
         return formatted_response["text"]
-        
+
     except Exception as e:
         print(f"[USSD Webhook] Error: {e}")
         return "END An error occurred. Please try again."
@@ -127,22 +127,22 @@ async def sms_webhook(request: Request):
     try:
         # Parse incoming webhook
         payload = await request.json()
-        
+
         # Parse request using adapter
         channel_request = _sms_adapter.parse_request(payload)
-        
+
         # Handle the request (command parsing and processing)
         channel_response = _sms_adapter.handle_request(channel_request)
-        
+
         # Send response SMS
         await _sms_adapter.send_message(
             to=channel_request.sender,
             message=channel_response.content
         )
-        
+
         # Return success (webhook acknowledgment)
         return {"status": "success", "message": "SMS processed"}
-        
+
     except Exception as e:
         print(f"[SMS Webhook] Error: {e}")
         return {"status": "error", "message": str(e)}
@@ -167,7 +167,7 @@ async def get_ussd_sessions(current_user: dict = Depends(get_current_operator)):
             "created_at": session.created_at.isoformat(),
             "updated_at": session.updated_at.isoformat()
         })
-    
+
     return {
         "total": len(sessions),
         "sessions": sessions
@@ -183,7 +183,7 @@ async def get_sms_messages(current_user: dict = Depends(get_current_operator)):
     """
     inbox = _sms_gateway.get_inbox()
     outbox = _sms_gateway.get_outbox()
-    
+
     return {
         "inbox": [
             {
@@ -225,7 +225,7 @@ async def test_ussd(
     """
     session_id = _ussd_gateway.start_session(phone_number)
     responses = []
-    
+
     # Initial request (empty input)
     payload = _ussd_gateway.send_input(session_id, "")
     channel_request = _ussd_adapter.parse_request(payload)
@@ -233,7 +233,7 @@ async def test_ussd(
     formatted = _ussd_adapter.format_response(channel_response)
     responses.append(formatted["text"])
     _ussd_gateway.receive_response(session_id, formatted["text"])
-    
+
     # Process each input
     for user_input in inputs:
         payload = _ussd_gateway.send_input(session_id, user_input)
@@ -242,7 +242,7 @@ async def test_ussd(
         formatted = _ussd_adapter.format_response(channel_response)
         responses.append(formatted["text"])
         _ussd_gateway.receive_response(session_id, formatted["text"])
-    
+
     return {
         "session_id": session_id,
         "phone_number": phone_number,
@@ -269,14 +269,14 @@ async def test_sms(
     """
     # Simulate receiving SMS
     payload = _sms_gateway.receive_message(phone_number, message)
-    
+
     # Process with adapter
     channel_request = _sms_adapter.parse_request(payload)
     channel_response = _sms_adapter.handle_request(channel_request)
-    
+
     # Send response
     await _sms_adapter.send_message(phone_number, channel_response.content)
-    
+
     return {
         "phone_number": phone_number,
         "incoming_message": message,

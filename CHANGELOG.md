@@ -9,8 +9,50 @@ Each phase is intentional and auditable.
 ## [Unreleased]
 
 ### Planned
-- Phase 9: Regional Aggregation (Sync-Nodes)
 - Phase 10: Governance & Quality Hardening
+
+---
+
+## [0.10.0] — Universal User System (2025-12-26)
+
+### Added
+- **Universal User System**: Single registration for all modules with role-based access
+- `telegram_users` table with phone as unique identifier
+- `UniversalUserService` for unified user management
+- Role management: farmer, driver, passenger, buyer, operator
+- Multi-role support (users can have multiple roles)
+- Telegram bot multi-step registration with role selection
+- Interactive role toggle buttons
+- Profile management foundation
+
+### Changed
+- Telegram registration flow now uses universal system
+- Users register once and select roles instead of per-module registration
+- Registration completion shows role-specific commands
+
+### Documentation
+- Added BINDING documentation enforcement rule to ROADMAP
+- All code changes must update: ROADMAP, CHANGELOG, task.md, technical docs
+
+---
+
+## [0.9.0] — Phase 9: Regional Aggregation (2025-12-26)
+
+### Added
+- **Vector Clock System**: Causality tracking for distributed sync
+- **Conflict Resolution**: LastWriteWins and ManualResolution strategies
+- **Sync Protocol**: SyncChange, SyncRequest, SyncResponse, SyncAck messages
+- **SyncEngine**: Delta computation, conflict detection, peer state tracking
+- **RegionalAggregator**: Cross-village harvest and transport analytics
+- **Regional Dashboard**: Manager view with aggregated data
+- `sync_state` and `sync_conflicts` tables for sync management
+- Regional router with summary, harvest, and transport endpoints
+- Dashboard UI with summary cards and aggregation tables
+
+### Impact
+- Scales to 100M+ users without US/EU cloud dependency
+- Peer-to-peer sync with eventual consistency
+- All data stays in Africa (sovereignty-by-design)
 
 ---
 

@@ -8,16 +8,15 @@ import asyncio
 import json
 import sqlite3
 import time
+from datetime import datetime
 from pathlib import Path
-from typing import Optional
-from datetime import datetime, timezone
 
 from aos.bus.events import Event
 
 
 class EventStore:
     """SQLite-backed persistent event queue with crash recovery."""
-    
+
     def __init__(self, db_path: str, ttl_seconds: int = 86400) -> None:
         """
         Initialize EventStore.
@@ -28,17 +27,17 @@ class EventStore:
         """
         self.db_path = db_path
         self.ttl_seconds = ttl_seconds
-        self._conn: Optional[sqlite3.Connection] = None
+        self._conn: sqlite3.Connection | None = None
         self._lock = asyncio.Lock()
-    
+
     async def initialize(self) -> None:
         """Initialize database schema."""
         # Create parent directory if needed
         Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
-        
+
         self._conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self._conn.execute("PRAGMA journal_mode=WAL;")
-        
+
         # Create events table
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS events (
@@ -55,21 +54,21 @@ class EventStore:
                 metadata TEXT DEFAULT '{}'
             )
         """)
-        
+
         # Create index for efficient queries
         self._conn.execute("""
             CREATE INDEX IF NOT EXISTS idx_status_created 
             ON events(status, created_at)
         """)
-        
+
         self._conn.commit()
-    
+
     async def shutdown(self) -> None:
         """Close database connection."""
         if self._conn:
             self._conn.close()
             self._conn = None
-    
+
     async def enqueue(self, event: Event) -> None:
         """
         Persist event to queue.
@@ -94,8 +93,8 @@ class EventStore:
                 json.dumps(event.metadata)
             ))
             self._conn.commit()
-    
-    async def dequeue(self) -> Optional[Event]:
+
+    async def dequeue(self) -> Event | None:
         """
         Dequeue next pending event (atomic operation).
         
@@ -112,10 +111,10 @@ class EventStore:
                 LIMIT 1
             """)
             row = cursor.fetchone()
-            
+
             if not row:
                 return None
-            
+
             # Mark as processing
             event_id = row[0]
             self._conn.execute("""
@@ -124,7 +123,7 @@ class EventStore:
                 WHERE id = ?
             """, (event_id,))
             self._conn.commit()
-            
+
             # Reconstruct event (use object.__setattr__ for frozen dataclass)
             event = Event(
                 name=row[1],
@@ -136,9 +135,9 @@ class EventStore:
             object.__setattr__(event, 'id', row[0])
             object.__setattr__(event, 'timestamp', datetime.fromisoformat(row[4]))
             object.__setattr__(event, 'source_node', row[5])
-            
+
             return event
-    
+
     async def mark_completed(self, event_id: str) -> None:
         """Mark event as successfully completed."""
         async with self._lock:
@@ -148,7 +147,7 @@ class EventStore:
                 WHERE id = ?
             """, (event_id,))
             self._conn.commit()
-    
+
     async def mark_failed(self, event_id: str, error_message: str) -> None:
         """Mark event as failed."""
         async with self._lock:
@@ -158,7 +157,7 @@ class EventStore:
                 WHERE id = ?
             """, (error_message, event_id))
             self._conn.commit()
-    
+
     async def get_pending_events(self, limit: int = 100) -> list[Event]:
         """
         Get all pending events (for replay after crash).
@@ -174,7 +173,7 @@ class EventStore:
                 ORDER BY created_at ASC
                 LIMIT ?
             """, (limit,))
-            
+
             events = []
             for row in cursor.fetchall():
                 event = Event(
@@ -187,9 +186,9 @@ class EventStore:
                 object.__setattr__(event, 'timestamp', datetime.fromisoformat(row[4]))
                 object.__setattr__(event, 'source_node', row[5])
                 events.append(event)
-            
+
             return events
-    
+
     async def cleanup_old_events(self) -> int:
         """
         Delete old completed events based on TTL.
@@ -199,15 +198,15 @@ class EventStore:
         """
         async with self._lock:
             cutoff_time = time.time() - self.ttl_seconds
-            
+
             cursor = self._conn.execute("""
                 DELETE FROM events
                 WHERE status = 'completed' AND created_at < ?
             """, (cutoff_time,))
-            
+
             self._conn.commit()
             return cursor.rowcount
-    
+
     async def get_queue_depth(self) -> int:
         """Get number of pending events."""
         async with self._lock:
@@ -215,7 +214,7 @@ class EventStore:
                 SELECT COUNT(*) FROM events WHERE status = 'pending'
             """)
             return cursor.fetchone()[0]
-    
+
     async def get_failed_count(self) -> int:
         """Get number of failed events."""
         async with self._lock:

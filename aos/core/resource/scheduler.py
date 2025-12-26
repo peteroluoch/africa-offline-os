@@ -3,12 +3,15 @@ Resource-Aware Task Scheduling
 Priority-based task queue with power-aware execution.
 """
 from __future__ import annotations
+
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Callable, Any, Optional
 from queue import PriorityQueue
+from typing import Any
+
 
 class TaskPriority(int, Enum):
     """Task priority levels (lower number = higher priority)."""
@@ -35,34 +38,34 @@ class Task:
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     name: str = ""
     priority: TaskPriority = TaskPriority.NORMAL
-    func: Optional[Callable] = None
+    func: Callable | None = None
     args: tuple = field(default_factory=tuple)
     kwargs: dict = field(default_factory=dict)
-    
+
     # Power awareness
     estimated_power_cost: float = 1.0  # Arbitrary units
-    max_delay_seconds: Optional[int] = None  # Max time task can be deferred
-    
+    max_delay_seconds: int | None = None  # Max time task can be deferred
+
     # State tracking
     state: TaskState = TaskState.PENDING
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
     result: Any = None
-    error: Optional[str] = None
-    
+    error: str | None = None
+
     def __lt__(self, other: Task) -> bool:
         """Compare tasks by priority for queue ordering."""
         return self.priority < other.priority
-    
+
     def execute(self) -> Any:
         """Execute the task function."""
         if not self.func:
             raise ValueError(f"Task {self.id} has no function to execute")
-        
+
         self.state = TaskState.RUNNING
-        self.started_at = datetime.now(timezone.utc)
-        
+        self.started_at = datetime.now(UTC)
+
         try:
             self.result = self.func(*self.args, **self.kwargs)
             self.state = TaskState.COMPLETED
@@ -72,14 +75,14 @@ class Task:
             self.error = str(e)
             raise
         finally:
-            self.completed_at = datetime.now(timezone.utc)
-    
+            self.completed_at = datetime.now(UTC)
+
     def is_expired(self) -> bool:
         """Check if task has exceeded its max delay."""
         if not self.max_delay_seconds:
             return False
-        
-        elapsed = (datetime.now(timezone.utc) - self.created_at).total_seconds()
+
+        elapsed = (datetime.now(UTC) - self.created_at).total_seconds()
         return elapsed > self.max_delay_seconds
 
 class ResourceAwareScheduler:
@@ -87,14 +90,14 @@ class ResourceAwareScheduler:
     Priority-based task scheduler with power awareness.
     Defers low-priority tasks when battery is low.
     """
-    
+
     def __init__(self):
         self._task_queue: PriorityQueue[Task] = PriorityQueue()
         self._deferred_tasks: list[Task] = []
         self._running_tasks: dict[str, Task] = {}
         self._completed_tasks: list[Task] = []
         self._max_completed_history = 100
-    
+
     def schedule(self, task: Task) -> str:
         """
         Schedule a task for execution.
@@ -102,7 +105,7 @@ class ResourceAwareScheduler:
         """
         self._task_queue.put(task)
         return task.id
-    
+
     def schedule_function(
         self,
         func: Callable,
@@ -123,17 +126,17 @@ class ResourceAwareScheduler:
             kwargs=kwargs
         )
         return self.schedule(task)
-    
+
     def should_execute(self, task: Task, current_profile: str) -> bool:
         """
         Determine if a task should execute given the current power profile.
         """
         from aos.core.resource.profiles import PowerProfile
-        
+
         # CRITICAL tasks always execute
         if task.priority == TaskPriority.CRITICAL:
             return True
-        
+
         # Check against power profile
         if current_profile == PowerProfile.CRITICAL:
             return task.priority == TaskPriority.CRITICAL
@@ -143,8 +146,8 @@ class ResourceAwareScheduler:
             return task.priority <= TaskPriority.NORMAL
         else:  # FULL_POWER
             return True
-    
-    def get_next_task(self, current_profile: str) -> Optional[Task]:
+
+    def get_next_task(self, current_profile: str) -> Task | None:
         """
         Get the next task to execute based on priority and power profile.
         Returns None if no tasks should execute now.
@@ -154,11 +157,11 @@ class ResourceAwareScheduler:
             if self.should_execute(task, current_profile) or task.is_expired():
                 self._deferred_tasks.remove(task)
                 return task
-        
+
         # Check queue
         if not self._task_queue.empty():
             task = self._task_queue.get()
-            
+
             if self.should_execute(task, current_profile):
                 return task
             else:
@@ -166,10 +169,10 @@ class ResourceAwareScheduler:
                 task.state = TaskState.DEFERRED
                 self._deferred_tasks.append(task)
                 return None
-        
+
         return None
-    
-    def execute_next(self, current_profile: str) -> Optional[Task]:
+
+    def execute_next(self, current_profile: str) -> Task | None:
         """
         Execute the next eligible task.
         Returns the executed task or None.
@@ -177,21 +180,21 @@ class ResourceAwareScheduler:
         task = self.get_next_task(current_profile)
         if not task:
             return None
-        
+
         self._running_tasks[task.id] = task
-        
+
         try:
             task.execute()
         finally:
             self._running_tasks.pop(task.id, None)
             self._completed_tasks.append(task)
-            
+
             # Limit history
             if len(self._completed_tasks) > self._max_completed_history:
                 self._completed_tasks = self._completed_tasks[-self._max_completed_history:]
-        
+
         return task
-    
+
     def get_stats(self) -> dict:
         """Get scheduler statistics."""
         return {
@@ -200,7 +203,7 @@ class ResourceAwareScheduler:
             "running": len(self._running_tasks),
             "completed": len(self._completed_tasks)
         }
-    
+
     def get_deferred_tasks(self) -> list[Task]:
         """Get list of currently deferred tasks."""
         return self._deferred_tasks.copy()

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any
 
 import pytest
 
@@ -26,7 +25,7 @@ class TestConfigDefaults:
                 del os.environ[key]
 
         settings = Settings()
-        
+
         # Verify defaults are set
         assert settings.environment == "development"
         assert settings.sqlite_path == "aos.db"
@@ -35,7 +34,7 @@ class TestConfigDefaults:
     def test_default_paths_are_relative(self) -> None:
         """Default paths must be relative, not absolute (mobile constraint)."""
         settings = Settings()
-        
+
         # DB path should be relative
         db_path = Path(settings.sqlite_path)
         assert not db_path.is_absolute(), "DB path must be relative for mobile compatibility"
@@ -43,7 +42,7 @@ class TestConfigDefaults:
     def test_config_uses_safe_defaults_for_mobile(self) -> None:
         """Config must use paths that work on Android/Termux."""
         settings = Settings()
-        
+
         # Should not use /var, /etc, or other Linux-specific paths
         forbidden_prefixes = ["/var", "/etc", "/usr", "/opt"]
         for prefix in forbidden_prefixes:
@@ -58,7 +57,7 @@ class TestConfigEnvironmentOverrides:
         """AOS_SQLITE_PATH must override default DB path."""
         custom_path = "/custom/path/db.sqlite"
         os.environ["AOS_SQLITE_PATH"] = custom_path
-        
+
         try:
             settings = Settings()
             assert settings.sqlite_path == custom_path
@@ -68,7 +67,7 @@ class TestConfigEnvironmentOverrides:
     def test_environment_override(self) -> None:
         """AOS_ENVIRONMENT must override default environment."""
         os.environ["AOS_ENVIRONMENT"] = "production"
-        
+
         try:
             settings = Settings()
             assert settings.environment == "production"
@@ -79,7 +78,7 @@ class TestConfigEnvironmentOverrides:
         """AOS_JWT_ISSUER must override default issuer."""
         custom_issuer = "custom-node-001"
         os.environ["AOS_JWT_ISSUER"] = custom_issuer
-        
+
         try:
             settings = Settings()
             assert settings.jwt_issuer == custom_issuer

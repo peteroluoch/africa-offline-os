@@ -1,6 +1,7 @@
 import pytest
-from aos.adapters.sms import SMSAdapter
+
 from aos.adapters.mocks.mock_sms_gateway import MockSMSGateway
+from aos.adapters.sms import SMSAdapter
 from aos.modules.agri_sms import AgriSMSHandler
 
 
@@ -25,7 +26,7 @@ def test_sms_adapter_request_parsing(sms_adapter, sms_gateway):
         "id": "msg_123",
         "date": "2025-12-25 12:00:00"
     }
-    
+
     request = sms_adapter.parse_request(payload)
     assert request.sender == "+254712345678"
     assert request.content == "HARVEST MAIZE 15 A"
@@ -37,7 +38,7 @@ def test_sms_adapter_harvest_handling(sms_adapter, sms_gateway):
     payload = sms_gateway.receive_message("+254712345678", "HARVEST MAIZE 15 A")
     request = sms_adapter.parse_request(payload)
     response = sms_adapter.handle_request(request)
-    
+
     assert "Harvest recorded" in response.content
     assert response.session_active is False
 
@@ -47,7 +48,7 @@ async def test_sms_adapter_send_message(sms_adapter, sms_gateway):
     """Test sending SMS via adapter."""
     success = await sms_adapter.send_message("+254712345678", "Test message")
     assert success is True
-    
+
     outbox = sms_gateway.get_outbox()
     assert len(outbox) == 1
     assert outbox[0].content == "Test message"

@@ -1,8 +1,9 @@
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import Any
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 
 class ChannelType(str, Enum):
@@ -31,22 +32,22 @@ class ChannelResponse:
 
 class ChannelAdapter(ABC):
     """Abstract base class for all channel adapters."""
-    
+
     @abstractmethod
     def parse_request(self, payload: dict[str, Any]) -> ChannelRequest:
         """Parse raw provider payload into a standard ChannelRequest."""
         pass
-    
+
     @abstractmethod
     def format_response(self, response: ChannelResponse) -> dict[str, Any]:
         """Format standard ChannelResponse into provider-specific format."""
         pass
-    
+
     @abstractmethod
     async def send_message(self, to: str, message: str, metadata: dict[str, Any] | None = None) -> bool:
         """Send an outbound message (SMS/WhatsApp)."""
         pass
-    
+
     @abstractmethod
     def get_channel_type(self) -> str:
         """Return the channel type identifier."""
@@ -55,12 +56,12 @@ class ChannelAdapter(ABC):
 
 class ChannelGateway(ABC):
     """Abstract base class for external API gateways (AT, Twilio)."""
-    
+
     @abstractmethod
     async def send(self, to: str, message: str, **kwargs) -> dict[str, Any]:
         """Send a message via the external API."""
         pass
-    
+
     @abstractmethod
     async def get_delivery_status(self, message_id: str) -> str:
         """Get status of a sent message."""

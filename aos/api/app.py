@@ -4,36 +4,37 @@ import asyncio
 import json
 import sqlite3
 import time
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator, List, Set, Any
 from pathlib import Path
 
 from fastapi import FastAPI
-from fastapi.responses import StreamingResponse, HTMLResponse
+from fastapi.responses import StreamingResponse
 
+from aos.bus.dispatcher import EventDispatcher
+from aos.bus.event_store import EventStore
+from aos.bus.events import Event
 from aos.core.config import Settings
 from aos.core.health import HealthStatus, check_db_health, get_disk_space, get_uptime
 from aos.db.engine import connect
 from aos.db.migrations import MigrationManager
 from aos.db.migrations.registry import MIGRATIONS
-from aos.bus.events import Event
-from aos.bus.event_store import EventStore
-from aos.bus.dispatcher import EventDispatcher
 
 # Global state
 _db_conn: sqlite3.Connection | None = None
 _boot_time: float | None = None
 _event_store: EventStore | None = None
 _event_dispatcher: EventDispatcher | None = None
-_mesh_manager: 'MeshSyncManager' | None = None
-_agri_module: 'AgriModule' | None = None
+_mesh_manager: MeshSyncManager | None = None
+_agri_module: AgriModule | None = None
 
 from aos.api.state import mesh_state
+
 
 class EventStream:
     """Manages Server-Sent Events (SSE) connections."""
     def __init__(self):
-        self._listeners: Set[asyncio.Queue] = set()
+        self._listeners: set[asyncio.Queue] = set()
 
     async def broadcast(self, event: Event) -> None:
         """Format event as HTML row and push to all listeners."""
@@ -48,7 +49,7 @@ class EventStream:
         """
         # SSE format: data: <content>\n\n
         msg = f"data: {html}\n\n"
-        
+
         # Broadcast to all queues
         # We assume queues are unbounded or managed by consumer
         dead_listeners = set()
@@ -57,7 +58,7 @@ class EventStream:
                 q.put_nowait(msg)
             except Exception:
                 dead_listeners.add(q)
-        
+
         # Cleanup dead listeners
         self._listeners -= dead_listeners
 
@@ -89,7 +90,7 @@ def reset_globals() -> None:
         except: pass
     _db_conn = None
     _boot_time = None
-    
+
     # Store shutdown is async, we can't easily await here in synchronous reset
     # Tests should assume clean state or use async fixtures
     _event_store = None
@@ -99,72 +100,72 @@ def reset_globals() -> None:
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Manage application lifecycle with graceful startup and shutdown."""
     global _db_conn, _boot_time, _event_store, _event_dispatcher
-    
+
     # Startup
     _boot_time = time.time()
     settings = Settings()
-    
+
     # Auto-create directories
     Path(settings.sqlite_path).parent.mkdir(parents=True, exist_ok=True)
-    
+
     _db_conn = connect(settings.sqlite_path)
-    
+
     # Run migrations
     mgr = MigrationManager(_db_conn)
     mgr.apply_migrations(MIGRATIONS)
-    
+
     # Initialize Event Bus
     _event_store = EventStore(settings.sqlite_path)
     await _event_store.initialize()
-    
+
     _event_dispatcher = EventDispatcher(_event_store)
-    
+
     # Hook up the Stream
     _event_dispatcher.subscribe_all(_event_stream.broadcast)
 
     # Initialize Mesh System (Batch 5)
     from aos.adapters.remote_node import RemoteNodeAdapter
-    from aos.core.mesh.queue import MeshQueue
     from aos.core.mesh.manager import MeshSyncManager
+    from aos.core.mesh.queue import MeshQueue
     from aos.core.security.identity import NodeIdentityManager
-    
+
     identity_mgr = NodeIdentityManager()
     remote_adapter = RemoteNodeAdapter(identity_mgr)
     mesh_db_path = str(Path(settings.sqlite_path).parent / "mesh_queue.db")
     mesh_queue = MeshQueue(mesh_db_path)
-    
+
     _mesh_manager = MeshSyncManager(remote_adapter, mesh_queue)
     mesh_state.manager = _mesh_manager
     await _mesh_manager.start()
 
     # Initialize Modules (Phase 5/6)
-    from aos.modules.reference import ReferenceModule
     from aos.modules.agri import AgriModule
+    from aos.modules.reference import ReferenceModule
     from aos.modules.transport import TransportModule
-    
+
     ref_mod = ReferenceModule(_event_dispatcher)
     await ref_mod.initialize()
-    
+
     # Initialize Resource Manager (Phase 8) - BEFORE modules so they can use it
     from aos.core.resource import ResourceManager
     _resource_manager = ResourceManager(event_bus=_event_dispatcher, check_interval=30)
     await _resource_manager.start()
-    
+
     # Initialize Modules with ResourceManager (Phase 5/6/7) - Power-aware
     _agri_module = AgriModule(_event_dispatcher, _db_conn, _resource_manager)
     await _agri_module.initialize()
-    
+
     _transport_module = TransportModule(_event_dispatcher, _db_conn, _resource_manager)
     await _transport_module.initialize()
-    
+
     # Store for global access if needed
-    from aos.api.state import agri_state, transport_state, resource_state
+    from aos.api.state import agri_state, resource_state, transport_state
     agri_state.module = _agri_module
     transport_state.module = _transport_module
     resource_state.manager = _resource_manager
-    
+
     print(f"[A-OS] Started - DB: {settings.sqlite_path}")
-    
+
     try:
         yield
     finally:
@@ -180,17 +181,19 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             print("[A-OS] Shutdown complete")
 
 
-from aos.api.routers.auth import router as auth_router
-from aos.api.routers.mesh import router as mesh_router
-from aos.api.routers.agri import router as agri_router
-from aos.api.routers.transport import router as transport_router
-from aos.api.routers.channels import router as channels_router
-from aos.api.routers.resource import router as resource_router
-from aos.api.routers.regional import router as regional_router
-from aos.core.security.auth import get_current_operator
 from fastapi import Depends, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+
+from aos.api.routers.agri import router as agri_router
+from aos.api.routers.auth import router as auth_router
+from aos.api.routers.channels import router as channels_router
+from aos.api.routers.mesh import router as mesh_router
+from aos.api.routers.regional import router as regional_router
+from aos.api.routers.resource import router as resource_router
+from aos.api.routers.transport import router as transport_router
+from aos.core.security.auth import get_current_operator
+
 
 def create_app() -> FastAPI:
     app = FastAPI(
@@ -198,7 +201,7 @@ def create_app() -> FastAPI:
         version="0.1.0",
         lifespan=lifespan,
     )
-    
+
     # Static files for Design System
     static_path = Path(__file__).parent / "static"
     if static_path.exists():
@@ -230,13 +233,13 @@ def create_app() -> FastAPI:
         disk_free = get_disk_space()
         uptime = get_uptime(_boot_time)
         db_status = check_db_health(_db_conn)
-        
+
         # Determine kernel metrics
         events_processed = 0
         mesh_peers_online = 0
         if _mesh_manager:
             mesh_peers_online = sum(1 for p in _mesh_manager.adapter.peers.values() if p.status == "ONLINE")
-        
+
         status = HealthStatus(
             status="ok",
             disk_free_mb=disk_free,
@@ -244,7 +247,7 @@ def create_app() -> FastAPI:
             db_status=db_status,
             events_processed=events_processed
         )
-        
+
         return {
             "status": status.status,
             "metrics": {
@@ -261,12 +264,12 @@ def create_app() -> FastAPI:
             _event_stream.subscribe(),
             media_type="text/event-stream"
         )
-        
+
     @app.get("/dashboard")
     async def dashboard(request: Request, current_user: dict = Depends(get_current_operator)):
         """Render the kernel dashboard (Protected)."""
         return templates.TemplateResponse(
-            "dashboard.html", 
+            "dashboard.html",
             {"request": request, "user": current_user}
         )
 
@@ -284,7 +287,7 @@ def create_app() -> FastAPI:
         peers = []
         if mesh_state.manager:
             peers = list(mesh_state.manager.adapter.peers.values())
-            
+
         return templates.TemplateResponse(
             "mesh.html",
             {"request": request, "user": current_user, "peers": peers}

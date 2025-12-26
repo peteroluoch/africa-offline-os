@@ -1,13 +1,15 @@
+import json
 import sqlite3
 import uuid
-import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from aos.core.security.password import get_password_hash
+
 
 def apply(conn: sqlite3.Connection) -> None:
     # Use cursor for consistency
     cursor = conn.cursor()
-    
+
     # 1. Create Roles
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS roles (
@@ -37,26 +39,26 @@ def apply(conn: sqlite3.Connection) -> None:
         FOREIGN KEY(role_id) REFERENCES roles(id)
     )
     """)
-    
+
     # 3. Bootstrap Admin
     # Check if admin role exists
     check = cursor.execute("SELECT id FROM roles WHERE name='admin'").fetchone()
     if not check:
         role_id = str(uuid.uuid4())
         admin_id = str(uuid.uuid4())
-        
+
         # Create Admin Role
         cursor.execute(
             "INSERT INTO roles (id, name, permissions, created_at) VALUES (?, ?, ?, ?)",
-            (role_id, "admin", json.dumps(["*"]), datetime.now(timezone.utc).isoformat())
+            (role_id, "admin", json.dumps(["*"]), datetime.now(UTC).isoformat())
         )
-        
+
         # Create Root Operator (admin / aos_root_2025)
         pw_hash = get_password_hash("aos_root_2025")
         cursor.execute(
             "INSERT INTO operators (id, username, password_hash, role_id, created_at) VALUES (?, ?, ?, ?, ?)",
-            (admin_id, "admin", pw_hash, role_id, datetime.now(timezone.utc).isoformat())
+            (admin_id, "admin", pw_hash, role_id, datetime.now(UTC).isoformat())
         )
         print("[Migration] Hardened 'admin' operator bootstrapped.")
-    
+
     conn.commit()

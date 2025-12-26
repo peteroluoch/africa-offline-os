@@ -3,10 +3,13 @@ Sync Protocol
 Defines message formats and protocol for peer-to-peer synchronization.
 """
 from __future__ import annotations
+
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import List, Dict, Any, Optional
+from datetime import UTC, datetime
+from typing import Any
+
 from aos.core.sync.vector_clock import VectorClock
+
 
 @dataclass
 class SyncChange:
@@ -14,7 +17,7 @@ class SyncChange:
     entity_type: str  # "harvest", "farmer", "vehicle", etc.
     entity_id: str
     operation: str  # "create", "update", "delete"
-    data: Dict[str, Any]
+    data: dict[str, Any]
     vector_clock: VectorClock
     timestamp: int  # Unix timestamp
     node_id: str  # Originating node
@@ -26,7 +29,7 @@ class SyncRequest:
     to_node: str
     last_sync_timestamp: int
     vector_clock: VectorClock
-    request_id: str = field(default_factory=lambda: str(datetime.now(timezone.utc).timestamp()))
+    request_id: str = field(default_factory=lambda: str(datetime.now(UTC).timestamp()))
 
 @dataclass
 class SyncResponse:
@@ -34,10 +37,10 @@ class SyncResponse:
     from_node: str
     to_node: str
     request_id: str
-    changes: List[SyncChange]
+    changes: list[SyncChange]
     vector_clock: VectorClock
     success: bool = True
-    error: Optional[str] = None
+    error: str | None = None
 
 @dataclass
 class SyncAck:

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import sqlite3
-from typing import Iterator
 
 
 def connect(sqlite_path: str) -> sqlite3.Connection:
@@ -12,6 +11,7 @@ def connect(sqlite_path: str) -> sqlite3.Connection:
     return conn
 
 from contextlib import contextmanager
+
 
 @contextmanager
 def transaction(conn: sqlite3.Connection):

@@ -1,11 +1,16 @@
 """
 Resource package initialization.
 """
-from aos.core.resource.monitor import ResourceMonitor, ResourceSnapshot, BatteryInfo, BatteryStatus
-from aos.core.resource.profiles import PowerProfile, PowerPolicy, PowerProfileManager, POWER_POLICIES
-from aos.core.resource.scheduler import Task, TaskPriority, TaskState, ResourceAwareScheduler
 from aos.core.resource.manager import ResourceManager
+from aos.core.resource.monitor import BatteryInfo, BatteryStatus, ResourceMonitor, ResourceSnapshot
 from aos.core.resource.power_aware import power_aware, should_run_task
+from aos.core.resource.profiles import (
+    POWER_POLICIES,
+    PowerPolicy,
+    PowerProfile,
+    PowerProfileManager,
+)
+from aos.core.resource.scheduler import ResourceAwareScheduler, Task, TaskPriority, TaskState
 
 __all__ = [
     "ResourceMonitor",

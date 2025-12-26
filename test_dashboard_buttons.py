@@ -2,16 +2,16 @@
 Dashboard Button Functionality Test
 Tests all interactive elements across the A-OS dashboard
 """
+
 import requests
-from typing import Dict, List
 
 BASE_URL = "http://localhost:8000"
 
 class DashboardTester:
     def __init__(self):
         self.session = requests.Session()
-        self.results: List[Dict] = []
-        
+        self.results: list[dict] = []
+
     def login(self):
         """Login to get authenticated session"""
         response = self.session.post(
@@ -20,15 +20,15 @@ class DashboardTester:
             allow_redirects=False
         )
         return response.status_code in [200, 303]
-    
-    def test_endpoint(self, name: str, method: str, path: str, data: Dict = None):
+
+    def test_endpoint(self, name: str, method: str, path: str, data: dict = None):
         """Test a single endpoint"""
         try:
             if method == "GET":
                 resp = self.session.get(f"{BASE_URL}{path}")
             elif method == "POST":
                 resp = self.session.post(f"{BASE_URL}{path}", data=data or {})
-            
+
             status = "✅ PASS" if resp.status_code in [200, 303, 307] else f"❌ FAIL ({resp.status_code})"
             self.results.append({
                 "name": name,
@@ -44,22 +44,22 @@ class DashboardTester:
                 "name": name,
                 "method": method,
                 "path": path,
-                "status": f"❌ ERROR",
+                "status": "❌ ERROR",
                 "code": str(e)
             })
             print(f"❌ ERROR - {name}: {e}")
             return False
-    
+
     def run_tests(self):
         print("🔍 Testing Dashboard Button Functionality\n")
-        
+
         # Login first
         print("1. Authentication")
         if not self.login():
             print("❌ Login failed - cannot proceed")
             return
         print("✅ Login successful\n")
-        
+
         # Test navigation links
         print("2. Navigation Links")
         self.test_endpoint("Dashboard", "GET", "/dashboard")
@@ -70,7 +70,7 @@ class DashboardTester:
         self.test_endpoint("Transport-Mobile", "GET", "/transport/")
         self.test_endpoint("UI Gallery", "GET", "/sys/gallery")
         print()
-        
+
         # Test Agri buttons
         print("3. Agri-Lighthouse Buttons")
         self.test_endpoint("Get Farmer Form", "GET", "/agri/farmer/new")
@@ -80,7 +80,7 @@ class DashboardTester:
             "contact": "+254700000000"
         })
         print()
-        
+
         # Test Mesh buttons
         print("4. Mesh Network Buttons")
         self.test_endpoint("Register Peer", "POST", "/sys/mesh/register", {
@@ -89,7 +89,7 @@ class DashboardTester:
             "public_key": "test_public_key_hex"
         })
         print()
-        
+
         # Test Transport buttons
         print("5. Transport-Mobile Buttons")
         self.test_endpoint("Route Details", "GET", "/transport/route/r-46")
@@ -99,7 +99,7 @@ class DashboardTester:
             "route_id": "r-46"
         })
         print()
-        
+
         # Summary
         print("\n" + "="*60)
         print("SUMMARY")
@@ -110,7 +110,7 @@ class DashboardTester:
         print(f"Passed: {passed}")
         print(f"Failed: {total - passed}")
         print(f"Success Rate: {(passed/total)*100:.1f}%")
-        
+
         if passed == total:
             print("\n✅ All dashboard buttons are functional!")
         else:

@@ -2,11 +2,12 @@
 Regional Dashboard Router
 API endpoints for regional manager dashboard.
 """
+import sqlite3
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from pathlib import Path
-import sqlite3
 
 from aos.api.app import get_db
 from aos.api.security import get_current_operator
@@ -23,14 +24,14 @@ async def regional_dashboard(
 ):
     """Regional manager dashboard."""
     aggregator = RegionalAggregator(db)
-    
+
     # Get summary stats
     summary = aggregator.get_village_summary()
-    
+
     # Get aggregated data
     harvests = aggregator.aggregate_harvests(days=30)
     transport = aggregator.aggregate_transport(days=7)
-    
+
     return templates.TemplateResponse("regional.html", {
         "request": request,
         "operator": operator,

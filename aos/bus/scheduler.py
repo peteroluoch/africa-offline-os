@@ -10,9 +10,7 @@ import logging
 import sqlite3
 import time
 import uuid
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional, List, Dict, Any
 
 from aos.bus.dispatcher import EventDispatcher
 from aos.bus.events import Event
@@ -26,7 +24,7 @@ class EventScheduler:
     Ensures that events can be emitted at specific times or intervals,
     even after system restarts.
     """
-    
+
     def __init__(self, db_path: str, dispatcher: EventDispatcher) -> None:
         """
         Initialize EventScheduler.
@@ -37,9 +35,9 @@ class EventScheduler:
         """
         self.db_path = db_path
         self.dispatcher = dispatcher
-        self._conn: Optional[sqlite3.Connection] = None
+        self._conn: sqlite3.Connection | None = None
         self._running = False
-        self._loop_task: Optional[asyncio.Task] = None
+        self._loop_task: asyncio.Task | None = None
         self._lock = asyncio.Lock()
 
     async def initialize(self) -> None:
@@ -47,7 +45,7 @@ class EventScheduler:
         Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self._conn.execute("PRAGMA journal_mode=WAL;")
-        
+
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS scheduled_tasks (
                 id TEXT PRIMARY KEY,
@@ -58,13 +56,13 @@ class EventScheduler:
                 status TEXT DEFAULT 'pending'
             )
         """)
-        
+
         # Index for efficient time-based retrieval
         self._conn.execute("""
             CREATE INDEX IF NOT EXISTS idx_status_time 
             ON scheduled_tasks(status, scheduled_at)
         """)
-        
+
         self._conn.commit()
 
     async def schedule_after(self, delay_seconds: float, event: Event) -> str:
@@ -87,7 +85,7 @@ class EventScheduler:
         scheduled_at = time.time() + interval_seconds
         return await self._store_task(event, scheduled_at, interval=interval_seconds)
 
-    async def _store_task(self, event: Event, scheduled_at: float, interval: Optional[float] = None) -> str:
+    async def _store_task(self, event: Event, scheduled_at: float, interval: float | None = None) -> str:
         """Persist task to database."""
         task_id = str(uuid.uuid4())
         async with self._lock:
@@ -115,14 +113,14 @@ class EventScheduler:
         """Start the scheduler processing loop."""
         self._running = True
         logger.info("Scheduler loop started")
-        
+
         while self._running:
             try:
                 now = time.time()
                 await self._process_ready_tasks(now)
             except Exception as e:
                 logger.error(f"Error in scheduler loop: {e}", exc_info=True)
-            
+
             # Sleep until next check or interrup
             # For simplicity, poll every 0.1s for test responsiveness.
             # In production, this can be optimized to sleep until the next task time.
@@ -144,16 +142,16 @@ class EventScheduler:
                 FROM scheduled_tasks
                 WHERE status = 'pending' AND scheduled_at <= ?
             """, (now,))
-            
+
             tasks = cursor.fetchall()
-            
+
             for task in tasks:
                 task_id, name, payload_str, interval = task
-                
+
                 # Emit event
                 event = Event(name=name, payload=json.loads(payload_str))
                 await self.dispatcher.dispatch(event)
-                
+
                 if interval is not None:
                     # Update next execution time for recurring task
                     next_time = now + interval
@@ -168,5 +166,5 @@ class EventScheduler:
                         DELETE FROM scheduled_tasks 
                         WHERE id = ?
                     """, (task_id,))
-            
+
             self._conn.commit()

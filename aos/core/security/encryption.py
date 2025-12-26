@@ -1,13 +1,16 @@
 from __future__ import annotations
+
 import os
+
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
+
 
 class SymmetricEncryption:
     """
     High-performance AEAD encryption using ChaCha20-Poly1305.
     Ideal for mobile/edge devices due to software-friendly design.
     """
-    
+
     def __init__(self, key: bytes):
         if len(key) != 32:
             raise ValueError("Key must be 32 bytes (256 bits).")
@@ -28,10 +31,10 @@ class SymmetricEncryption:
         """
         if len(nonce_prefixed_ciphertext) < 12:
             raise ValueError("Invalid ciphertext: too short.")
-            
+
         nonce = nonce_prefixed_ciphertext[:12]
         ciphertext = nonce_prefixed_ciphertext[12:]
-        
+
         try:
             return self.aead.decrypt(nonce, ciphertext, associated_data)
         except Exception:

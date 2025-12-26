@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, Callable, Coroutine, Dict, List, Optional
-from aos.bus.events import Event
+from collections.abc import Callable, Coroutine
+from typing import Any
+
 from aos.bus.event_store import EventStore
+from aos.bus.events import Event
 
 logger = logging.getLogger(__name__)
 
@@ -19,15 +21,15 @@ class EventDispatcher:
     If a store is provided, events are persisted before dispatch
     and can be recovered after process restarts.
     """
-    
-    def __init__(self, store: Optional[EventStore] = None):
+
+    def __init__(self, store: EventStore | None = None):
         """
         Initialize EventDispatcher.
         
         Args:
             store: Optional EventStore for persistent journaling.
         """
-        self._subscribers: Dict[str, List[EventHandler]] = {}
+        self._subscribers: dict[str, list[EventHandler]] = {}
         self._store = store
         self._lock = asyncio.Lock()
 
@@ -35,7 +37,7 @@ class EventDispatcher:
         """Register an async handler for a specific event name."""
         if event_name not in self._subscribers:
             self._subscribers[event_name] = []
-        
+
         if handler not in self._subscribers[event_name]:
             self._subscribers[event_name].append(handler)
             logger.debug(f"Subscribed handler to {event_name}")
@@ -44,7 +46,7 @@ class EventDispatcher:
         """Register a handler for ALL events (e.g. logging, streaming)."""
         if "all" not in self._subscribers:
             self._subscribers["all"] = []
-        
+
         if handler not in self._subscribers["all"]:
             self._subscribers["all"].append(handler)
             logger.debug("Subscribed global handler")
@@ -58,11 +60,11 @@ class EventDispatcher:
         """
         if self._store:
             await self._store.enqueue(event)
-            
+
         handlers = self._subscribers.get(event.name, [])
         # Add global handlers
         handlers.extend(self._subscribers.get("all", []))
-        
+
         if not handlers:
             # If no handlers and stored, we can consider it completed
             if self._store:
@@ -77,24 +79,24 @@ class EventDispatcher:
             for handler in handlers:
                 asyncio.create_task(self._safe_execute(handler, event))
 
-    async def _execute_with_tracking(self, handlers: List[EventHandler], event: Event) -> None:
+    async def _execute_with_tracking(self, handlers: list[EventHandler], event: Event) -> None:
         """Execute multiple handlers and track overall success in storage."""
         results = await asyncio.gather(
             *[self._safe_execute_tracked(h, event) for h in handlers],
             return_exceptions=True
         ) or []
-        
+
         # If any handler failed, mark the event as failed in the store
         # Extract exceptions from results
         exceptions = [r for r in results if isinstance(r, Exception)]
-        
+
         if exceptions:
             errmsg = "; ".join(str(e) for e in exceptions)
             await self._store.mark_failed(event.id, errmsg)
         else:
             await self._store.mark_completed(event.id)
 
-    async def _safe_execute_tracked(self, handler: EventHandler, event: Event) -> Optional[Exception]:
+    async def _safe_execute_tracked(self, handler: EventHandler, event: Event) -> Exception | None:
         """Execute a single handler and return exception if any."""
         try:
             await handler(event)
@@ -119,7 +121,7 @@ class EventDispatcher:
         """
         if not self._store:
             return 0
-        
+
         pending_events = await self._store.get_pending_events()
         count = 0
         for event in pending_events:
@@ -127,7 +129,7 @@ class EventDispatcher:
             # Actually, we can just call an internal dispatch method
             await self._dispatch_recovered(event)
             count += 1
-            
+
         return count
 
     async def _dispatch_recovered(self, event: Event) -> None:
@@ -136,5 +138,5 @@ class EventDispatcher:
         if not handlers:
             await self._store.mark_completed(event.id)
             return
-            
+
         asyncio.create_task(self._execute_with_tracking(handlers, event))

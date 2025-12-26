@@ -1,18 +1,21 @@
 from __future__ import annotations
+
 import asyncio
-from aos.core.module import Module
-from aos.bus.events import Event
+
 from aos.bus.dispatcher import EventDispatcher
+from aos.bus.events import Event
+from aos.core.module import Module
+
 
 class ReferenceModule(Module):
     """
     Reference implementation of a Vehicle Module.
     Demonstrates Hexagonal Architecture compliance.
     """
-    
+
     def __init__(self, dispatcher: EventDispatcher):
         self.dispatcher = dispatcher
-        
+
     @property
     def name(self) -> str:
         return "system.reference"
@@ -38,9 +41,9 @@ class ReferenceModule(Module):
             "status": "ok",
             "source": self.name
         }
-        
+
         pong = Event(name="system.pong", payload=response_payload, correlation_id=event.id)
-        
+
         # Dispatch response back to bus
         # Note: dispatch() is async
         await self.dispatcher.dispatch(pong)

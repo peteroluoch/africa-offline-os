@@ -1,12 +1,12 @@
 from __future__ import annotations
-from typing import Any
+
 from aos.core.channels.base import ChannelResponse
 from aos.core.channels.ussd import USSDSession
 
 
 class AgriUSSDHandler:
     """Menu flow handler for the Agri vehicle."""
-    
+
     def __init__(self):
         self.crops = {"1": "Maize", "2": "Beans", "3": "Sorghum"}
         self.grades = {"1": "A", "2": "B", "3": "C"}

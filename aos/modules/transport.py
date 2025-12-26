@@ -1,10 +1,12 @@
 from __future__ import annotations
-import sqlite3
+
 import logging
-from typing import List, Optional, TYPE_CHECKING
-from aos.core.module import Module
+import sqlite3
+from typing import TYPE_CHECKING
+
 from aos.bus.dispatcher import EventDispatcher
 from aos.bus.events import Event
+from aos.core.module import Module
 
 if TYPE_CHECKING:
     from aos.core.resource import ResourceManager
@@ -16,8 +18,8 @@ class TransportModule(Module):
     Transport & Mobility Module.
     Handles route status, vehicle availability, and bookings.
     """
-    
-    def __init__(self, dispatcher: EventDispatcher, db_conn: sqlite3.Connection, resource_manager: Optional['ResourceManager'] = None):
+
+    def __init__(self, dispatcher: EventDispatcher, db_conn: sqlite3.Connection, resource_manager: ResourceManager | None = None):
         self._dispatcher = dispatcher
         self._db = db_conn
         self.resource_manager = resource_manager  # Power awareness
@@ -37,7 +39,7 @@ class TransportModule(Module):
 
     # --- Domain Logic ---
 
-    def list_routes(self) -> List[dict]:
+    def list_routes(self) -> list[dict]:
         cursor = self._db.cursor()
         cursor.execute("SELECT id, name, start_point, end_point, base_price FROM routes")
         return [
@@ -53,7 +55,7 @@ class TransportModule(Module):
             (status.upper(), route_id, plate.upper())
         )
         self._db.commit()
-        
+
         if cursor.rowcount > 0:
             # Dispatch event
             # self._dispatcher.dispatch(...)
@@ -68,10 +70,10 @@ class TransportModule(Module):
             (route_id,)
         )
         vehicles = [{"plate": v[0], "status": v[1]} for v in cursor.fetchall()]
-        
+
         cursor.execute("SELECT name FROM routes WHERE id = ?", (route_id,))
         route_name = cursor.fetchone()
-        
+
         return {
             "route_id": route_id,
             "route_name": route_name[0] if route_name else "Unknown",

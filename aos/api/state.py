@@ -1,23 +1,24 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional
+
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from aos.core.mesh.manager import MeshSyncManager
+    from aos.core.resource.manager import ResourceManager
     from aos.modules.agri import AgriModule
     from aos.modules.transport import TransportModule
-    from aos.core.resource.manager import ResourceManager
 
 class MeshState:
-    manager: Optional['MeshSyncManager'] = None
+    manager: MeshSyncManager | None = None
 
 class AgriState:
-    module: Optional['AgriModule'] = None
+    module: AgriModule | None = None
 
 class TransportState:
-    module: Optional['TransportModule'] = None
+    module: TransportModule | None = None
 
 class ResourceState:
-    manager: Optional['ResourceManager'] = None
+    manager: ResourceManager | None = None
 
 mesh_state = MeshState()
 agri_state = AgriState()
