@@ -1,0 +1,125 @@
+{% extends "dashboard.html" %}
+{% from "components/atoms/Badge.html" import badge %}
+{% from "components/atoms/Card.html" import card %}
+
+{% block title %}Regional Dashboard - A-OS{% endblock %}
+
+{% block content %}
+<div class="aos-container">
+    <div class="aos-page-header">
+        <h1 class="aos-h1">Regional Dashboard</h1>
+        <p class="aos-text-muted">Cross-village analytics and sync monitoring</p>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="aos-grid aos-grid-cols-4 aos-gap-4 aos-mb-6">
+        <div class="aos-glass aos-p-4 aos-rounded-lg">
+            <div class="aos-text-muted aos-text-sm aos-mb-2">Total Farmers</div>
+            <div class="aos-h2 aos-text-primary">{{ summary.total_farmers }}</div>
+        </div>
+        <div class="aos-glass aos-p-4 aos-rounded-lg">
+            <div class="aos-text-muted aos-text-sm aos-mb-2">Harvests (30d)</div>
+            <div class="aos-h2 aos-text-success">{{ summary.total_harvests_30d }}</div>
+        </div>
+        <div class="aos-glass aos-p-4 aos-rounded-lg">
+            <div class="aos-text-muted aos-text-sm aos-mb-2">Total Routes</div>
+            <div class="aos-h2 aos-text-info">{{ summary.total_routes }}</div>
+        </div>
+        <div class="aos-glass aos-p-4 aos-rounded-lg">
+            <div class="aos-text-muted aos-text-sm aos-mb-2">Total Vehicles</div>
+            <div class="aos-h2 aos-text-warning">{{ summary.total_vehicles }}</div>
+        </div>
+    </div>
+
+    <!-- Harvest Aggregation -->
+    <div class="aos-mb-6">
+        <h2 class="aos-h3 aos-mb-4">Harvest Aggregation (Last 30 Days)</h2>
+        <div class="aos-glass aos-rounded-lg aos-overflow-hidden">
+            <table class="aos-table">
+                <thead>
+                    <tr>
+                        <th>Crop Type</th>
+                        <th>Total Quantity</th>
+                        <th>Farmers</th>
+                        <th>Harvests</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for harvest in harvests %}
+                    <tr>
+                        <td>
+                            <span class="aos-font-semibold">{{ harvest.crop_type }}</span>
+                        </td>
+                        <td>{{ "%.1f"|format(harvest.total_quantity) }} bags</td>
+                        <td>{{ harvest.farmer_count }}</td>
+                        <td>{{ harvest.harvest_count }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not harvests %}
+                    <tr>
+                        <td colspan="4" class="aos-text-center aos-text-muted aos-py-8">
+                            No harvest data available
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Transport Utilization -->
+    <div class="aos-mb-6">
+        <h2 class="aos-h3 aos-mb-4">Transport Utilization (Last 7 Days)</h2>
+        <div class="aos-glass aos-rounded-lg aos-overflow-hidden">
+            <table class="aos-table">
+                <thead>
+                    <tr>
+                        <th>Route</th>
+                        <th>Bookings</th>
+                        <th>Total Passengers</th>
+                        <th>Avg Passengers</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for route in transport %}
+                    <tr>
+                        <td>
+                            <span class="aos-font-semibold">{{ route.route_name }}</span>
+                        </td>
+                        <td>{{ route.booking_count }}</td>
+                        <td>{{ route.total_passengers }}</td>
+                        <td>
+                            {% if route.booking_count > 0 %}
+                            {{ "%.1f"|format(route.total_passengers / route.booking_count) }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not transport %}
+                    <tr>
+                        <td colspan="4" class="aos-text-center aos-text-muted aos-py-8">
+                            No transport data available
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Sync Status (Placeholder for Phase 9.3 completion) -->
+    <div class="aos-mb-6">
+        <h2 class="aos-h3 aos-mb-4">Village Sync Status</h2>
+        <div class="aos-glass aos-p-6 aos-rounded-lg aos-text-center">
+            <p class="aos-text-muted">
+                Village sync monitoring will be available when mesh nodes are deployed.
+            </p>
+            <p class="aos-text-sm aos-text-muted aos-mt-2">
+                This dashboard aggregates data from all connected village nodes without requiring a central cloud.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

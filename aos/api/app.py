@@ -186,6 +186,7 @@ from aos.api.routers.agri import router as agri_router
 from aos.api.routers.transport import router as transport_router
 from aos.api.routers.channels import router as channels_router
 from aos.api.routers.resource import router as resource_router
+from aos.api.routers.regional import router as regional_router
 from aos.core.security.auth import get_current_operator
 from fastapi import Depends, Request
 from fastapi.staticfiles import StaticFiles
@@ -212,6 +213,7 @@ def create_app() -> FastAPI:
     app.include_router(transport_router)
     app.include_router(channels_router)
     app.include_router(resource_router)
+    app.include_router(regional_router)
 
     @app.post("/sys/ping")
     async def sys_ping(current_user: dict = Depends(get_current_operator)) -> dict:
