@@ -32,7 +32,7 @@ class RegionalAggregator:
                 COUNT(DISTINCT farmer_id) as farmer_count,
                 COUNT(*) as harvest_count
             FROM harvests
-            WHERE recorded_at >= ?
+            WHERE created_at >= ?
             GROUP BY crop_type
             ORDER BY total_quantity DESC
         """, (since,))
@@ -89,7 +89,7 @@ class RegionalAggregator:
         # Total harvests (last 30 days)
         since_30d = int((datetime.now() - timedelta(days=30)).timestamp())
         cursor = self.db.execute(
-            "SELECT COUNT(*), SUM(quantity) FROM harvests WHERE recorded_at >= ?",
+            "SELECT COUNT(*), SUM(quantity) FROM harvests WHERE created_at >= ?",
             (since_30d,)
         )
         row = cursor.fetchone()
