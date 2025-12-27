@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from aos.bus.dispatcher import EventDispatcher
     from aos.modules.agri import AgriModule
     from aos.modules.transport import TransportModule
+    from aos.modules.community import CommunityModule
 
 logger = logging.getLogger(__name__)
 
@@ -27,11 +28,13 @@ class TelegramAdapter:
         self,
         event_bus: EventDispatcher,
         agri_module: Optional[AgriModule] = None,
-        transport_module: Optional[TransportModule] = None
+        transport_module: Optional[TransportModule] = None,
+        community_module: Optional[CommunityModule] = None
     ):
         self.event_bus = event_bus
         self.agri_module = agri_module
         self.transport_module = transport_module
+        self.community_module = community_module
         self.bot_token = os.getenv('TELEGRAM_BOT_TOKEN', '')
         self.api_url = f"https://api.telegram.org/bot{self.bot_token}"
         

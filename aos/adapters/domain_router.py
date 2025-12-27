@@ -7,6 +7,7 @@ from typing import Dict, Optional, List
 from aos.adapters.domains.base import BaseDomain
 from aos.adapters.domains.agri_domain import AgriDomain
 from aos.adapters.domains.transport_domain import TransportDomain
+from aos.adapters.domains.community_domain import CommunityDomain
 from aos.core.users import UniversalUserService
 
 logger = logging.getLogger(__name__)
@@ -21,8 +22,8 @@ class DomainRouter:
         # Register domains
         self.domains: Dict[str, BaseDomain] = {
             "agriculture": AgriDomain(adapter),
-            "transport": TransportDomain(adapter)
-            # Add future domains here
+            "transport": TransportDomain(adapter),
+            "community": CommunityDomain(adapter)
         }
     
     def route_command(self, chat_id: int, command: str, args: List[str]) -> bool:
