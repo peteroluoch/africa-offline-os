@@ -114,6 +114,28 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     mgr = MigrationManager(_db_conn)
     mgr.apply_migrations(MIGRATIONS)
 
+    # Power-safe Uptime Merge
+    try:
+        cursor = _db_conn.execute("SELECT value FROM node_config WHERE key = 'session_uptime'")
+        row = cursor.fetchone()
+        if row:
+            session_uptime = float(row[0])
+            _db_conn.execute(
+                "UPDATE node_config SET value = CAST(value AS REAL) + ? WHERE key = 'accumulated_uptime'",
+                (session_uptime,)
+            )
+            # If accumulated doesn't exist, insert it
+            if _db_conn.total_changes == 0:
+                 _db_conn.execute(
+                    "INSERT OR IGNORE INTO node_config (key, value) VALUES ('accumulated_uptime', ?)",
+                    (str(session_uptime),)
+                )
+            
+            _db_conn.execute("DELETE FROM node_config WHERE key = 'session_uptime'")
+            _db_conn.commit()
+    except Exception as e:
+        print(f"[A-OS] Warning: Uptime merge failed: {e}")
+
     # Initialize Event Bus
     _event_store = EventStore(settings.sqlite_path)
     await _event_store.initialize()
@@ -148,7 +170,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     # Initialize Resource Manager (Phase 8) - BEFORE modules so they can use it
     from aos.core.resource import ResourceManager
-    _resource_manager = ResourceManager(event_bus=_event_dispatcher, check_interval=30)
+    _resource_manager = ResourceManager(
+        event_bus=_event_dispatcher, 
+        db_conn=_db_conn, 
+        check_interval=settings.resource_check_interval
+    )
     await _resource_manager.start()
 
     # Initialize Modules with ResourceManager (Phase 5/6/7) - Power-aware
@@ -234,8 +260,11 @@ def create_app() -> FastAPI:
     @app.get("/health")
     def health() -> dict:
         """Comprehensive health check (Public)."""
+        from aos.core.health import get_total_uptime
+        
         disk_free = get_disk_space()
-        uptime = get_uptime(_boot_time)
+        session_uptime = get_uptime(_boot_time)
+        total_uptime = get_total_uptime(_db_conn, session_uptime)
         db_status = check_db_health(_db_conn)
 
         # Determine kernel metrics
@@ -247,16 +276,20 @@ def create_app() -> FastAPI:
         status = HealthStatus(
             status="ok",
             disk_free_mb=disk_free,
-            uptime_seconds=uptime,
+            uptime_seconds=total_uptime,
             db_status=db_status,
             events_processed=events_processed
         )
 
         return {
             "status": status.status,
+            "db_status": db_status,
+            "disk_free_mb": disk_free,
+            "uptime_seconds": total_uptime,
             "metrics": {
                 "disk_mb": status.disk_free_mb,
                 "uptime_s": status.uptime_seconds,
+                "session_uptime_s": session_uptime,
                 "mesh_peers_online": mesh_peers_online
             }
         }

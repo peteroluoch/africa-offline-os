@@ -7,6 +7,9 @@ Following TDD: These tests define the enhanced /health endpoint requirements.
 from __future__ import annotations
 
 import pytest
+from unittest.mock import patch
+import asyncio
+import httpx
 from fastapi.testclient import TestClient
 
 from aos.api.app import create_app, reset_globals
@@ -58,9 +61,49 @@ class TestHealthUptimeTracking:
             assert isinstance(data["uptime_seconds"], (int, float))
             assert data["uptime_seconds"] >= 0
 
-    def test_uptime_persists_across_restarts(self) -> None:
+    async def test_uptime_persists_across_restarts(self, tmp_path) -> None:
         """Uptime must be persisted in DB (power-safe)."""
-        pass
+        from aos.db.engine import connect
+        import os
+        
+        db_path = tmp_path / "uptime.db"
+        env = {
+            "AOS_SQLITE_PATH": str(db_path),
+            "AOS_RESOURCE_CHECK_INTERVAL": "0"
+        }
+        with patch.dict("os.environ", env):
+            # 1. First run
+            app = create_app()
+            async with app.router.lifespan_context(app):
+                 # Ensure we have some session uptime
+                 await asyncio.sleep(0.8)
+            
+            # Verify file exists
+            assert os.path.exists(db_path), f"DB file was not created at {db_path}!"
+            
+            # 2. Verify it's in DB
+            conn = connect(str(db_path))
+            try:
+                # Check if table exists
+                cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='node_config'")
+                assert cursor.fetchone() is not None, "node_config table missing!"
+                
+                cursor = conn.execute("SELECT value FROM node_config WHERE key = 'session_uptime'")
+                row = cursor.fetchone()
+                assert row is not None, "session_uptime not persisted in node_config"
+                persisted_uptime = float(row[0])
+                assert persisted_uptime > 0
+            finally:
+                conn.close()
+
+            # 3. Second run (restart)
+            app2 = create_app()
+            async with app2.router.lifespan_context(app2):
+                async with httpx.AsyncClient(app=app2, base_url="http://test") as client:
+                    resp = await client.get("/health")
+                    data = resp.json()
+                    uptime = data["metrics"]["uptime_s"]
+                    assert uptime >= persisted_uptime
 
 
 class TestHealthDatabaseStatus:

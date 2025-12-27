@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from aos.bus.events import Event
+from aos.core.health import get_uptime
 from aos.core.resource.monitor import ResourceMonitor, ResourceSnapshot
 from aos.core.resource.profiles import PowerProfile, PowerProfileManager
 from aos.core.resource.scheduler import ResourceAwareScheduler, Task, TaskPriority
@@ -28,17 +29,20 @@ class ResourceManager:
     def __init__(
         self,
         event_bus: EventDispatcher | None = None,
+        db_conn: sqlite3.Connection | None = None,
         check_interval: int = 30
     ):
         self.monitor = ResourceMonitor()
         self.profile_manager = PowerProfileManager()
         self.scheduler = ResourceAwareScheduler()
         self.event_bus = event_bus
+        self.db_conn = db_conn
         self.check_interval = check_interval
 
         self._running = False
         self._background_task: asyncio.Task | None = None
         self._last_snapshot: ResourceSnapshot | None = None
+        self._boot_time = datetime.now(UTC).timestamp()
 
     async def start(self):
         """Start the resource manager background loop."""
@@ -99,6 +103,27 @@ class ResourceManager:
 
         # Execute eligible tasks
         await self._execute_tasks()
+
+        # Persist session uptime periodically (power-safe)
+        if self.db_conn:
+            try:
+                # We store session uptime. On boot, it's added to a permanent record.
+                # Actually, a better way: every interval, we ADD the interval to the persisted total.
+                # Wait, get_uptime retrieves current session uptime.
+                # Let's just update a "session_uptime" key, or better, increment "accumulated_uptime".
+                # But to be safe against double counting, we'll store "last_session_uptime" 
+                # and only add the delta.
+                
+                # Simplified for A-OS: just store full session.
+                # On next boot, we'll add this to 'accumulated_uptime' and reset session_uptime to 0.
+                uptime = get_uptime(self._boot_time)
+                self.db_conn.execute(
+                    "INSERT OR REPLACE INTO node_config (key, value, updated_at) VALUES ('session_uptime', ?, CURRENT_TIMESTAMP)",
+                    (str(uptime),)
+                )
+                self.db_conn.commit()
+            except Exception as e:
+                logger.error(f"Failed to persist uptime: {e}")
 
     async def _execute_tasks(self):
         """Execute tasks that are eligible given current power profile."""

@@ -47,5 +47,8 @@ class Settings(BaseSettings):
     # Security configuration
     jwt_issuer: str = "aos"
 
+    # Resource configuration
+    resource_check_interval: int = 30
+
 
 settings = Settings()

@@ -53,17 +53,37 @@ def get_disk_space(path: str = ".") -> float:
 
 def get_uptime(start_time: float | None = None) -> float:
     """
-    Get system uptime in seconds.
-    
-    Args:
-        start_time: Boot timestamp (if None, returns 0)
-        
-    Returns:
-        Uptime in seconds
+    Get system session uptime in seconds.
     """
     if start_time is None:
         return 0.0
     return time.time() - start_time
+
+
+def get_total_uptime(conn: sqlite3.Connection | None, current_session_uptime: float) -> float:
+    """
+    Get total life-time uptime combining:
+    1. accumulated_uptime (all previous finished sessions)
+    2. session_uptime (from a previous session that might have crashed)
+    3. current_session_uptime (current session in-memory)
+    """
+    if conn is None:
+        return current_session_uptime
+
+    try:
+        # Load accumulated
+        cursor = conn.execute("SELECT value FROM node_config WHERE key = 'accumulated_uptime'")
+        row = cursor.fetchone()
+        accumulated = float(row[0]) if row else 0.0
+
+        # Load "buffered" session from a previous run (in case it didn't merge)
+        cursor = conn.execute("SELECT value FROM node_config WHERE key = 'session_uptime'")
+        row = cursor.fetchone()
+        buffered = float(row[0]) if row else 0.0
+
+        return accumulated + buffered + current_session_uptime
+    except (sqlite3.Error, ValueError):
+        return current_session_uptime
 
 
 def check_db_health(conn: sqlite3.Connection | None) -> Literal["healthy", "degraded", "unavailable"]:

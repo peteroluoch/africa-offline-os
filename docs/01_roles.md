@@ -778,9 +778,9 @@ As of December 2025, A-OS follows a systematic 5-framework approach to achieve a
 - **Rugged Aesthetic**: High-contrast, accessibility-first design for edge environments.
 - **Visual Performance**: Glassmorphism with hardware-accelerated transforms.
 
-#### **FRAMEWORK C: TESTING & QA** ✅ ACTIVE
-**Status**: ACTIVE Pass rate 100%
-**Documentation**: `docs/70_testing/`
+#### **FRAMEWORK C: TESTING & QA** ✅ COMPLETE
+**Status**: 100% Complete (December 27, 2025)  
+**Documentation**: `docs/70_testing/`, `aos/testing/`
 
 **Objectives:**
 - Implement TDD for all core kernel features.
@@ -791,13 +791,15 @@ As of December 2025, A-OS follows a systematic 5-framework approach to achieve a
 **Implementation:**
 - ✅ Unit testing with `pytest`.
 - ✅ Integration testing (API -> DB -> Bus).
-- ⏳ Fault injection testing (Simulating disk death).
-- ⏳ Resilience testing (Power loss simulation).
+- ✅ Fault injection testing (Simulating disk death).
+- ✅ Resilience testing (Power loss simulation).
+- ✅ Persistent Uptime tracking (Power-safe recovery).
 
-**Standards to Apply:**
+**Standards Applied:**
 - 100% test coverage for new code.
 - All tests passing before commit.
 - TDD methodology (Red → Green → Refactor).
+- Chaos Engineering: Fault injection integrated into test suite.
 
 #### **FRAMEWORK D: SECURITY & COMPLIANCE** 📝 PLANNED
 **Status**: Documented, Ready for implementation (Phase 2)

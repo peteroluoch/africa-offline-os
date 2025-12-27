@@ -7,7 +7,10 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from aos.core.users import UniversalUserService
 from aos.core.security.auth import get_current_operator
+from aos.api.app import get_db
 import logging
+import sqlite3
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -15,15 +18,16 @@ router = APIRouter(prefix="/dashboard", tags=["admin"])
 templates = Jinja2Templates(directory="aos/api/templates")
 
 @router.get("/users", response_class=HTMLResponse)
-async def users_list(request: Request, current_user: dict = Depends(get_current_operator)):
+async def users_list(
+    request: Request, 
+    db: sqlite3.Connection = Depends(get_db),
+    current_user: dict = Depends(get_current_operator)
+):
     """Display all Telegram users."""
     user_service = UniversalUserService()
     
-    # Get all users from database
-    import sqlite3
-    conn = sqlite3.connect("aos.db")
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
+    db.row_factory = sqlite3.Row
+    cursor = db.cursor()
     
     cursor.execute("""
         SELECT * FROM telegram_users 
@@ -31,7 +35,6 @@ async def users_list(request: Request, current_user: dict = Depends(get_current_
     """)
     
     rows = cursor.fetchall()
-    conn.close()
     
     # Convert to dicts and parse roles
     import json
@@ -78,7 +81,8 @@ async def user_detail(request: Request, chat_id: int, current_user: dict = Depen
 async def update_user_roles(
     request: Request, 
     chat_id: int, 
-    current_user: dict = Depends(get_current_operator)
+    current_user: dict = Depends(get_current_operator),
+    db: sqlite3.Connection = Depends(get_db)
 ):
     """Update user roles."""
     form_data = await request.form()
@@ -91,10 +95,7 @@ async def update_user_roles(
         raise HTTPException(status_code=404, detail="User not found")
     
     # Update roles in database
-    import sqlite3
-    import json
-    conn = sqlite3.connect("aos.db")
-    cursor = conn.cursor()
+    cursor = db.cursor()
     
     cursor.execute("""
         UPDATE telegram_users 
@@ -102,8 +103,7 @@ async def update_user_roles(
         WHERE chat_id = ?
     """, (json.dumps(selected_roles), chat_id))
     
-    conn.commit()
-    conn.close()
+    db.commit()
     
     logger.info(f"Admin {current_user['username']} updated roles for user {chat_id}: {selected_roles}")
     

@@ -238,3 +238,34 @@ This document serves as the persistent memory for the AI Architect. It records l
 - Consider expanding fault injection to simulate disk/network failures for deeper resilience testing.
 
 ---
+
+## 📅 Framework C (Testing & QA) — Full Implementation (Dec 27, 2025)
+
+### Lessons Learned - Resilience engineering
+1. **Power-Safe Uptime Persistence**:
+   - **Observation**: Abrupt power loss can lead to gaps in system telemetry.
+   - **Lesson**: Periodic persistence of "buffered" session state, combined with a startup "merge" protocol, ensures the system recovers its temporal state accurately.
+   - **Protocol**: Mandate session-persistent buffers for all critical telemetry.
+
+2. **Fault Injection Strategy**:
+   - **Observation**: Testing for `sqlite3.OperationalError` (disk death) requires careful mocking of the connection object, but real connection termination (power loss) is best tested by actually closing the handle.
+   - **Lesson**: Use `unittest.mock` for software-level faults and direct object manipulation for environment-level faults.
+   - **Pattern**: `simulate_disk_death` via `MagicMock`, `simulate_power_loss` via `conn.close()`.
+
+3. **Encoding Hazards in Windows**:
+   - **Observation**: PowerShell redirection defaults to `UTF-16LE`, which breaks Jinja2's `UTF-8` parser.
+   - **Lesson**: Always specify `-Encoding utf8` when writing files from PowerShell for a cross-platform kernel.
+
+### Progress Summary
+- **Resilience**: Verified kernel robustness against disk failure and power loss. ✅
+- **Telemetry**: Persistent uptime tracking implemented. ✅
+- **Automation**: Integrated 10+ resilience tests into the core suite. ✅
+- **Navigation**: Hierarchical sidebar with search and Cmd+K support deployed. ✅
+
+### **Status Update: 2025-12-27**
+- **Achievement**: Framework C (Testing & QA) 100% COMPLETE.
+- **Milestone**: 3 of 5 Enterprise Frameworks now COMPLETE (A, B, C).
+- **Next Directive**: Framework D (Security & Compliance hardening).
+
+---
+*End of Entry - Framework C Full Sign-off*
