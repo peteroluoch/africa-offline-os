@@ -1,0 +1,93 @@
+{% extends "dashboard.html" %}
+
+{% block dashboard_content %}
+<div class="aos-stack-lg">
+    <header class="aos-stack-sm">
+        <h1 class="aos-title-lg">Community-Pulse</h1>
+        <p class="aos-text-secondary">trusted social distribution networks</p>
+    </header>
+
+    <div class="aos-grid aos-grid-3">
+        <div class="aos-card aos-stack-sm">
+            <span class="aos-text-secondary aos-text-xs uppercase tracking-wider">Active Groups</span>
+            <span class="aos-title-md">{{ groups|length }}</span>
+        </div>
+        <div class="aos-card aos-stack-sm">
+            <span class="aos-text-secondary aos-text-xs uppercase tracking-wider">Broadcasts (30d)</span>
+            <span class="aos-title-md">{{ broadcasts_count|default(0) }}</span>
+        </div>
+        <div class="aos-card aos-stack-sm">
+            <span class="aos-text-secondary aos-text-xs uppercase tracking-wider">Inquiry Hits</span>
+            <span class="aos-title-md">{{ inquiry_hits|default(0) }}</span>
+        </div>
+    </div>
+
+    <section class="aos-stack-md">
+        <div class="aos-flex aos-flex-between aos-flex-center">
+            <h2 class="aos-title-md">Registered Groups</h2>
+            <button class="aos-button aos-button-primary" hx-get="/community/register" hx-target="#modal-content"
+                onclick="openModal()">
+                Register Group
+            </button>
+        </div>
+
+        <div class="aos-card p-0 overflow-hidden">
+            <table class="aos-table">
+                <thead>
+                    <tr>
+                        <th>Group Name</th>
+                        <th>Type</th>
+                        <th>Trust Level</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for group in groups %}
+                    <tr>
+                        <td class="aos-text-bold">{{ group.name }}</td>
+                        <td><span class="aos-badge aos-badge-info">{{ group.group_type }}</span></td>
+                        <td>
+                            <span
+                                class="aos-badge {% if group.trust_level == 'verified' %}aos-badge-success{% else %}aos-badge-warning{% endif %}">
+                                {{ group.trust_level }}
+                            </span>
+                        </td>
+                        <td class="aos-text-sm aos-text-secondary">{{ group.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <div class="aos-flex aos-gap-sm">
+                                <button class="aos-button aos-button-ghost aos-button-sm">View</button>
+                                <button
+                                    class="aos-button aos-button-ghost aos-button-sm aos-text-danger">Review</button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="aos-text-center py-8 aos-text-secondary italic">
+                            No community groups registered on this node.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<!-- Modal container for registration form -->
+<div id="modal-container" class="aos-modal-overlay hidden">
+    <div id="modal-content" class="aos-modal-content aos-card glassmorphism aos-stack-md">
+        <!-- Loaded via HTMX -->
+    </div>
+</div>
+
+<script>
+    function openModal() {
+        document.getElementById('modal-container').classList.remove('hidden');
+    }
+    function closeModal() {
+        document.getElementById('modal-container').classList.add('hidden');
+    }
+</script>
+{% endblock %}

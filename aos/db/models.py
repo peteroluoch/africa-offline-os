@@ -62,3 +62,45 @@ class HarvestDTO(BaseModel):
     harvest_date: datetime
     status: str = "stored"
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class CommunityGroupDTO(BaseModel):
+    """Represents a trusted local group."""
+    id: str
+    name: str
+    description: str | None = None
+    group_type: str | None = None
+    location: str | None = None
+    admin_id: str | None = None
+    trust_level: str = "local"
+    preferred_channels: str = "ussd,sms"
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class CommunityEventDTO(BaseModel):
+    """Represents a scheduled community event."""
+    id: str
+    group_id: str
+    title: str
+    event_type: str | None = None
+    start_time: datetime
+    end_time: datetime | None = None
+    recurrence: str | None = None
+    visibility: str = "public"
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class CommunityAnnouncementDTO(BaseModel):
+    """Represents a one-way announcement."""
+    id: str
+    group_id: str
+    message: str
+    urgency: str = "normal"
+    expires_at: datetime | None = None
+    target_audience: str = "public"
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class CommunityInquiryDTO(BaseModel):
+    """Represents a cached inquiry response."""
+    id: str
+    group_id: str
+    question_pattern: str
+    cached_response: str
+    last_updated: datetime = Field(default_factory=datetime.utcnow)

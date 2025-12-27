@@ -78,7 +78,10 @@ class BaseRepository(Generic[T]):
         self.conn.commit()
         return cursor.rowcount > 0
 
-from aos.db.models import CropDTO, FarmerDTO, HarvestDTO, NodeDTO, OperatorDTO
+from aos.db.models import (
+    OperatorDTO, NodeDTO, FarmerDTO, HarvestDTO, CropDTO,
+    CommunityGroupDTO, CommunityEventDTO, CommunityAnnouncementDTO, CommunityInquiryDTO
+)
 
 
 class NodeRepository(BaseRepository[NodeDTO]):
@@ -168,4 +171,48 @@ class HarvestRepository(BaseRepository[HarvestDTO]):
             harvest.status,
             harvest.created_at
         ))
+        self.conn.commit()
+
+class CommunityGroupRepository(BaseRepository[CommunityGroupDTO]):
+    def __init__(self, connection: sqlite3.Connection):
+        super().__init__(connection, CommunityGroupDTO, "community_groups")
+
+    def save(self, group: CommunityGroupDTO) -> None:
+        self.conn.execute("""
+            INSERT OR REPLACE INTO community_groups (id, name, description, group_type, location, admin_id, trust_level, preferred_channels, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (group.id, group.name, group.description, group.group_type, group.location, group.admin_id, group.trust_level, group.preferred_channels, group.created_at))
+        self.conn.commit()
+
+class CommunityEventRepository(BaseRepository[CommunityEventDTO]):
+    def __init__(self, connection: sqlite3.Connection):
+        super().__init__(connection, CommunityEventDTO, "community_events")
+
+    def save(self, event: CommunityEventDTO) -> None:
+        self.conn.execute("""
+            INSERT OR REPLACE INTO community_events (id, group_id, title, event_type, start_time, end_time, recurrence, visibility, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (event.id, event.group_id, event.title, event.event_type, event.start_time, event.end_time, event.recurrence, event.visibility, event.created_at))
+        self.conn.commit()
+
+class CommunityAnnouncementRepository(BaseRepository[CommunityAnnouncementDTO]):
+    def __init__(self, connection: sqlite3.Connection):
+        super().__init__(connection, CommunityAnnouncementDTO, "community_announcements")
+
+    def save(self, announcement: CommunityAnnouncementDTO) -> None:
+        self.conn.execute("""
+            INSERT OR REPLACE INTO community_announcements (id, group_id, message, urgency, expires_at, target_audience, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (announcement.id, announcement.group_id, announcement.message, announcement.urgency, announcement.expires_at, announcement.target_audience, announcement.created_at))
+        self.conn.commit()
+
+class CommunityInquiryRepository(BaseRepository[CommunityInquiryDTO]):
+    def __init__(self, connection: sqlite3.Connection):
+        super().__init__(connection, CommunityInquiryDTO, "community_inquiry_cache")
+
+    def save(self, inquiry: CommunityInquiryDTO) -> None:
+        self.conn.execute("""
+            INSERT OR REPLACE INTO community_inquiry_cache (id, group_id, question_pattern, cached_response, last_updated)
+            VALUES (?, ?, ?, ?, ?)
+        """, (inquiry.id, inquiry.group_id, inquiry.question_pattern, inquiry.cached_response, inquiry.last_updated))
         self.conn.commit()

@@ -1,13 +1,13 @@
 <form hx-post="/transport/vehicle" hx-swap="outerHTML" class="space-y-6">
     <div>
-        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Vehicle Plate
+        <label class="block text-xs font-bold aos-text-label uppercase tracking-widest mb-2">Vehicle Plate
             Number</label>
         <input type="text" name="plate_number" placeholder="e.g. KCA 123X" required
             class="w-full px-4 py-3 bg-slate-950/50 border border-slate-800 rounded-xl text-slate-200 focus:border-blue-500 focus:outline-none transition-colors">
     </div>
 
     <div>
-        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Vehicle Type</label>
+        <label class="block text-xs font-bold aos-text-label uppercase tracking-widest mb-2">Vehicle Type</label>
         <select name="vehicle_type" required
             class="w-full px-4 py-3 bg-slate-950/50 border border-slate-800 rounded-xl text-slate-200 focus:border-blue-500 focus:outline-none transition-colors">
             <option value="">Select Type</option>
@@ -18,14 +18,14 @@
     </div>
 
     <div>
-        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Capacity
+        <label class="block text-xs font-bold aos-text-label uppercase tracking-widest mb-2">Capacity
             (Passengers)</label>
         <input type="number" name="capacity" placeholder="e.g. 14" required min="1" max="100"
             class="w-full px-4 py-3 bg-slate-950/50 border border-slate-800 rounded-xl text-slate-200 focus:border-blue-500 focus:outline-none transition-colors">
     </div>
 
     <div>
-        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Assigned Route
+        <label class="block text-xs font-bold aos-text-label uppercase tracking-widest mb-2">Assigned Route
             (Optional)</label>
         <select name="current_route_id"
             class="w-full px-4 py-3 bg-slate-950/50 border border-slate-800 rounded-xl text-slate-200 focus:border-blue-500 focus:outline-none transition-colors">

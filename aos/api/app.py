@@ -179,6 +179,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     from aos.modules.agri import AgriModule
     from aos.modules.reference import ReferenceModule
     from aos.modules.transport import TransportModule
+    from aos.modules.community import CommunityModule
 
     ref_mod = ReferenceModule(_event_dispatcher)
     await ref_mod.initialize()
@@ -199,11 +200,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     _transport_module = TransportModule(_event_dispatcher, _db_conn, _resource_manager)
     await _transport_module.initialize()
 
+    _community_module = CommunityModule(_event_dispatcher, _db_conn)
+    # CommunityModule does not have an async initialize() yet, but we'll follow pattern
+
     # Store for global access if needed
-    from aos.api.state import agri_state, resource_state, transport_state
+    from aos.api.state import agri_state, resource_state, transport_state, community_state
     agri_state.module = _agri_module
     transport_state.module = _transport_module
     resource_state.manager = _resource_manager
+    community_state.module = _community_module
 
     print(f"[A-OS] Started - DB: {settings.sqlite_path}")
 
@@ -228,6 +233,7 @@ from fastapi.templating import Jinja2Templates
 
 from aos.api.routers.agri import router as agri_router
 from aos.api.routers.auth import router as auth_router
+from aos.api.routers.community import router as community_router
 from aos.api.routers.channels import router as channels_router
 from aos.api.routers.mesh import router as mesh_router
 from aos.api.routers.regional import router as regional_router
@@ -257,6 +263,7 @@ def create_app() -> FastAPI:
     app.include_router(mesh_router)
     app.include_router(agri_router)
     app.include_router(transport_router)
+    app.include_router(community_router)
     app.include_router(channels_router)
     app.include_router(resource_router)
     app.include_router(regional_router)

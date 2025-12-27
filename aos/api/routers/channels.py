@@ -12,6 +12,8 @@ from aos.core.channels.base import ChannelResponse
 from aos.core.security.auth import get_current_operator
 from aos.modules.agri_sms import AgriSMSHandler
 from aos.modules.agri_ussd import AgriUSSDHandler
+from aos.modules.community_ussd import CommunityUSSDHandler
+from aos.modules.transport_sms import TransportSMSHandler
 from aos.modules.transport_ussd import TransportUSSDHandler
 
 router = APIRouter(prefix="/channels", tags=["channels"])
@@ -27,19 +29,23 @@ _sms_adapter = SMSAdapter(_sms_gateway)
 # Multi-Vehicle Router (Internal Mock)
 class MultiVehicleUSSDHandler:
     def __init__(self):
-        from aos.api.state import agri_state
+        from aos.api.state import agri_state, community_state
         self.agri = AgriUSSDHandler(agri_state.module)
+        self.community = CommunityUSSDHandler(community_state.module)
         # Note: transport_state.module might be None during router init,
         # so we'll init handler inside process if needed or use lazy loading
         self.transport = None
 
     async def process(self, session, user_input):
-        from aos.api.state import agri_state, transport_state
+        from aos.api.state import agri_state, transport_state, community_state
         
         # Ensure handlers are refreshed with modules if they were None at init
         if not self.agri.agri and agri_state.module:
             self.agri.agri = agri_state.module
             
+        if not self.community.community and community_state.module:
+            self.community.community = community_state.module
+
         if not self.transport and transport_state.module:
             self.transport = TransportUSSDHandler(transport_state.module)
 
@@ -48,7 +54,7 @@ class MultiVehicleUSSDHandler:
 
         if not vehicle:
             if not user_input:
-                return ChannelResponse("[A-OS Central]\n1. Agri-Lighthouse\n2. Transport-Mobile", True)
+                return ChannelResponse("[A-OS Central]\n1. Agri-Lighthouse\n2. Transport-Mobile\n3. Community-Pulse", True)
             if user_input == "1":
                 session.data["vehicle"] = "agri"
                 session.state = "START"
@@ -59,6 +65,10 @@ class MultiVehicleUSSDHandler:
                 if self.transport:
                     return await self.transport.process(session, "")
                 return ChannelResponse("Transport module starting...", False)
+            if user_input == "3":
+                session.data["vehicle"] = "community"
+                session.state = "START"
+                return await self.community.process(session, "")
             return ChannelResponse("Invalid selection.", False)
 
         if vehicle == "agri":
@@ -66,6 +76,8 @@ class MultiVehicleUSSDHandler:
         if vehicle == "transport":
             if self.transport:
                 return await self.transport.process(session, user_input)
+        if vehicle == "community":
+            return await self.community.process(session, user_input)
 
         return ChannelResponse("Error: Vehicle not found.", False)
 

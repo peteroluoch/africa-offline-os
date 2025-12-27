@@ -1,0 +1,33 @@
+<div class="aos-flex aos-flex-between aos-flex-center">
+    <h3 class="aos-title-sm">Register Community Group</h3>
+    <button class="aos-button aos-button-ghost aos-button-sm" onclick="closeModal()">✕</button>
+</div>
+
+<form action="/community/register" method="POST" class="aos-stack-md">
+    <div class="aos-stack-xs">
+        <label for="name" class="aos-text-secondary aos-text-xs uppercase">Group Name</label>
+        <input type="text" id="name" name="name" class="aos-input" placeholder="e.g. St Mark's Church" required>
+    </div>
+
+    <div class="aos-stack-xs">
+        <label for="group_type" class="aos-text-secondary aos-text-xs uppercase">Group Type</label>
+        <select id="group_type" name="group_type" class="aos-input">
+            <option value="church">Church</option>
+            <option value="mosque">Mosque</option>
+            <option value="committee">Village Committee</option>
+            <option value="sacco">SACCO</option>
+            <option value="other">Other</option>
+        </select>
+    </div>
+
+    <div class="aos-stack-xs">
+        <label for="description" class="aos-text-secondary aos-text-xs uppercase">Description</label>
+        <textarea id="description" name="description" class="aos-input" rows="3"
+            placeholder="Brief purpose or location..."></textarea>
+    </div>
+
+    <div class="aos-flex aos-flex-end aos-gap-sm pt-4">
+        <button type="button" class="aos-button aos-button-secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="aos-button aos-button-primary">Register Group</button>
+    </div>
+</form>
