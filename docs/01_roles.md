@@ -709,135 +709,29 @@ Integration Test:
 
 ---
 
-## 🏢 FAANG 5-FRAMEWORK SYSTEM - ENTERPRISE-GRADE STANDARDS (A-OS EDITION)
+## 🏢 FAANG 5-FRAMEWORK SYSTEM - ENTERPRISE-GRADE STANDARDS
 
-As of December 2025, A-OS follows a systematic 5-framework approach to achieve and maintain FAANG-grade quality across the offline-first substrate.
+A-OS follows a systematic 5-framework approach to maintain FAANG-grade quality. Detailed implementation plans, checklists, and verification metrics have been moved to their respective subfolders for clarity.
 
-#### **FRAMEWORK A: PERFORMANCE OPTIMIZATION** ✅ COMPLETE
-**Status**: 100% Complete (December 2025)  
-**Documentation**: `docs/04_performance/`
+### [Framework A: Performance Optimization](file:///C:/Users/LENOVO/Documents/africa-offline-os/docs/frameworks/framework_a/README.md) ✅ COMPLETE
+- **Goal**: 100% data integrity during power loss; 0ms loop blockage.
+- **Key Metric**: Kernel RAM < 20MB, Boot Time < 500ms.
 
-**Objectives:**
-- Optimize kernel boot times and runtime memory footprint.
-- Implement lazy imports and optimized database connection pooling.
-- Establish 3-layer caching architecture (Memory + SQLite + Local Persistence).
-- Set and enforce storage and RAM performance budgets.
+### [Framework B: Code Quality & Design System](file:///C:/Users/LENOVO/Documents/africa-offline-os/docs/frameworks/framework_b/README.md) ✅ COMPLETE
+- **Goal**: Zero hardcoded UI values; 100% design token compliance.
+- **Key Item**: `/sys/gallery` Design System Registry.
 
-**Implementation:**
-- **Phase 1**: Lazy module loading (Reduced boot time by 300ms, saved 15MB RAM).
-- **Phase 2**: SQLite WAL mode optimization (3x write throughput improvement).
-- **Phase 3**: HTMX partial optimization (Minimized payload sizes for edge nodes).
-- **Phase 4**: Blocking I/O removal from main event loop (0% loop blockage).
-- **Phase 5**: Resource budgets with automated boot-speed profiling.
+### [Framework C: Testing & QA](file:///C:/Users/LENOVO/Documents/africa-offline-os/docs/frameworks/framework_c/README.md) ✅ COMPLETE
+- **Goal**: 100% test coverage for critical kernel logic; Fault Injection.
+- **Key Item**: `pytest --cov=aos` integration gate.
 
-**Key Deliverables:**
-- ✅ `aos.core.config.Settings` - Performance-tuned kernel configurations
-- ✅ `aos.db.engine` - WAL mode and local connection pooling
-- ✅ `HTMX Fragment` system - Optimized partial edge rendering
-- ✅ `withPerformanceBudget` helper - Decorator for boot-time enforcement
-- ✅ 3-layer caching system (Async Cache + SQLite KV + Persistent Journal)
+### [Framework D: Security & Compliance](file:///C:/Users/LENOVO/Documents/africa-offline-os/docs/frameworks/framework_d/README.md) ✅ COMPLETE
+- **Goal**: Defense in Depth; Data-at-rest encryption (ChaCha20).
+- **Key Item**: Hierarchical RBAC and Node-Identity (Ed25519).
 
-**Performance Metrics Achieved:**
-- Kernel RAM: 45MB → 18MB (-60%, 27MB reduction)
-- Boot Time: 1.25s → 0.42s (-0.83s, 66% improvement)
-- SQLite Throughput: 500 ops/s → 1850 ops/s (3.7x faster)
-- Query Latency: 45ms → 14ms average (69% faster)
-
-**Standards Applied:**
-- Boot Time Budget: < 500ms
-- Persistent Core RAM Budget: < 20MB
-- Loop Blockage Limit: 0ms
-- UI Payload Budget: < 50KB for local fragments
-
-#### **FRAMEWORK B: CODE QUALITY & DESIGN SYSTEM** ✅ COMPLETE
-**Status**: 100% Complete (December 25, 2025)
-**Documentation**: `aos/ui/tokens.json`, `aos/api/templates/components/`
-
-**Objectives:**
-- Eliminate ALL hardcoded CSS values (colors, spacing, typography).
-- Establish single source of truth via `aos/ui/tokens.json` and `bridge.py`.
-- Implement Atomic Design Registry (Atoms & Molecules) via Jinja2 macros.
-- Mandatory Storybook-equivalent verification via `/sys/gallery`.
-
-**Implementation:**
-- **Phase 1**: Tokenization Foundation (`tokens.json` + `bridge.py`).
-- **Phase 2**: Atomic Registry (`aos/api/templates/components/atoms/` - EliteButton, Badge, Card).
-- **Phase 3**: Molecular Composition (`aos/api/templates/components/molecules/` - FormField, DataCard, NodeStatus).
-- **Phase 4**: Component Gallery established at `/sys/gallery` for FAANG-grade audit.
-- **Phase 5**: 100% Template Refactoring (Login & Dashboard).
-
-**Key Deliverables:**
-- ✅ `aos/ui/tokens.json` - Professional design tokens (AI Suggestion tier).
-- ✅ `aos/ui/bridge.py` - Token-to-CSS/Python bridge.
-- ✅ `EliteButton`, `Badge`, `Card`, `FormField`, `DataCard`, `NodeStatus` - Core registry.
-- ✅ `/sys/gallery` - Design System Verification Suite.
-
-**Standards Applied:**
-- **Zero Hardcoded Values**: Mandatory use of `var(--aos-*)`.
-- **Atomic Hierarchy**: Strict Atoms → Molecules → Organisms flow.
-- **Rugged Aesthetic**: High-contrast, accessibility-first design for edge environments.
-- **Visual Performance**: Glassmorphism with hardware-accelerated transforms.
-
-#### **FRAMEWORK C: TESTING & QA** ✅ COMPLETE
-**Status**: 100% Complete (December 27, 2025)  
-**Documentation**: `docs/70_testing/`, `aos/testing/`
-
-**Objectives:**
-- Implement TDD for all core kernel features.
-- Achieve 100% test coverage for `aos/core`.
-- Establish automated testing pipeline with Fault Injection.
-- Ensure zero-bug development through strict verification.
-
-**Implementation:**
-- ✅ Unit testing with `pytest`.
-- ✅ Integration testing (API -> DB -> Bus).
-- ✅ Fault injection testing (Simulating disk death).
-- ✅ Resilience testing (Power loss simulation).
-- ✅ Persistent Uptime tracking (Power-safe recovery).
-
-**Standards Applied:**
-- 100% test coverage for new code.
-- All tests passing before commit.
-- TDD methodology (Red → Green → Refactor).
-- Chaos Engineering: Fault injection integrated into test suite.
-
-#### **FRAMEWORK D: SECURITY & COMPLIANCE** 📝 PLANNED
-**Status**: Documented, Ready for implementation (Phase 2)
-**Documentation**: `docs/60_auth/`
-
-**Objectives:**
-- Implement enterprise-grade edge node identity (Ed25519).
-- Ensure data privacy at rest (ChaCha20-Poly1305).
-- Establish security audit procedures for offline nodes.
-- Maintain compliance with local data sovereignty laws.
-
-**Standards to Apply:**
-- Zero security vulnerabilities in production.
-- Regular security audits (Log scans).
-- Encrypted storage for PII (Personally Identifiable Information).
-
-#### **FRAMEWORK E: MONITORING & OBSERVABILITY** ✅ ACTIVE
-**Status**: 85% Complete - Kernel Health Monitoring Implemented.
-**Documentation**: `docs/04_performance/OBSERVABILITY.md`
-
-**Objectives:**
-- Implement structured JSON logging system.
-- Establish performance telemetry for edge nodes.
-- Create local alerting system (Health Endpoint).
-- Enable proactive issue detection in "black box" offline environments.
-
-**Completed Implementation:**
-- ✅ **Kernel Health Monitoring**
-  - Structured Logging (`aos.core.logging`)
-  - `/health` endpoint with real-time stats (Disk, RAM, DB).
-  - SQLite WAL mode monitoring.
-  - Correlation ID tracking for event bus.
-  - Admin Dashboard health widgets (Local UI).
-
-**Standards Applied:**
-- ✅ All critical kernel operations logged in JSON.
-- ✅ Performance metrics tracked.
-- ✅ Correlation IDs mandatory for all trace-friendly events.
+### [Framework E: Monitoring & Observability](file:///C:/Users/LENOVO/Documents/africa-offline-os/docs/frameworks/framework_e/README.md) ✅ ACTIVE
+- **Goal**: Black-box visibility on disconnected edge nodes.
+- **Key Item**: `/health` endpoint and structured JSON telemetry.
 
 ---
 

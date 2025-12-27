@@ -1,1 +1,2 @@
 {"timestamp": 1766824207.1419878, "event_type": "UNAUTHORIZED_ACCESS", "severity": "WARNING", "correlation_id": "6abbb18b-5b61-4f0c-b5b3-c7bb0e844c86", "metadata": {"user": "viewer_user", "required": "admin", "found": "viewer"}}
+{"timestamp": 1766824458.0792649, "event_type": "UNAUTHORIZED_ACCESS", "severity": "WARNING", "correlation_id": "21cfa035-557b-46c4-be98-2f2ee95a033f", "metadata": {"user": "viewer_user", "required": "admin", "found": "viewer"}}
