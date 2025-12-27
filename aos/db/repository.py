@@ -80,7 +80,8 @@ class BaseRepository(Generic[T]):
 
 from aos.db.models import (
     OperatorDTO, NodeDTO, FarmerDTO, HarvestDTO, CropDTO,
-    CommunityGroupDTO, CommunityEventDTO, CommunityAnnouncementDTO, CommunityInquiryDTO
+    CommunityGroupDTO, CommunityEventDTO, CommunityAnnouncementDTO, CommunityInquiryDTO,
+    TransportZoneDTO, TrafficSignalDTO, TransportAvailabilityDTO
 )
 
 
@@ -215,4 +216,37 @@ class CommunityInquiryRepository(BaseRepository[CommunityInquiryDTO]):
             INSERT OR REPLACE INTO community_inquiry_cache (id, group_id, normalized_question, answer, hit_count, last_updated)
             VALUES (?, ?, ?, ?, ?, ?)
         """, (inquiry.id, inquiry.group_id, inquiry.normalized_question, inquiry.answer, inquiry.hit_count, inquiry.last_updated))
+        self.conn.commit()
+
+class TransportZoneRepository(BaseRepository[TransportZoneDTO]):
+    def __init__(self, connection: sqlite3.Connection):
+        super().__init__(connection, TransportZoneDTO, "transport_zones")
+
+    def save(self, zone: TransportZoneDTO) -> None:
+        self.conn.execute("""
+            INSERT OR REPLACE INTO transport_zones (id, name, type, location_scope, active, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (zone.id, zone.name, zone.type, zone.location_scope, zone.active, zone.created_at))
+        self.conn.commit()
+
+class TrafficSignalRepository(BaseRepository[TrafficSignalDTO]):
+    def __init__(self, connection: sqlite3.Connection):
+        super().__init__(connection, TrafficSignalDTO, "traffic_signals")
+
+    def save(self, signal: TrafficSignalDTO) -> None:
+        self.conn.execute("""
+            INSERT OR REPLACE INTO traffic_signals (id, zone_id, state, source, confidence_score, reported_at, expires_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (signal.id, signal.zone_id, signal.state, signal.source, signal.confidence_score, signal.reported_at, signal.expires_at))
+        self.conn.commit()
+
+class TransportAvailabilityRepository(BaseRepository[TransportAvailabilityDTO]):
+    def __init__(self, connection: sqlite3.Connection):
+        super().__init__(connection, TransportAvailabilityDTO, "transport_availability")
+
+    def save(self, availability: TransportAvailabilityDTO) -> None:
+        self.conn.execute("""
+            INSERT OR REPLACE INTO transport_availability (id, zone_id, destination, availability_state, reported_by, reported_at, expires_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (availability.id, availability.zone_id, availability.destination, availability.availability_state, availability.reported_by, availability.reported_at, availability.expires_at))
         self.conn.commit()

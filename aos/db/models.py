@@ -108,3 +108,32 @@ class CommunityInquiryDTO(BaseModel):
     answer: str
     hit_count: int = 0
     last_updated: datetime = Field(default_factory=datetime.utcnow)
+
+class TransportZoneDTO(BaseModel):
+    """Represents a road, area, stage, or junction."""
+    id: str
+    name: str
+    type: str # road, area, stage, junction
+    location_scope: str | None = None
+    active: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class TrafficSignalDTO(BaseModel):
+    """Represents a traffic signal (state of a zone)."""
+    id: str
+    zone_id: str
+    state: str # flowing, slow, blocked
+    source: str # user, agent, authority
+    confidence_score: float = 1.0
+    reported_at: datetime = Field(default_factory=datetime.utcnow)
+    expires_at: datetime | None = None
+
+class TransportAvailabilityDTO(BaseModel):
+    """Represents vehicle availability to a destination."""
+    id: str
+    zone_id: str
+    destination: str
+    availability_state: str # available, limited, none
+    reported_by: str
+    reported_at: datetime = Field(default_factory=datetime.utcnow)
+    expires_at: datetime | None = None

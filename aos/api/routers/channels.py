@@ -13,8 +13,8 @@ from aos.core.security.auth import get_current_operator
 from aos.modules.agri_sms import AgriSMSHandler
 from aos.modules.agri_ussd import AgriUSSDHandler
 from aos.modules.community.ussd_adapter import CommunityUSSDHandler
-from aos.modules.transport_sms import TransportSMSHandler
-from aos.modules.transport_ussd import TransportUSSDHandler
+from aos.modules.transport.sms_adapter import TransportSMSHandler
+from aos.modules.transport.ussd_adapter import TransportUSSDHandler
 
 router = APIRouter(prefix="/channels", tags=["channels"])
 
