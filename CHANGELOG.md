@@ -13,6 +13,34 @@ Each phase is intentional and auditable.
 
 ---
 
+## [0.12.0] — Phase 7.6: Transport Module v2 (Africa-First) (2025-12-27)
+
+### Added
+- **Transport Module v2 (FAANG-Grade)**: Zone-based mobility intelligence infrastructure
+- `TransportModule` with Africa-first interface: zone registration, signal reporting, availability tracking
+- Domain entities: `TransportZoneDTO`, `TrafficSignalDTO`, `TransportAvailabilityDTO`
+- Signal aggregation with confidence scoring and time-based expiry
+- Zone discovery by location and type (roads, stages, junctions, areas)
+- Migration `_008_transport_v2_schema.py` with legacy route auto-migration
+- Package structure: `aos/modules/transport/` with `ussd_adapter.py`, `sms_adapter.py`
+- Telegram commands: `/zones`, `/avoid`, `/state`, `/report`, `/traffic`, `/avl`
+- 6 comprehensive TDD tests validating zone intelligence and signal consensus
+
+### Changed
+- **BREAKING**: Transport Module refactored from Route/Vehicle to Zone/Signal/Availability model
+- Telegram TransportDomain renamed to "Transport-Pulse" with v2 commands
+- USSD/SMS adapters moved to package structure
+
+### Deprecated
+- Legacy `list_routes()` and `get_route_status()` (backward-compatible shims provided)
+
+### Quality
+- Africa-first design: crowd-sourced intelligence, no GPS dependency
+- Offline-first: SQLite WAL mode, time-based expiry
+- Zero technical debt, production-ready
+
+---
+
 ## [0.11.0] — Phase 7.5: Community Module (2025-12-27)
 
 ### Added
