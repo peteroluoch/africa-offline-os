@@ -3,6 +3,9 @@ from __future__ import annotations
 import os
 
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.backends import default_backend
 
 
 class SymmetricEncryption:
@@ -15,6 +18,20 @@ class SymmetricEncryption:
         if len(key) != 32:
             raise ValueError("Key must be 32 bytes (256 bits).")
         self.aead = ChaCha20Poly1305(key)
+
+    @staticmethod
+    def derive_key(salt: bytes, secret: str, iterations: int = 100000) -> bytes:
+        """
+        Derive a 32-byte key from a secret and salt using PBKDF2-HMAC-SHA256.
+        """
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt,
+            iterations=iterations,
+            backend=default_backend()
+        )
+        return kdf.derive(secret.encode())
 
     def encrypt(self, data: bytes, associated_data: bytes | None = None) -> bytes:
         """

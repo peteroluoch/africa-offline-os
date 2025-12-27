@@ -6,7 +6,39 @@ from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel
 
+from aos.core.security.encryption import SymmetricEncryption
+from aos.core.config import settings
+
 T = TypeVar("T", bound=BaseModel)
+
+class SecureRepositoryMixin:
+    """
+    Mixin to provide transparent encryption/decryption for specific fields.
+    """
+    def __init__(self, master_encryption: SymmetricEncryption, encrypted_fields: list[str]):
+        self.encryptor = master_encryption
+        self.encrypted_fields = encrypted_fields
+
+    def _encrypt_dict(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Encrypt configured fields in the dictionary."""
+        for field in self.encrypted_fields:
+            if field in data and data[field]:
+                val = data[field]
+                if not isinstance(val, bytes):
+                    val = str(val).encode()
+                data[field] = self.encryptor.encrypt(val)
+        return data
+
+    def _decrypt_dict(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Decrypt configured fields in the dictionary."""
+        for field in self.encrypted_fields:
+            if field in data and data[field]:
+                try:
+                    decrypted = self.encryptor.decrypt(data[field])
+                    data[field] = decrypted.decode()
+                except Exception as e:
+                    print(f"[Security] Decryption warning for {field}: {e}")
+        return data
 
 class BaseRepository(Generic[T]):
     """
@@ -77,9 +109,16 @@ class OperatorRepository(BaseRepository[OperatorDTO]):
         """, (operator.id, operator.username, operator.hashed_password, operator.role_id, operator.created_at, operator.last_login))
         self.conn.commit()
 
-class FarmerRepository(BaseRepository[FarmerDTO]):
-    def __init__(self, connection: sqlite3.Connection):
-        super().__init__(connection, FarmerDTO, "farmers")
+class FarmerRepository(BaseRepository[FarmerDTO], SecureRepositoryMixin):
+    def __init__(self, connection: sqlite3.Connection, encryptor: SymmetricEncryption):
+        BaseRepository.__init__(self, connection, FarmerDTO, "farmers")
+        SecureRepositoryMixin.__init__(self, encryptor, ["location", "contact"])
+
+    def _row_to_model(self, row: sqlite3.Row) -> FarmerDTO:
+        data = dict(row)
+        data = self._decrypt_dict(data)
+        data = self._preprocess_data(data)
+        return self.model_class.model_validate(data)
 
     def _preprocess_data(self, data: dict[str, Any]) -> dict[str, Any]:
         if data.get("metadata") and isinstance(data["metadata"], str):
@@ -90,16 +129,19 @@ class FarmerRepository(BaseRepository[FarmerDTO]):
         return data
 
     def save(self, farmer: FarmerDTO) -> None:
+        data = farmer.model_dump()
+        data = self._encrypt_dict(data)
+        
         self.conn.execute("""
             INSERT OR REPLACE INTO farmers (id, name, location, contact, metadata, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
         """, (
-            farmer.id,
-            farmer.name,
-            farmer.location,
-            farmer.contact,
-            json.dumps(farmer.metadata),
-            farmer.created_at
+            data["id"],
+            data["name"],
+            data["location"],
+            data["contact"],
+            json.dumps(data["metadata"]),
+            data["created_at"]
         ))
         self.conn.commit()
 

@@ -277,5 +277,20 @@ This document serves as the persistent memory for the AI Architect. It records l
    - **Observation**: `TestClient` handles cookies differently than browsers in some edge cases.
    - **Lesson**: Checking for `access_token=""` and `Max-Age=0` in the `set-cookie` header list is the most robust way to verify deletion via integration tests.
 
+### **Status Update: 2025-12-27 (Framework D COMPLETE)**
+- **Achievement**: Framework D (Security & Compliance) 100% COMPLETE.
+- **Milestone**: 4 of 5 Enterprise Frameworks now COMPLETE (A, B, C, D).
+- **Next Directive**: Framework E (Observability) or Agent PWA.
+
+### Lessons Learned - Hierarchical RBAC
+1. **Dependency Injection Power**:
+   - **Observation**: Checking roles inside every route handler leads to "security spaghetti."
+   - **Lesson**: Using FastAPI's `Depends` with a factory function (`requires_role(minimum)`) keeps route logic clean and ensures that security is declarative.
+   - **Protocol**: Always log `UNAUTHORIZED_ACCESS` events with the required vs. provided role for rapid forensic analysis.
+
+2. **Lifespan and Database State**:
+   - **Observation**: Tests failing because the database connection wasn't initialized in the sub-app.
+   - **Lesson**: Use the `with client as c:` context manager in `TestClient` to ensure the `lifespan` handler runs, initializing all global state (DB, Encryptors) exactly as it would in production.
+
 ---
-*End of Entry - Phase 5 Batch 1*
+*End of Entry - Security Hardening Phase*

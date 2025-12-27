@@ -6,7 +6,7 @@ from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from aos.core.users import UniversalUserService
-from aos.core.security.auth import get_current_operator
+from aos.core.security.auth import get_current_operator, requires_role, AosRole
 from aos.api.app import get_db
 import logging
 import sqlite3
@@ -21,7 +21,7 @@ templates = Jinja2Templates(directory="aos/api/templates")
 async def users_list(
     request: Request, 
     db: sqlite3.Connection = Depends(get_db),
-    current_user: dict = Depends(get_current_operator)
+    current_user: dict = Depends(requires_role(AosRole.ADMIN))
 ):
     """Display all Telegram users."""
     user_service = UniversalUserService()

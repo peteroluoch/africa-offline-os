@@ -46,6 +46,8 @@ class Settings(BaseSettings):
 
     # Security configuration
     jwt_issuer: str = "aos"
+    master_secret: str = "change-this-in-production-use-aos-master-secret"
+    kdf_iterations: int = 100000  # PBKDF2 iterations for key derivation
 
     # Resource configuration
     resource_check_interval: int = 30

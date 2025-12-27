@@ -12,6 +12,11 @@ from aos.bus.events import Event
 from aos.core.module import Module
 from aos.db.models import CropDTO, FarmerDTO, HarvestDTO
 from aos.db.repository import CropRepository, FarmerRepository, HarvestRepository
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from aos.core.resource.manager import ResourceManager
+    from aos.core.security.encryption import SymmetricEncryption
 
 logger = logging.getLogger("aos.agri")
 
@@ -20,10 +25,10 @@ class AgriModule(Module):
     Business logic for the Agricultural domain.
     """
 
-    def __init__(self, dispatcher: EventDispatcher, db_conn: sqlite3.Connection, resource_manager: ResourceManager | None = None):
+    def __init__(self, dispatcher: EventDispatcher, db_conn: sqlite3.Connection, resource_manager: ResourceManager | None = None, encryptor: SymmetricEncryption | None = None):
         self._dispatcher = dispatcher
         self._db = db_conn
-        self._farmers = FarmerRepository(db_conn)
+        self._farmers = FarmerRepository(db_conn, encryptor)
         self._harvests = HarvestRepository(db_conn)
         self._crops = CropRepository(db_conn)
         self.resource_manager = resource_manager  # Power awareness

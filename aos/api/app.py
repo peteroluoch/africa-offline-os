@@ -26,6 +26,7 @@ _boot_time: float | None = None
 _event_store: EventStore | None = None
 _event_dispatcher: EventDispatcher | None = None
 _mesh_manager: MeshSyncManager | None = None
+_encryptor: SymmetricEncryption | None = None
 _agri_module: AgriModule | None = None
 
 from aos.api.state import mesh_state
@@ -142,6 +143,20 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     _event_dispatcher = EventDispatcher(_event_store)
 
+    # Initialize Security Engine (Phase 6.1)
+    from aos.core.security.encryption import SymmetricEncryption
+    from aos.core.security.identity import NodeIdentityManager
+    identity_mgr = NodeIdentityManager()
+    identity_mgr.ensure_identity()
+    
+    # Derive master key from node identity and configured secret
+    master_key = SymmetricEncryption.derive_key(
+        salt=identity_mgr.get_public_key()[:16], # Use node public key as salt
+        secret=settings.master_secret,
+        iterations=settings.kdf_iterations
+    )
+    _encryptor = SymmetricEncryption(master_key)
+    
     # Hook up the Stream
     _event_dispatcher.subscribe_all(_event_stream.broadcast)
 
@@ -178,7 +193,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     await _resource_manager.start()
 
     # Initialize Modules with ResourceManager (Phase 5/6/7) - Power-aware
-    _agri_module = AgriModule(_event_dispatcher, _db_conn, _resource_manager)
+    _agri_module = AgriModule(_event_dispatcher, _db_conn, _resource_manager, _encryptor)
     await _agri_module.initialize()
 
     _transport_module = TransportModule(_event_dispatcher, _db_conn, _resource_manager)

@@ -4,8 +4,26 @@ from datetime import UTC, datetime, timedelta
 
 import jwt
 
+from enum import Enum
 from aos.core.config import settings
 from aos.core.security.identity import NodeIdentityManager
+
+
+class AosRole(str, Enum):
+    ROOT = "root"          # Full kernel access
+    ADMIN = "admin"        # Regional / Organization management
+    OPERATOR = "operator"  # Data entry and field operations
+    VIEWER = "viewer"      # Read-only access
+
+    @property
+    def level(self) -> int:
+        """Numeric level for hierarchical comparison."""
+        return {
+            AosRole.ROOT: 4,
+            AosRole.ADMIN: 3,
+            AosRole.OPERATOR: 2,
+            AosRole.VIEWER: 1
+        }[self]
 
 
 class AuthManager:
@@ -96,10 +114,39 @@ async def get_current_operator(
         )
 
     try:
-        return auth_manager.verify_token(token)
+        payload = auth_manager.verify_token(token)
+        return payload
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(e),
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+def requires_role(minimum_role: AosRole):
+    """
+    Dependency to enforce hierarchical RBAC.
+    """
+    async def role_checker(current_user: dict = Depends(get_current_operator)):
+        user_role_str = current_user.get("role", "viewer")
+        try:
+            user_role = AosRole(user_role_str)
+        except ValueError:
+            user_role = AosRole.VIEWER
+
+        if user_role.level < minimum_role.level:
+            from aos.core.security.audit import AuditLogger
+            audit = AuditLogger()
+            audit.log_event("UNAUTHORIZED_ACCESS", {
+                "user": current_user.get("username"),
+                "required": minimum_role.value,
+                "found": user_role.value
+            }, severity="WARNING")
+            
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Operation requires {minimum_role.value} privileges."
+            )
+        return current_user
+    
+    return role_checker
