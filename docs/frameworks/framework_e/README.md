@@ -2,11 +2,13 @@
 
 **Canonical source**: `docs/01_roles.md` (FAANG 5-Framework System — A-OS Edition)
 
-## 1. What Framework E is in A-OS
+### [Framework E: Monitoring & Observability](file:///C:/Users/LENOVO/Documents/africa-offline-os/docs/frameworks/framework_e/README.md) ✅ COMPLETE
+- **Goal**: Black-box visibility on disconnected edge nodes.
+- **Key Item**: `/health` endpoint and structured JSON telemetry.
 
 Framework E provides visibility into the "black box" of offline edge nodes, enabling proactive maintenance and resource management.
 
-**Status**: ✅ ACTIVE / 90% COMPLETE (December 2025)
+**Status**: ✅ 100% COMPLETE (December 2025)
 
 ## 2. Objectives
 - Implement structured JSON logging system.

@@ -14,6 +14,7 @@ from aos.core.health import get_uptime
 from aos.core.resource.monitor import ResourceMonitor, ResourceSnapshot
 from aos.core.resource.profiles import PowerProfile, PowerProfileManager
 from aos.core.resource.scheduler import ResourceAwareScheduler, Task, TaskPriority
+from aos.core.security.forensics import ForensicMonitor
 
 if TYPE_CHECKING:
     from aos.bus.dispatcher import EventDispatcher
@@ -38,6 +39,7 @@ class ResourceManager:
         self.event_bus = event_bus
         self.db_conn = db_conn
         self.check_interval = check_interval
+        self.forensics = ForensicMonitor()
 
         self._running = False
         self._background_task: asyncio.Task | None = None
@@ -100,6 +102,9 @@ class ResourceManager:
                         "timestamp": datetime.now(UTC).isoformat()
                     }
                 ))
+
+        # Forensic Analysis
+        self.forensics.check_health(snapshot)
 
         # Execute eligible tasks
         await self._execute_tasks()
