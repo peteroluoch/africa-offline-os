@@ -37,18 +37,18 @@ async def login(
 
         if not row:
             print(f"[Auth] User not found: {username}")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect username or password",
+            return HTMLResponse(
+                content="<html><body><h1>Login Failed</h1><p>Incorrect username or password</p><a href='/login'>Try again</a></body></html>",
+                status_code=401
             )
 
         op_id, op_username, op_hash, op_role = row
 
         if not verify_password(password, op_hash):
             print(f"[Auth] Invalid password for: {username}")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect username or password",
+            return HTMLResponse(
+                content="<html><body><h1>Login Failed</h1><p>Incorrect username or password</p><a href='/login'>Try again</a></body></html>",
+                status_code=401
             )
 
         print(f"[Auth] Success for {username}. Issuing token...")
