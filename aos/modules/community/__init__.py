@@ -46,6 +46,7 @@ class CommunityModule:
 
     def __init__(self, dispatcher: EventDispatcher, connection: sqlite3.Connection):
         self._dispatcher = dispatcher
+        self._db = connection  # SECURITY: Direct DB access for member queries
         self._groups = CommunityGroupRepository(connection)
         self._events = CommunityEventRepository(connection)
         self._announcements = CommunityAnnouncementRepository(connection)
@@ -275,6 +276,180 @@ class CommunityModule:
         })
         
         return announcement
+
+    # --- Member Management (SECURITY-CRITICAL) ---
+
+    def add_member_to_community(
+        self,
+        community_id: str,
+        user_id: str,
+        channel: str
+    ) -> bool:
+        """
+        Add a user to a community.
+        
+        SECURITY: This is the ONLY way to associate users with communities.
+        
+        Args:
+            community_id: Community ID (REQUIRED)
+            user_id: User identifier (phone, chat_id, etc.)
+            channel: Channel type ('telegram', 'sms', 'ussd', 'whatsapp')
+            
+        Returns:
+            True if added successfully
+            
+        Raises:
+            ValueError: If any required parameter is missing or invalid
+        """
+        if not community_id or not user_id or not channel:
+            raise ValueError("community_id, user_id, and channel are required")
+        
+        # Verify community exists
+        if not self._groups.get_by_id(community_id):
+            raise ValueError(f"Invalid community_id: {community_id}")
+        
+        member_id = f"MEM-{uuid.uuid4().hex[:8].upper()}"
+        self._db.execute("""
+            INSERT OR IGNORE INTO community_members 
+            (id, community_id, user_id, channel, active)
+            VALUES (?, ?, ?, ?, 1)
+        """, (member_id, community_id, user_id, channel))
+        self._db.commit()
+        return True
+
+    def remove_member_from_community(
+        self,
+        community_id: str,
+        user_id: str,
+        channel: str
+    ) -> bool:
+        """
+        Remove a user from a community (soft delete).
+        
+        Args:
+            community_id: Community ID
+            user_id: User identifier
+            channel: Channel type
+            
+        Returns:
+            True if removed successfully
+        """
+        self._db.execute("""
+            UPDATE community_members 
+            SET active = 0 
+            WHERE community_id = ? AND user_id = ? AND channel = ?
+        """, (community_id, user_id, channel))
+        self._db.commit()
+        return True
+
+    def get_community_members(
+        self,
+        community_id: str,
+        channel: Optional[str] = None
+    ) -> List[str]:
+        """
+        Resolve members of a community.
+        
+        SECURITY: This is the ONLY method that resolves recipients.
+        MUST enforce WHERE community_id = ?
+        
+        Args:
+            community_id: Community ID (REQUIRED)
+            channel: Optional channel filter
+            
+        Returns:
+            List of user IDs (phone numbers or chat IDs)
+            
+        Raises:
+            ValueError: If community_id is None or invalid
+        """
+        if not community_id:
+            raise ValueError("community_id is required for recipient resolution")
+        
+        # Verify community exists
+        community = self._groups.get_by_id(community_id)
+        if not community:
+            raise ValueError(f"Invalid community_id: {community_id}")
+        
+        # KERNEL-LEVEL QUERY: Mandatory WHERE community_id = ?
+        query = "SELECT user_id FROM community_members WHERE community_id = ? AND active = 1"
+        params = [community_id]
+        
+        if channel:
+            query += " AND channel = ?"
+            params.append(channel)
+        
+        cursor = self._db.execute(query, params)
+        return [row[0] for row in cursor.fetchall()]
+
+    async def deliver_announcement(
+        self,
+        announcement_id: str,
+        admin_id: str
+    ) -> dict:
+        """
+        Deliver an announcement to community members.
+        
+        SECURITY: Enforces admin→community binding and recipient scoping.
+        
+        Args:
+            announcement_id: Announcement ID
+            admin_id: Admin making the delivery request
+            
+        Returns:
+            {
+                "delivered": int,
+                "failed": int,
+                "community_id": str,
+                "recipients": List[str]
+            }
+            
+        Raises:
+            ValueError: If announcement invalid or admin not authorized
+        """
+        # 1. Get announcement
+        announcement = self._announcements.get_by_id(announcement_id)
+        if not announcement:
+            raise ValueError(f"Invalid announcement_id: {announcement_id}")
+        
+        community_id = announcement.group_id
+        
+        # 2. Verify admin→community binding
+        community = self._groups.get_by_id(community_id)
+        if not community:
+            raise ValueError(f"Invalid community: {community_id}")
+        
+        if community.admin_id != admin_id:
+            raise ValueError(
+                f"Admin {admin_id} not authorized for community {community_id}"
+            )
+        
+        # 3. Resolve recipients (KERNEL-LEVEL SCOPING)
+        recipients = self.get_community_members(community_id)
+        
+        if not recipients:
+            return {
+                "delivered": 0,
+                "failed": 0,
+                "community_id": community_id,
+                "recipients": []
+            }
+        
+        # 4. Emit delivery event (adapters listen and send)
+        await self._dispatcher.dispatch("COMMUNITY_MESSAGE_DELIVER", {
+            "announcement_id": announcement_id,
+            "community_id": community_id,
+            "message": announcement.message,
+            "recipients": recipients,  # Pre-scoped by kernel
+            "urgency": announcement.urgency
+        })
+        
+        return {
+            "delivered": len(recipients),
+            "failed": 0,
+            "community_id": community_id,
+            "recipients": recipients
+        }
 
     # --- Inquiry Handling ---
 

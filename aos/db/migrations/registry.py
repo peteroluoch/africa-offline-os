@@ -7,6 +7,7 @@ from aos.db.migrations import (
     _006_telegram_users,
     _007_domain_aware_users,
     _008_transport_v2_schema,
+    _009_community_members,
 )
 
 # Strict migration registry
@@ -19,4 +20,5 @@ MIGRATIONS = [
     _006_telegram_users,
     _007_domain_aware_users,
     _008_transport_v2_schema,
+    _009_community_members,
 ]
