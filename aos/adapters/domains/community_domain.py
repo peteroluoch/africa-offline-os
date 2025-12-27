@@ -54,9 +54,7 @@ class CommunityDomain(BaseDomain):
     
     def handle_command(self, chat_id: int, command: str, args: List[str]) -> bool:
         """Handle community-specific commands."""
-        from aos.api.state import community_state
-        
-        if not community_state.module:
+        if not self.adapter.community_module:
             self.adapter.send_message(chat_id, "⚠️ Community module not initialized")
             return True
         
@@ -75,9 +73,7 @@ class CommunityDomain(BaseDomain):
     
     def _handle_groups(self, chat_id: int) -> bool:
         """List all registered groups."""
-        from aos.api.state import community_state
-        
-        groups = community_state.module.list_groups()
+        groups = self.adapter.community_module.list_groups()
         
         if not groups:
             self.adapter.send_message(
@@ -103,8 +99,6 @@ class CommunityDomain(BaseDomain):
     
     def _handle_discover(self, chat_id: int, args: List[str]) -> bool:
         """Discover groups by location or tags."""
-        from aos.api.state import community_state
-        
         if not args:
             self.adapter.send_message(
                 chat_id,
@@ -120,11 +114,11 @@ class CommunityDomain(BaseDomain):
         search_term = " ".join(args)
         
         # Try location search first
-        groups = community_state.module.discover_groups(location=search_term)
+        groups = self.adapter.community_module.discover_groups(location=search_term)
         
         # If no results, try tag search
         if not groups:
-            groups = community_state.module.discover_groups(tag_filter=[search_term])
+            groups = self.adapter.community_module.discover_groups(tag_filter=[search_term])
         
         if not groups:
             self.adapter.send_message(
@@ -143,9 +137,7 @@ class CommunityDomain(BaseDomain):
     
     def _handle_events(self, chat_id: int) -> bool:
         """List upcoming events."""
-        from aos.api.state import community_state
-        
-        events = community_state.module.list_events()
+        events = self.adapter.community_module.list_events()
         
         if not events:
             self.adapter.send_message(
@@ -156,7 +148,7 @@ class CommunityDomain(BaseDomain):
         
         message = "📅 <b>Upcoming Events</b>\n\n"
         for event in events[:5]:
-            group = community_state.module.get_group(event.group_id)
+            group = self.adapter.community_module.get_group(event.group_id)
             group_name = group.name if group else "Unknown Group"
             
             message += f"• <b>{event.title}</b>\n"
@@ -169,9 +161,7 @@ class CommunityDomain(BaseDomain):
     
     def _handle_announcements(self, chat_id: int) -> bool:
         """List recent announcements."""
-        from aos.api.state import community_state
-        
-        announcements = community_state.module._announcements.list_all()
+        announcements = self.adapter.community_module._announcements.list_all()
         
         if not announcements:
             self.adapter.send_message(
@@ -182,7 +172,7 @@ class CommunityDomain(BaseDomain):
         
         message = "📢 <b>Community Announcements</b>\n\n"
         for ann in announcements[:3]:
-            group = community_state.module.get_group(ann.group_id)
+            group = self.adapter.community_module.get_group(ann.group_id)
             group_name = group.name if group else "Unknown Group"
             
             urgency_icon = "🚨" if ann.urgency == "urgent" else "ℹ️"
