@@ -65,7 +65,7 @@ class CommunityUSSDHandler:
         if state == "SEND_INQUIRY":
             # In a real system, we'd notify the admin. Here we check cache.
             group_id = session.data.get("group_id")
-            answer = await self.community.handle_inquiry(group_id, user_input)
+            answer, inquiry_id = await self.community.handle_inquiry(group_id, user_input)
             if answer:
                 return ChannelResponse(f"[Auto-Reply]\n{answer}", False)
             return ChannelResponse("Message sent to admin. You will receive an SMS reply.", False)
@@ -86,7 +86,7 @@ class CommunityUSSDHandler:
         if state == "ADMIN_BROADCAST":
             group_id = session.data.get("group_id", "ST_MARKS_001") # Default for demo
             if self.community:
-                await self.community.create_announcement(group_id, user_input)
+                await self.community.publish_announcement(group_id, user_input)
                 return ChannelResponse("Broadcast sent to all members.", False)
             return ChannelResponse("Error: Module offline.", False)
 

@@ -22,15 +22,15 @@ async def community_dashboard(request: Request, operator=Depends(get_current_ope
 
     return templates.TemplateResponse("community.html", {
         "request": request,
-        "operator": operator,
+        "user": operator,
         "groups": groups,
         "broadcasts_count": broadcasts_count,
         "inquiry_hits": 0
     })
 
 @router.get("/register", response_class=HTMLResponse)
-async def community_register_form(request: Request):
-    return templates.TemplateResponse("partials/community_group_form.html", {"request": request})
+async def community_register_form(request: Request, operator=Depends(get_current_operator)):
+    return templates.TemplateResponse("partials/community_group_form.html", {"request": request, "user": operator})
 
 @router.post("/register")
 async def register_community_group(
@@ -38,13 +38,16 @@ async def register_community_group(
     name: str = Form(...),
     group_type: str = Form(...),
     description: str = Form(""),
+    location: str = Form(""),
     operator=Depends(get_current_operator)
 ):
     if community_state.module:
         await community_state.module.register_group(
             name=name,
-            group_type=group_type,
+            tags=[group_type] if group_type else [],
+            location=location or "Unknown",
             admin_id=operator.id,
+            group_type=group_type,
             description=description
         )
     return RedirectResponse(url="/community", status_code=303)

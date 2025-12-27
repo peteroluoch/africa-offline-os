@@ -69,10 +69,12 @@ class CommunityGroupDTO(BaseModel):
     name: str
     description: str | None = None
     group_type: str | None = None
+    tags: str = "[]" # JSON list of free-text tags
     location: str | None = None
     admin_id: str | None = None
     trust_level: str = "local"
     preferred_channels: str = "ussd,sms"
+    active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class CommunityEventDTO(BaseModel):
@@ -85,6 +87,7 @@ class CommunityEventDTO(BaseModel):
     end_time: datetime | None = None
     recurrence: str | None = None
     visibility: str = "public"
+    language: str = "en"
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class CommunityAnnouncementDTO(BaseModel):
@@ -101,6 +104,7 @@ class CommunityInquiryDTO(BaseModel):
     """Represents a cached inquiry response."""
     id: str
     group_id: str
-    question_pattern: str
-    cached_response: str
+    normalized_question: str
+    answer: str
+    hit_count: int = 0
     last_updated: datetime = Field(default_factory=datetime.utcnow)

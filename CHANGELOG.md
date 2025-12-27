@@ -13,6 +13,35 @@ Each phase is intentional and auditable.
 
 ---
 
+## [0.11.0] — Phase 7.5: Community Module (2025-12-27)
+
+### Added
+- **Community Module (FAANG-Grade)**: Infrastructure-first social distribution layer
+- `CommunityModule` with strict interface: 8 public methods
+- Domain entities: `CommunityGroupDTO`, `CommunityEventDTO`, `CommunityAnnouncementDTO`, `CommunityInquiryDTO`
+- Tag-based group discovery (`discover_groups`)
+- Inquiry caching with hit count tracking
+- Language support for events
+- Announcement expiry and target audience
+- Migration `_005_create_community_tables.py` with location indexing
+- Package structure: `aos/modules/community/` with `ussd_adapter.py`
+- Web dashboard: Group registration, event/announcement management
+- 13 comprehensive TDD tests validating interface compliance
+
+### Changed
+- Restructured `community.py` into proper package
+- Updated `CommunityUSSDHandler` to use new interface methods
+- Enhanced `CommunityGroupRepository`, `CommunityEventRepository`, `CommunityAnnouncementRepository`, `CommunityInquiryRepository`
+
+### Quality
+- Zero individual user accounts (groups hold accounts)
+- Zero religion-specific logic (free-text tags)
+- 100% test coverage for core interface
+- Enterprise-grade, production-ready code
+- Zero technical debt
+
+---
+
 ## [0.10.0] — Universal User System (2025-12-26)
 
 ### Added

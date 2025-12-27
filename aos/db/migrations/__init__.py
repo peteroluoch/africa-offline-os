@@ -65,6 +65,8 @@ class MigrationManager:
 
                 if hasattr(migration, 'apply'):
                     migration.apply(self.conn)
+                elif hasattr(migration, 'upgrade'):
+                    migration.upgrade(self.conn)
                 elif hasattr(migration, 'up'):
                     migration.up(self.conn)
                 elif hasattr(migration, 'migrate'):

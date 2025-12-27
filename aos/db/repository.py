@@ -179,9 +179,9 @@ class CommunityGroupRepository(BaseRepository[CommunityGroupDTO]):
 
     def save(self, group: CommunityGroupDTO) -> None:
         self.conn.execute("""
-            INSERT OR REPLACE INTO community_groups (id, name, description, group_type, location, admin_id, trust_level, preferred_channels, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (group.id, group.name, group.description, group.group_type, group.location, group.admin_id, group.trust_level, group.preferred_channels, group.created_at))
+            INSERT OR REPLACE INTO community_groups (id, name, description, group_type, tags, location, admin_id, trust_level, preferred_channels, active, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (group.id, group.name, group.description, group.group_type, group.tags, group.location, group.admin_id, group.trust_level, group.preferred_channels, group.active, group.created_at))
         self.conn.commit()
 
 class CommunityEventRepository(BaseRepository[CommunityEventDTO]):
@@ -190,9 +190,9 @@ class CommunityEventRepository(BaseRepository[CommunityEventDTO]):
 
     def save(self, event: CommunityEventDTO) -> None:
         self.conn.execute("""
-            INSERT OR REPLACE INTO community_events (id, group_id, title, event_type, start_time, end_time, recurrence, visibility, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (event.id, event.group_id, event.title, event.event_type, event.start_time, event.end_time, event.recurrence, event.visibility, event.created_at))
+            INSERT OR REPLACE INTO community_events (id, group_id, title, event_type, start_time, end_time, recurrence, visibility, language, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (event.id, event.group_id, event.title, event.event_type, event.start_time, event.end_time, event.recurrence, event.visibility, event.language, event.created_at))
         self.conn.commit()
 
 class CommunityAnnouncementRepository(BaseRepository[CommunityAnnouncementDTO]):
@@ -212,7 +212,7 @@ class CommunityInquiryRepository(BaseRepository[CommunityInquiryDTO]):
 
     def save(self, inquiry: CommunityInquiryDTO) -> None:
         self.conn.execute("""
-            INSERT OR REPLACE INTO community_inquiry_cache (id, group_id, question_pattern, cached_response, last_updated)
-            VALUES (?, ?, ?, ?, ?)
-        """, (inquiry.id, inquiry.group_id, inquiry.question_pattern, inquiry.cached_response, inquiry.last_updated))
+            INSERT OR REPLACE INTO community_inquiry_cache (id, group_id, normalized_question, answer, hit_count, last_updated)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (inquiry.id, inquiry.group_id, inquiry.normalized_question, inquiry.answer, inquiry.hit_count, inquiry.last_updated))
         self.conn.commit()
