@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import asyncio
+import time
 from typing import Any
 
 from aos.core.channels.base import ChannelAdapter, ChannelGateway, ChannelRequest, ChannelResponse
 from aos.core.channels.sms import SMSProtocolAT
+from aos.core.security.rate_limiter import TokenBucketLimiter
 
 
 class SMSAdapter(ChannelAdapter):
@@ -12,9 +15,10 @@ class SMSAdapter(ChannelAdapter):
     Delegates command processing to specific handlers.
     """
 
-    def __init__(self, gateway: ChannelGateway):
+    def __init__(self, gateway: ChannelGateway, rate_limiter: TokenBucketLimiter | None = None):
         self.gateway = gateway
         self.protocol = SMSProtocolAT()
+        self.rate_limiter = rate_limiter or TokenBucketLimiter(capacity=5, fill_rate=0.1)  # 5 msg burst, 1 every 10s
         self._command_handler = None
 
     def set_command_handler(self, handler: Any):
@@ -36,8 +40,21 @@ class SMSAdapter(ChannelAdapter):
     def get_channel_type(self) -> str:
         return "sms"
 
-    def handle_request(self, request: ChannelRequest) -> ChannelResponse:
+    async def handle_request(self, request: ChannelRequest) -> ChannelResponse:
+        # Check rate limit
+        if self.rate_limiter:
+            status = self.rate_limiter.check(request.sender)
+            if not status.allowed:
+                return ChannelResponse(
+                    content=f"Error: Rate limit exceeded. Try again in {int(status.reset_at - time.time())}s",
+                    session_active=False
+                )
+
         if self._command_handler:
-            return self._command_handler.process(request)
+            # Support both sync and async command handlers
+            if asyncio.iscoroutinefunction(self._command_handler.process):
+                return await self._command_handler.process(request)
+            else:
+                return self._command_handler.process(request)
 
         return ChannelResponse(content="Error: No command handler configured.", session_active=False)

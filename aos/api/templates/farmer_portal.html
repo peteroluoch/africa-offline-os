@@ -1,0 +1,167 @@
+{% from "components/atoms/EliteButton.html" import elite_button %}
+{% from "components/atoms/Card.html" import card %}
+{% from "components/atoms/Badge.html" import badge %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>A-OS Agent | Agri-Pulse</title>
+
+    <!-- A-OS Design System -->
+    {% include 'partials/design_system.html' %}
+
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            background: var(--aos-surface-base);
+            color: var(--aos-neutral-50);
+            touch-action: manipulation;
+            /* Faster taps on mobile */
+        }
+
+        .safe-area-bottom {
+            padding-bottom: env(safe-area-inset-bottom, 1rem);
+        }
+
+        .portal-header {
+            padding: var(--aos-spacing-6);
+            background: var(--aos-surface-glass);
+            border-bottom: 1px solid var(--aos-surface-border);
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            backdrop-filter: blur(10px);
+        }
+
+        .fab {
+            position: fixed;
+            bottom: calc(var(--aos-spacing-8) + env(safe-area-inset-bottom, 0px));
+            right: var(--aos-spacing-6);
+            z-index: 50;
+            box-shadow: var(--aos-shadow-xl);
+        }
+    </style>
+</head>
+
+<body class="flex flex-col min-h-screen">
+    <!-- Mobile Header -->
+    <header class="portal-header flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-lg bg-[var(--aos-primary-base)] flex items-center justify-center">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.168.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.168.477-4.5 1.253">
+                    </path>
+                </svg>
+            </div>
+            <div>
+                <h1 class="aos-text-display aos-text-lg font-bold">Agri-Pulse</h1>
+                <p class="aos-text-xs aos-text-muted uppercase tracking-widest">Agent Portal</p>
+            </div>
+        </div>
+
+        {{ badge(text="Offline Ready", variant="success", dot=True) }}
+    </header>
+
+    <main class="flex-1 p-4 space-y-6">
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-2 gap-4">
+            <div
+                class="aos-p-4 rounded-[var(--aos-radius-lg)] bg-[var(--aos-surface-elevated)] border border-[var(--aos-surface-border)]">
+                <p class="aos-text-xs aos-text-muted uppercase font-bold mb-1">Farmers</p>
+                <h2 class="aos-text-2xl font-black text-[var(--aos-neutral-50)]">{{ farmers|length }}</h2>
+            </div>
+            <div
+                class="aos-p-4 rounded-[var(--aos-radius-lg)] bg-[var(--aos-surface-elevated)] border border-[var(--aos-surface-border)]">
+                <p class="aos-text-xs aos-text-muted uppercase font-bold mb-1">Harvests</p>
+                <h2 class="aos-text-2xl font-black text-[var(--aos-primary-base)]">42</h2>
+            </div>
+        </div>
+
+        <!-- Search / Action List -->
+        <div id="portal-content" class="space-y-4">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="aos-h3 aos-text-base">Field Operations</h3>
+            </div>
+
+            <!-- Farmer Selection List -->
+            <div class="space-y-3">
+                {% for farmer in farmers %}
+                <div class="aos-p-4 rounded-[var(--aos-radius-lg)] bg-[var(--aos-surface-glass)] border border-[var(--aos-surface-border)] flex items-center justify-between active:bg-[var(--aos-surface-accent)] transition-colors"
+                    hx-get="/agri/harvest/new?farmer_id={{ farmer.id }}" hx-target="#modal-content"
+                    onclick="document.getElementById('agri-modal').classList.remove('hidden')">
+                    <div class="flex items-center space-x-4">
+                        <div
+                            class="w-10 h-10 rounded-full bg-[var(--aos-surface-accent)] flex items-center justify-center aos-text-mono font-bold">
+                            {{ farmer.name[0] | upper }}
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-[var(--aos-neutral-100)]">{{ farmer.name }}</h4>
+                            <p class="aos-text-xs aos-text-muted">{{ farmer.location }}</p>
+                        </div>
+                    </div>
+                    <svg class="w-5 h-5 aos-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </main>
+
+    <!-- FAB: Register New Farmer -->
+    <button
+        class="fab w-14 h-14 rounded-full bg-[var(--aos-primary-base)] text-white flex items-center justify-center active:scale-95 transition-transform"
+        hx-get="/agri/farmer/new" hx-target="#modal-content"
+        onclick="document.getElementById('agri-modal').classList.remove('hidden')">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 6v6m0 0v6m0-6h6m0-0H6"></path>
+        </svg>
+    </button>
+
+    <!-- Modal Container -->
+    <div id="agri-modal"
+        class="fixed inset-0 z-[100] hidden bg-slate-950/90 backdrop-blur-lg flex items-end sm:items-center justify-center">
+        <div
+            class="bg-[var(--aos-surface-base)] border-t sm:border border-[var(--aos-surface-border)] w-full max-w-md rounded-t-3xl sm:rounded-2xl overflow-hidden animate-slide-up">
+            <div class="p-6 border-b border-[var(--aos-surface-border)] flex justify-between items-center">
+                <h3 class="aos-h3 aos-text-base uppercase tracking-widest">Field Action</h3>
+                <button onclick="document.getElementById('agri-modal').classList.add('hidden')"
+                    class="aos-text-muted p-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+            <div id="modal-content" class="p-6 pb-12">
+                <div class="flex justify-center py-12">
+                    <div class="aos-spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes slide-up {
+            from {
+                transform: translateY(100%);
+            }
+
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .animate-slide-up {
+            animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</body>
+
+</html>

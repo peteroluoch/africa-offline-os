@@ -34,6 +34,22 @@ async def agri_root(request: Request, current_user: dict = Depends(get_current_o
         }
     )
 
+@router.get("/portal", response_class=HTMLResponse)
+async def agri_portal(request: Request, current_user: dict = Depends(get_current_operator)):
+    """Mobile-First Farmer Portal for field agents."""
+    if not agri_state.module:
+        return HTMLResponse("AgriModule not initialized", status_code=500)
+
+    farmers = agri_state.module.list_all_farmers()
+    return templates.TemplateResponse(
+        "farmer_portal.html",
+        {
+            "request": request,
+            "user": current_user,
+            "farmers": farmers
+        }
+    )
+
 @router.post("/farmer", response_class=HTMLResponse)
 async def register_farmer(
     request: Request,

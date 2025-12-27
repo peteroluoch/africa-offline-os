@@ -1,6 +1,7 @@
 <form hx-post="/agri/farmer" hx-target="#farmer-list-container" hx-swap="innerHTML" class="space-y-6"
     onsubmit="setTimeout(() => { document.getElementById('agri-modal').classList.add('hidden') }, 500)">
-    <h3 class="text-sm font-bold text-blue-400 uppercase tracking-widest mb-4">Register New Farmer</h3>
+    <h3 class="aos-text-sm font-bold text-[var(--aos-primary-base)] uppercase tracking-widest mb-4">Register New Farmer
+    </h3>
 
     {% include "components/molecules/FormField.html" with label="Full Name" name="name" placeholder="John Doe"
     required=True %}

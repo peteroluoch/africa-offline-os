@@ -2,16 +2,20 @@ from __future__ import annotations
 
 from aos.core.channels.base import ChannelResponse
 from aos.core.channels.ussd import USSDSession
+from aos.db.models import HarvestDTO
+from datetime import datetime
+import uuid
 
 
 class AgriUSSDHandler:
     """Menu flow handler for the Agri vehicle."""
 
-    def __init__(self):
+    def __init__(self, agri_module: 'AgriModule' | None = None):
         self.crops = {"1": "Maize", "2": "Beans", "3": "Sorghum"}
         self.grades = {"1": "A", "2": "B", "3": "C"}
+        self.agri = agri_module
 
-    def process(self, session: USSDSession, user_input: str) -> ChannelResponse:
+    async def process(self, session: USSDSession, user_input: str) -> ChannelResponse:
         state = session.state
         user_input = user_input.strip()
 
@@ -42,7 +46,22 @@ class AgriUSSDHandler:
                 grade = self.grades[user_input]
                 crop = session.data.get("crop")
                 qty = session.data.get("qty")
-                return ChannelResponse(f"✓ Recorded: {qty} bags Grade {grade} {crop}", False)
+                
+                # Persistence logic
+                if self.agri:
+                    harvest = HarvestDTO(
+                        id=f"H-{uuid.uuid4().hex[:8].upper()}",
+                        farmer_id=session.phone_number, # Assume phone is identity for now
+                        crop_id=crop, # Map name to ID (simplified)
+                        quantity=qty,
+                        unit="BAGS",
+                        quality_grade=grade,
+                        harvest_date=datetime.now()
+                    )
+                    await self.agri.record_harvest(harvest)
+                    return ChannelResponse(f"✓ Recorded: {qty} bags Grade {grade} {crop}. Ref: {harvest.id}", False)
+                
+                return ChannelResponse(f"✓ Finalized: {qty} bags Grade {grade} {crop}", False)
             return ChannelResponse("Invalid grade.", False)
 
         return ChannelResponse("Session Error.", False)

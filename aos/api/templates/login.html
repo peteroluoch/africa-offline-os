@@ -24,9 +24,9 @@
             height: 200%;
             z-index: -1;
             background:
-                radial-gradient(circle at 70% 30%, #1e1b4b 0%, transparent 40%),
-                radial-gradient(circle at 30% 70%, #0f172a 0%, transparent 40%),
-                radial-gradient(circle at 50% 50%, #1e3a8a 0%, transparent 60%);
+                radial-gradient(circle at 70% 30%, var(--aos-surface-elevated) 0%, transparent 40%),
+                radial-gradient(circle at 30% 70%, var(--aos-surface-base) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, var(--aos-primary-active) 0%, transparent 60%);
             filter: blur(80px);
             opacity: 0.6;
             animation: mesh 15s ease infinite;
@@ -70,23 +70,25 @@
     <div class="mesh-bg"></div>
 
     <!-- Floating background elements -->
-    <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl animate-float"></div>
-    <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl animate-float"
-        style="animation-delay: -2s"></div>
+    <div class="absolute top-1/4 left-1/4 w-64 h-64 rounded-full blur-3xl animate-float"
+        style="background: var(--aos-primary-hover); opacity: 0.2"></div>
+    <div class="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-float"
+        style="background: var(--aos-secondary-hover); opacity: 0.1; animation-delay: -2s"></div>
 
     <main class="w-full max-w-md relative">
         <div class="text-center mb-12">
             <h1
-                class="aos-text-display text-5xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500 mb-2">
+                class="aos-text-display text-5xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-[var(--aos-primary-base)] to-[var(--aos-primary-hover)] mb-2">
                 A-OS KERNEL
             </h1>
-            <p class="text-slate-400 font-medium tracking-widest text-[10px] opacity-70 uppercase aos-text-mono">
+            <p
+                class="aos-text-muted font-medium tracking-widest text-[var(--aos-size-xs)] opacity-70 uppercase aos-text-mono">
                 Offline Sovereign Operating System
             </p>
         </div>
 
         {% call card(padding="10") %}
-        <h2 class="aos-h2 text-white mb-8">Secure Login</h2>
+        <h2 class="aos-h2 text-[var(--aos-neutral-50)] mb-8">Secure Login</h2>
 
         <form action="/auth/login" method="POST" class="space-y-8">
             {{ form_field(label="Operator Identity", name="username", placeholder="operator_identity", required=True) }}
@@ -100,8 +102,8 @@
             </div>
         </form>
 
-        <div class="mt-8 pt-8 border-t border-slate-800/50 text-center">
-            <div class="flex items-center justify-center space-x-3 text-slate-500 font-mono text-[10px] tracking-tight">
+        <div class="mt-8 pt-8 border-t border-[var(--aos-surface-border)] text-center">
+            <div class="flex items-center justify-center space-x-3 aos-text-muted font-mono aos-text-xs tracking-tight">
                 {{ badge(text="", variant="info", dot=True, pulse=True, class="scale-110") }}
                 <span class="uppercase tracking-widest font-bold">ED25519 SECURE ENCLAVE ACTIVE</span>
             </div>
@@ -109,7 +111,7 @@
         {% endcall %}
 
         <footer
-            class="mt-8 text-center text-[10px] text-slate-600 uppercase tracking-[0.2em] font-medium opacity-50 aos-text-mono">
+            class="mt-8 text-center aos-text-xs text-[var(--aos-neutral-600)] uppercase tracking-[0.2em] font-medium opacity-50 aos-text-mono">
             &copy; 2025 Africa Offline OS. All Rights Reserved.
         </footer>
     </main>

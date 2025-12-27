@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from aos.core.channels.base import ChannelAdapter, ChannelGateway, ChannelRequest, ChannelResponse
@@ -33,11 +34,16 @@ class USSDAdapter(ChannelAdapter):
     def get_channel_type(self) -> str:
         return "ussd"
 
-    def handle_request(self, request: ChannelRequest) -> ChannelResponse:
+    async def handle_request(self, request: ChannelRequest) -> ChannelResponse:
         session = self.session_manager.get_or_create(request.session_id, request.sender)
 
         if self._flow_handler:
-            response = self._flow_handler.process(session, request.content)
+            # Check if flow handler is async
+            if asyncio.iscoroutinefunction(self._flow_handler.process):
+                response = await self._flow_handler.process(session, request.content)
+            else:
+                response = self._flow_handler.process(session, request.content)
+                
             if not response.session_active:
                 self.session_manager.end(request.session_id)
             return response

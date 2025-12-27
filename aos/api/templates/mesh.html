@@ -3,8 +3,8 @@
 {% block content %}
 <div class="space-y-10 fade-in">
     <div>
-        <h2 class="aos-text-display text-3xl font-bold text-slate-100 tracking-tight">Mesh Network</h2>
-        <p class="text-slate-400 text-sm mt-1">Peer-to-Peer Node Management</p>
+        <h2 class="aos-h2 text-[var(--aos-neutral-100)]">Mesh Network</h2>
+        <p class="aos-text-muted aos-text-sm aos-mt-1">Peer-to-Peer Node Management</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -58,7 +58,7 @@
                 </div>
                 {% endfor %}
                 {% else %}
-                <div class="text-center py-20 text-slate-500 aos-text-mono text-sm opacity-50">
+                <div class="aos-text-center aos-py-20 aos-text-muted aos-text-mono aos-text-sm opacity-50">
                     No remote nodes registered in this mesh link.
                 </div>
                 {% endif %}

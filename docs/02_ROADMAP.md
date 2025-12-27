@@ -66,7 +66,7 @@ To prevent "AI Drift" and ensure architectural integrity, execution is batched i
 
 ### Phase 2: Node Control UI ⏳
 - **Scope**: PWA (HTMX + Alpine). Real-time node status (RAM/Disk/Power).
-- **Status**: Design tokens defined (`aos_tokens.json`).
+- **Status**: Design tokens defined (`aos/ui/tokens.json`).
 
 ### Phase 3: Connectivity & Sync Layer ⏳
 - **Scope**: Smart retries, signed payloads, delta-sync for bandwidth saving.
@@ -104,15 +104,21 @@ To prevent "AI Drift" and ensure architectural integrity, execution is batched i
     - Real-time P2P Mesh Management UI.
 - **Remaining Work**:
   - Batch 5: Remote Node Adapter (Swapped Priority)
-  - Batch 6: USSD Adapter
-  - Batch 7: SMS Gateway Integration
+  - ✅ **Batch 6**: USSD Adapter (Hardened)
+    - Multi-step session handling with async module integration.
+    - Persistence logic for harvest recording.
+  - ✅ **Batch 7**: SMS Gateway Integration (Hardened)
+    - Token Bucket Rate Limiting for security and resource fairness.
+    - Command parsing for Farmer/Harvest recording.
   - Batch 8: WhatsApp Business API
   - ✅ **Batch 9**: Telegram Bot Adapter
     - Integrated with universal event bus.
-    - Full TDD suite with network mocking.
-    - Verified ingestion and dispatch flows.
-  - Batch 10: Agent PWA (Offline-first)
-  - Batch 11: Integration Testing & Hardening
+  - ✅ **Batch 10**: Agent PWA (Mobile-first foundation)
+    - Hierarchical FAANG-grade navigation.
+    - Mobile-first templates (`farmer_portal.html`) and routing.
+  - ✅ **Batch 11**: Integration Testing & Hardening
+    - Comprehensive `test_hardening.py` for USSD/SMS flows.
+    - 100% template design token compliance scanner implemented.
 - **Artifacts**: Vehicle Adapters, Message Mappers, Retry logic, Premium UI templates, Design System
 - **Rule**: No domain logic inside adapters. Maps signals to Bus Events.
 
@@ -124,7 +130,9 @@ To prevent "AI Drift" and ensure architectural integrity, execution is batched i
   - ✅ Batch 1: Agri-Domain & Event Schema
   - ✅ Batch 2: Harvest Recording UI
   - ✅ Batch 3: USSD/SMS Channel Infrastructure
-  - ⏳ Batch 4: AgriModule Integration & Real API Setup
+  - ✅ Batch 4: AgriModule Integration & Real API Setup
+    - Hardened USSD/SMS handlers wired to AgriModule persistence.
+    - Harvest recording flow verified E2E via channel adapters.
 
 ### Phase 7: Transport & Mobility ✅ COMPLETE
 - **Focus**: Rural transit logic, signal processors for crowd-sourced traffic, offline nav-hints.

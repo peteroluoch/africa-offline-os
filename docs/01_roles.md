@@ -881,15 +881,15 @@ git submodule update --remote
 ```bash
 # 1. Create template directory
 design-system-template/
-└── aos_tokens.json
+└── tokens.json
 
 # 2. Copy to new modules
-cp design-system-template/aos_tokens.json new-module/assets/
+cp aos/ui/tokens.json new-module/assets/
 ```
 
 #### **MANDATORY DESIGN SYSTEM STRUCTURE:**
 
-**Every A-OS module MUST adhere to this token-driven structure (stored in `aos_tokens.json` and exported to `aos_tokens.css`):**
+**Every A-OS module MUST adhere to this token-driven structure (stored in `aos/ui/tokens.json` and exported to `aos/ui/base.css`):**
 
 #### **DESIGN SYSTEM EVOLUTION WORKFLOW:**
 
@@ -906,7 +906,7 @@ cp design-system-template/aos_tokens.json new-module/assets/
    └── Plan migration for legacy offline nodes
 
 3. UPDATE CENTRAL SYSTEM
-   ├── Update master aos_tokens.json repo
+   ├── Update master aos/ui/tokens.json repo
    ├── Bump version (Semantic Versioning)
    ├── Document in CHANGELOG and ROADMAP
    └── Publish/push changes to master kernel substrate
@@ -990,7 +990,7 @@ cp design-system-template/aos_tokens.json new-module/assets/
 **As Design System Steward, I MUST:**
 
 1. **Maintain Single Source of Truth:**
-   - All tokens in `aos_tokens.json` (The "St substrate").
+   - All tokens in `aos/ui/tokens.json` (The "Stateless" substrate).
    - No project-specific forks; all edge nodes must sync to the master token repo.
 2. **Version Control:**
    - Strict semantic versioning.
