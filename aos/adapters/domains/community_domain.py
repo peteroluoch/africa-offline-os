@@ -12,13 +12,31 @@ class CommunityDomain(BaseDomain):
     """Handles Community-related commands in Telegram."""
     
     def __init__(self, adapter):
-        super().__init__(adapter, "community", "Community-Pulse")
+        super().__init__(adapter)
+        self._name = "community"
+        self._display_name = "🏘️ Community-Pulse"
+    
+    @property
+    def name(self) -> str:
+        return self._name
+    
+    @property
+    def display_name(self) -> str:
+        return self._display_name
         
-    def get_commands(self) -> List[str]:
+    def get_commands(self) -> List[dict]:
         """Return list of supported commands."""
         return [
-            "/groups", "/discover", "/events", "/announcements", "/inquiry"
+            {"command": "groups", "description": "View all registered groups"},
+            {"command": "discover", "description": "Find groups by location or type"},
+            {"command": "events", "description": "View upcoming events"},
+            {"command": "announcements", "description": "Latest community announcements"},
+            {"command": "inquiry", "description": "Send a question to a group"}
         ]
+    
+    def handle_callback(self, chat_id: int, callback_data: str) -> bool:
+        """Handle callback queries (not implemented yet)."""
+        return False
     
     def get_help_text(self) -> str:
         """Return help text for this domain."""
