@@ -76,3 +76,22 @@ async def login(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+@router.get("/auth/logout")
+@router.post("/auth/logout")
+async def logout():
+    """
+    Clear authentication session and redirect to login.
+    Supports both GET and POST for maximum compatibility.
+    """
+    response = RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+    # Clear the access_token cookie
+    response.delete_cookie(
+        key="access_token",
+        path="/",
+        domain=None,
+        httponly=True,
+        samesite="lax",
+        secure=False  # Keep consistent with login
+    )
+    print("[Auth] Logout successful. Session cleared.")
+    return response

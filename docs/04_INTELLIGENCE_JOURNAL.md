@@ -262,10 +262,20 @@ This document serves as the persistent memory for the AI Architect. It records l
 - **Automation**: Integrated 10+ resilience tests into the core suite. ✅
 - **Navigation**: Hierarchical sidebar with search and Cmd+K support deployed. ✅
 
-### **Status Update: 2025-12-27**
-- **Achievement**: Framework C (Testing & QA) 100% COMPLETE.
-- **Milestone**: 3 of 5 Enterprise Frameworks now COMPLETE (A, B, C).
+### **Status Update: 2025-12-27 (Post-Logout)**
+- **Achievement**: Framework C (Testing & QA) and Authentication (Logout) 100% COMPLETE.
+- **Milestone**: Verified session destruction via cookie purging and integrated UI controls.
 - **Next Directive**: Framework D (Security & Compliance hardening).
 
+### Lessons Learned - Session Security
+1. **Idempotent Logout**:
+   - **Observation**: Users might trigger logout multiple times or from different URLs.
+   - **Lesson**: Supporting both `GET` and `POST` for the `/logout` endpoint, and ensuring it clears the cookie regardless of its current state, provides a more reliable UX.
+   - **Protocol**: Always use `RedirectResponse.delete_cookie` with complete security flags (`httponly`, `samesite`).
+
+2. **Integration Testing for Cookies**:
+   - **Observation**: `TestClient` handles cookies differently than browsers in some edge cases.
+   - **Lesson**: Checking for `access_token=""` and `Max-Age=0` in the `set-cookie` header list is the most robust way to verify deletion via integration tests.
+
 ---
-*End of Entry - Framework C Full Sign-off*
+*End of Entry - Phase 5 Batch 1*
