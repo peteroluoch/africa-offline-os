@@ -166,8 +166,10 @@ To prevent "AI Drift" and ensure architectural integrity, execution is batched i
   - ✅ **Package Structure**: `aos/modules/transport/` with adapter separation
   - ✅ **Telegram Integration**: `/zones`, `/avoid`, `/state`, `/report`, `/traffic`, `/avl` commands
   - ✅ **Backward Compatibility**: Shims for `list_routes()` and `get_route_status()`
-  - ✅ **TDD**: 6 comprehensive tests (zone registration, signal reporting, consensus, expiry, availability, migration)
-- **Artifacts**: `aos.modules.transport`, `transport_domain.py`, `test_transport.py`, migration `_008_transport_v2_schema.py`.
+  - ✅ **TDD**: 9 comprehensive tests (zone registration, signal reporting, consensus, expiry, availability, migration, avoidance summary)
+  - ✅ **Enhancement**: `get_avoidance_summary()` for SMS/USSD-optimized intelligence (Added 2025-12-28)
+  - ✅ **Simulation**: Realistic Nairobi usage data seeding script (`seed_transport_v2_simulation.py`)
+- **Artifacts**: `aos.modules.transport`, `transport_domain.py`, `test_transport.py`, `seed_transport_v2_simulation.py`, migration `_008_transport_v2_schema.py`.
 - **Quality**: Africa-first design, offline-first, crowd-sourced intelligence, zero GPS dependency.
 
 ### Phase 7.7: Community Message Isolation (Security Hardening) ✅ COMPLETE

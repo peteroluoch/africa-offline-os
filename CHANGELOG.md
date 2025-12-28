@@ -13,6 +13,23 @@ Each phase is intentional and auditable.
 
 ---
 
+## [0.14.0] — Phase 7.6 & 11: Transport v2 & Deployment Playbooks (2025-12-28)
+
+### Added
+- **Transport Module v2 Enhancement**: Added `get_avoidance_summary()` for SMS/USSD-optimized avoidance intelligence
+- **Simulation**: Added `seed_transport_v2_simulation.py` with realistic Nairobi traffic data
+- **Phase 11 Deployment Playbooks**: 
+  - Community Onboarding & Agent Guidelines
+  - Rollout Strategy (Pilot → National)
+  - Anti-Spam Policy & Operator Training
+  - Troubleshooting Guide
+
+### Changed
+- **Transport Logic**: Shifted from Routes to Zones (Waiyaki Way, Thika Road) with signal-based intelligence
+- **Documentation**: Updated ROADMAP to reflect 100% completion of Phases 0-11
+
+---
+
 ## [0.13.0] — Phase 7.7: Community Message Isolation (2025-12-28)
 
 ### Added
