@@ -1,9 +1,8 @@
-# Africa Offline OS (A-OS)
+# Africa Offline OS (A-OS): The Platform Substrate
 
-**Africa Offline OS (A-OS)** is an offline-first, edge-native infrastructure platform designed to solve Africa’s most critical systemic challenges—connectivity gaps, food loss, mobility inefficiencies, and identity exclusion—under conditions of unreliable power, high data costs, and intermittent internet access.
+**Africa Offline OS (A-OS)** is a resilient, edge-native **Infrastructure Substrate** designed to run Africa’s informal economy. It provides the "Digital Rails" for regions with unreliable power and intermittent connectivity—unifying USSD, SMS, and modern Bots under a single, power-aware, offline-first kernel.
 
-A-OS is **not an app**.  
-It is an **operating substrate** that runs locally on edge nodes and exposes multiple human interaction “vehicles” (USSD, SMS, bots, PWAs) on top of resilient core services.
+A-OS is **not just an app**. It is an **operating substrate** that runs locally on edge nodes (Pi, Mobile, Server) and allows for the rapid deployment of critical digital services (Agri, Transport, Finance) that continue working **without constant internet**.
 
 ---
 
