@@ -27,39 +27,39 @@ class TransportDomain(BaseDomain):
             {"command": "report", "description": "Report traffic or availability"}
         ]
     
-    def handle_command(self, chat_id: int, command: str, args: List[str]) -> bool:
+    async def handle_command(self, chat_id: int, command: str, args: List[str]) -> bool:
         if not getattr(self.adapter, "transport_module", None):
-            self.adapter.send_message(chat_id, "⚠️ Transport module not initialized")
+            await self.adapter.send_message(str(chat_id), "⚠️ Transport module not initialized")
             return True
 
         if command == "/zones":
-            return self._handle_zones(chat_id)
+            return await self._handle_zones(chat_id)
         elif command == "/avoid":
-            return self._handle_avoid(chat_id)
+            return await self._handle_avoid(chat_id)
         elif command == "/state":
-            return self._handle_state(chat_id, args)
+            return await self._handle_state(chat_id, args)
         elif command == "/report":
-            return self._handle_report_prompt(chat_id)
+            return await self._handle_report_prompt(chat_id)
         elif command == "/routes": # Shim
-            return self._handle_zones(chat_id)
+            return await self._handle_zones(chat_id)
         elif command == "/traffic":
-            return self._handle_traffic_report(chat_id, args)
+            return await self._handle_traffic_report(chat_id, args)
         elif command == "/avl":
-            return self._handle_availability_report(chat_id, args)
+            return await self._handle_availability_report(chat_id, args)
             
         return False
     
-    def handle_callback(self, chat_id: int, callback_data: str) -> bool:
+    async def handle_callback(self, chat_id: int, callback_data: str) -> bool:
         if callback_data.startswith('view_zone_'):
             zone_id = callback_data.replace('view_zone_', '')
-            return self._show_zone_state(chat_id, zone_id)
+            return await self._show_zone_state(chat_id, zone_id)
         return False
 
-    def _handle_zones(self, chat_id: int) -> bool:
+    async def _handle_zones(self, chat_id: int) -> bool:
         """List transport zones."""
         zones = self.adapter.transport_module.discover_zones()
         if not zones:
-            self.adapter.send_message(chat_id, "📭 No transport zones registered.")
+            await self.adapter.send_message(str(chat_id), "📭 No transport zones registered.")
             return True
 
         message = "🚌 <b>Transport Zones</b>\n\n"
@@ -69,10 +69,10 @@ class TransportDomain(BaseDomain):
             keyboard_buttons.append([{"text": f"🔍 {zone.name}", "callback_data": f"view_zone_{zone.id}"}])
 
         keyboard = {"inline_keyboard": keyboard_buttons}
-        self.adapter.send_message(chat_id, message, reply_markup=keyboard)
+        await self.adapter.send_message(str(chat_id), message, metadata={"reply_markup": keyboard})
         return True
 
-    def _handle_avoid(self, chat_id: int) -> bool:
+    async def _handle_avoid(self, chat_id: int) -> bool:
         """Show blocked or slow zones."""
         zones = self.adapter.transport_module.discover_zones()
         blocked_zones = []
@@ -83,7 +83,7 @@ class TransportDomain(BaseDomain):
                 blocked_zones.append(intel)
 
         if not blocked_zones:
-            self.adapter.send_message(chat_id, "✅ <b>All systems flowing!</b>\nNo blocked or slow roads reported.")
+            await self.adapter.send_message(str(chat_id), "✅ <b>All systems flowing!</b>\nNo blocked or slow roads reported.")
             return True
 
         message = "🚨 <b>Roads to Avoid</b>\n\n"
@@ -91,13 +91,13 @@ class TransportDomain(BaseDomain):
             icon = "🛑" if item["current_state"] == "blocked" else "⚠️"
             message += f"{icon} <b>{item['zone_name']}</b>: {item['current_state'].upper()}\n"
             
-        self.adapter.send_message(chat_id, message)
+        await self.adapter.send_message(str(chat_id), message)
         return True
 
-    def _handle_state(self, chat_id: int, args: List[str]) -> bool:
+    async def _handle_state(self, chat_id: int, args: List[str]) -> bool:
         """Check specific zone intelligence."""
         if not args:
-            self.adapter.send_message(chat_id, "🔍 Usage: /state [zone_name]")
+            await self.adapter.send_message(str(chat_id), "🔍 Usage: /state [zone_name]")
             return True
             
         search = " ".join(args)
@@ -108,12 +108,12 @@ class TransportDomain(BaseDomain):
             zones = [z for z in all_zones if search.lower() in z.name.lower()]
 
         if not zones:
-            self.adapter.send_message(chat_id, f"📭 Zone '{search}' not found.")
+            await self.adapter.send_message(str(chat_id), f"📭 Zone '{search}' not found.")
             return True
 
-        return self._show_zone_state(chat_id, zones[0].id)
+        return await self._show_zone_state(chat_id, zones[0].id)
 
-    def _show_zone_state(self, chat_id: int, zone_id: str) -> bool:
+    async def _show_zone_state(self, chat_id: int, zone_id: str) -> bool:
         """Show detailed intelligence for a zone."""
         intel = self.adapter.transport_module.get_zone_intelligence(zone_id)
         if not intel:
@@ -133,13 +133,13 @@ class TransportDomain(BaseDomain):
         else:
             message += "<i>No vehicles reported recently.</i>"
 
-        self.adapter.send_message(chat_id, message)
+        await self.adapter.send_message(str(chat_id), message)
         return True
 
-    def _handle_report_prompt(self, chat_id: int) -> bool:
+    async def _handle_report_prompt(self, chat_id: int) -> bool:
         """Prompt to report traffic/availability."""
-        self.adapter.send_message(
-            chat_id, 
+        await self.adapter.send_message(
+            str(chat_id), 
             "📢 <b>Mobility Report</b>\n\n"
             "Reports are verified by the community.\n\n"
             "To report traffic:\n<code>/traffic [zone] [flowing|slow|blocked]</code>\n\n"
@@ -147,24 +147,24 @@ class TransportDomain(BaseDomain):
         )
         return True
 
-    def _handle_traffic_report(self, chat_id: int, args: List[str]) -> bool:
+    async def _handle_traffic_report(self, chat_id: int, args: List[str]) -> bool:
         """Handle traffic report command."""
         if len(args) < 2:
-            self.adapter.send_message(chat_id, "❌ Usage: /traffic [zone_name] [flowing|slow|blocked]")
+            await self.adapter.send_message(str(chat_id), "❌ Usage: /traffic [zone_name] [flowing|slow|blocked]")
             return True
             
         state = args[-1].lower()
         zone_search = " ".join(args[:-1])
         
         if state not in ["flowing", "slow", "blocked"]:
-            self.adapter.send_message(chat_id, "❌ Invalid state. Use: flowing, slow, or blocked.")
+            await self.adapter.send_message(str(chat_id), "❌ Invalid state. Use: flowing, slow, or blocked.")
             return True
 
         all_zones = self.adapter.transport_module.discover_zones()
         target_zone = next((z for z in all_zones if zone_search.lower() in z.name.lower()), None)
         
         if not target_zone:
-            self.adapter.send_message(chat_id, f"📭 Zone '{zone_search}' not found.")
+            await self.adapter.send_message(str(chat_id), f"📭 Zone '{zone_search}' not found.")
             return True
 
         success = self.adapter.transport_module.report_traffic_signal(
@@ -174,15 +174,15 @@ class TransportDomain(BaseDomain):
         )
         
         if success:
-            self.adapter.send_message(chat_id, f"✅ Traffic report for <b>{target_zone.name}</b> recorded.")
+            await self.adapter.send_message(str(chat_id), f"✅ Traffic report for <b>{target_zone.name}</b> recorded.")
         else:
-            self.adapter.send_message(chat_id, "❌ Failed to record report.")
+            await self.adapter.send_message(str(chat_id), "❌ Failed to record report.")
         return True
 
-    def _handle_availability_report(self, chat_id: int, args: List[str]) -> bool:
+    async def _handle_availability_report(self, chat_id: int, args: List[str]) -> bool:
         """Handle availability report command."""
         if len(args) < 3:
-            self.adapter.send_message(chat_id, "❌ Usage: /avl [zone_name] [destination] [available|limited|none]")
+            await self.adapter.send_message(str(chat_id), "❌ Usage: /avl [zone_name] [destination] [available|limited|none]")
             return True
             
         state = args[-1].lower()
@@ -190,14 +190,14 @@ class TransportDomain(BaseDomain):
         zone_search = " ".join(args[:-2])
         
         if state not in ["available", "limited", "none"]:
-            self.adapter.send_message(chat_id, "❌ Invalid state. Use: available, limited, or none.")
+            await self.adapter.send_message(str(chat_id), "❌ Invalid state. Use: available, limited, or none.")
             return True
 
         all_zones = self.adapter.transport_module.discover_zones()
         target_zone = next((z for z in all_zones if zone_search.lower() in z.name.lower()), None)
         
         if not target_zone:
-            self.adapter.send_message(chat_id, f"📭 Zone '{zone_search}' not found.")
+            await self.adapter.send_message(str(chat_id), f"📭 Zone '{zone_search}' not found.")
             return True
 
         success = self.adapter.transport_module.report_availability(
@@ -208,7 +208,7 @@ class TransportDomain(BaseDomain):
         )
         
         if success:
-            self.adapter.send_message(chat_id, f"✅ Availability to <b>{destination}</b> from <b>{target_zone.name}</b> recorded.")
+            await self.adapter.send_message(str(chat_id), f"✅ Availability to <b>{destination}</b> from <b>{target_zone.name}</b> recorded.")
         else:
-            self.adapter.send_message(chat_id, "❌ Failed to record report.")
+            await self.adapter.send_message(str(chat_id), "❌ Failed to record report.")
         return True

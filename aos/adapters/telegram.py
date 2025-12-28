@@ -9,6 +9,9 @@ import os
 import requests
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from aos.adapters.domain_router import DomainRouter
+from aos.adapters.telegram_gateway import TelegramGateway
+from aos.core.channels.base import ChannelAdapter, ChannelRequest, ChannelResponse, ChannelType
+from aos.core.utils.phone import normalize_phone
 
 if TYPE_CHECKING:
     from aos.bus.dispatcher import EventDispatcher
@@ -18,7 +21,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-class TelegramAdapter:
+class TelegramAdapter(ChannelAdapter):
     """
     Telegram Bot Adapter for A-OS.
     Features a DomainRouter for scalable, context-aware command handling.
@@ -29,16 +32,18 @@ class TelegramAdapter:
         event_bus: EventDispatcher,
         agri_module: Optional[AgriModule] = None,
         transport_module: Optional[TransportModule] = None,
-        community_module: Optional[CommunityModule] = None
+        community_module: Optional[CommunityModule] = None,
+        gateway: Optional[TelegramGateway] = None
     ):
         self.event_bus = event_bus
         self.agri_module = agri_module
         self.transport_module = transport_module
         self.community_module = community_module
-        self.bot_token = os.getenv('TELEGRAM_BOT_TOKEN', '')
-        self.api_url = f"https://api.telegram.org/bot{self.bot_token}"
         
-        if not self.bot_token:
+        # Inject or create gateway for API interactions
+        self.gateway = gateway or TelegramGateway()
+        
+        if not self.gateway.bot_token:
             logger.warning("TELEGRAM_BOT_TOKEN not set - Telegram bot disabled")
         
         # Initialize Domain Router
@@ -57,43 +62,53 @@ class TelegramAdapter:
             {"command": "help", "description": "Get Help"}
         ]
         try:
-            requests.post(f"{self.api_url}/setMyCommands", json={"commands": commands})
+            # Note: We still use requests here briefly for setup, or we could move this to the gateway
+            # For strict compliance, moving setup to gateway might be better, but gateway usually handles 'messages'.
+            # Let's use the gateway's token/url.
+            url = f"{self.gateway.base_url}/setMyCommands"
+            requests.post(url, json={"commands": commands})
         except Exception as e:
             logger.error(f"Error setting bot commands: {e}")
 
-    def send_message(self, chat_id: int, text: str, reply_markup: Optional[Dict] = None, parse_mode: str = "HTML") -> bool:
-        """Send message to Telegram chat."""
-        if not self.bot_token:
-            return False
-            
-        url = f"{self.api_url}/sendMessage"
-        payload = {
-            'chat_id': chat_id,
-            'text': text,
-            'parse_mode': parse_mode
-        }
-        if reply_markup:
-            payload['reply_markup'] = reply_markup
+    async def send_message(self, to: str, message: str, metadata: dict[str, Any] | None = None) -> bool:
+        """Standardized outbound message send using the gateway."""
+        # Normalize to string if it somehow isn't
+        chat_id = str(to)
+        
+        # Send via gateway
+        response = await self.gateway.send(chat_id, message, metadata=metadata)
+        return response.get("ok", False)
 
-        try:
-            response = requests.post(url, json=payload, timeout=10)
-            return response.json().get('ok', False)
-        except Exception as e:
-            logger.error(f"Error sending message: {e}")
-            return False
+    def parse_request(self, payload: dict[str, Any]) -> ChannelRequest:
+        """Standardized request parsing."""
+        message = payload.get("message", {})
+        chat_id = str(message.get("chat", {}).get("id", ""))
+        sender = str(message.get("from", {}).get("id", ""))
+        text = message.get("text", "")
+
+        return ChannelRequest(
+            session_id=chat_id,
+            sender=sender,
+            content=text,
+            channel_type="telegram",
+            raw_payload=payload
+        )
+
+    def format_response(self, response: ChannelResponse) -> dict[str, Any]:
+        """Standardized response formatting."""
+        return {
+            "text": response.content,
+            "parse_mode": "HTML"
+        }
+
+    def get_channel_type(self) -> str:
+        return "telegram"
 
     def send_chat_action(self, chat_id: int, action: str = "typing") -> bool:
-        """Send a chat action indicator (e.g., typing)."""
-        if not self.bot_token:
-            return False
-        url = f"{self.api_url}/sendChatAction"
-        try:
-            requests.post(url, json={'chat_id': chat_id, 'action': action}, timeout=5)
-            return True
-        except:
-            return False
+        """Send a chat action indicator indicator via gateway."""
+        return self.gateway.send_chat_action(str(chat_id), action)
 
-    def handle_message(self, message: Dict[str, Any]) -> None:
+    async def handle_message(self, message: Dict[str, Any]) -> None:
         """Entry point for incoming messages."""
         chat_id = message.get('chat', {}).get('id')
         user_id = message.get('from', {}).get('id')
@@ -112,25 +127,25 @@ class TelegramAdapter:
             
             # 1. Handle Global Core Commands
             if command == '/start':
-                self.send_welcome(chat_id)
+                await self.send_welcome(chat_id)
             elif command == '/register':
-                self._start_registration(chat_id)
+                await self._start_registration(chat_id)
             elif command == '/profile':
-                self._show_profile(chat_id)
+                await self._show_profile(chat_id)
             elif command == '/help':
-                self.send_help(chat_id)
+                await self.send_help(chat_id)
             elif command == '/domain':
-                self.router.show_domain_selector(chat_id)
+                await self.router.show_domain_selector(chat_id)
             else:
                 # 2. Route to Active Domain
-                handled = self.router.route_command(chat_id, command, args)
+                handled = await self.router.route_command(chat_id, command, args)
                 if not handled:
-                    self.send_message(chat_id, f"❓ Unknown command: {command}\n\nUse /domain to select a service or /help for info.")
+                    await self.send_message(str(chat_id), f"❓ Unknown command: {command}\n\nUse /domain to select a service or /help for info.")
         else:
             # It's regular text (likely part of a registration or domain-specific prompt)
-            self._handle_conversational_text(user_id, chat_id, text)
+            await self._handle_conversational_text(user_id, chat_id, text)
 
-    def _handle_conversational_text(self, user_id: int, chat_id: int, text: str):
+    async def _handle_conversational_text(self, user_id: int, chat_id: int, text: str):
         """Handle context-aware text inputs."""
         from aos.adapters.telegram_state import TelegramStateManager
         state_manager = TelegramStateManager()
@@ -138,7 +153,7 @@ class TelegramAdapter:
         
         if not user_state:
             # Fallback - echo or suggest commands
-            self.send_message(chat_id, "Use /domain to start a service or /help for a list of commands.")
+            await self.send_message(str(chat_id), "Use /domain to start a service or /help for a list of commands.")
             return
             
         state = user_state.get("state")
@@ -148,12 +163,12 @@ class TelegramAdapter:
         if state == "register_name":
             data["name"] = text
             state_manager.set_state(chat_id, "register_phone", data)
-            self.send_message(chat_id, "📱 Great! What is your <b>phone number</b>?")
+            await self.send_message(str(chat_id), "📱 Great! What is your <b>phone number</b>?")
         
         elif state == "register_phone":
             data["phone"] = text
             state_manager.set_state(chat_id, "register_town", data)
-            self.send_message(chat_id, "🏙️ Which <b>Town or City</b> are you nearest to?")
+            await self.send_message(str(chat_id), "🏙️ Which <b>Town or City</b> are you nearest to?")
         
         elif state == "register_town":
             data["town"] = text
@@ -166,7 +181,7 @@ class TelegramAdapter:
                     [{"text": "✅ Done", "callback_data": "role_done"}]
                 ]
             }
-            self.send_message(chat_id, "🎗️ <b>One last step!</b>\n\nSelect your roles (you can pick multiple):", reply_markup=keyboard)
+            await self.send_message(str(chat_id), "🎗️ <b>One last step!</b>\n\nSelect your roles (you can pick multiple):", metadata={"reply_markup": keyboard})
             
         else:
             # If not in a core registration state, it might be a domain-specific conversational state
@@ -174,17 +189,17 @@ class TelegramAdapter:
             # As modules grow, we can add a router.handle_text method.
             pass
 
-    def handle_callback(self, user_id: int, chat_id: int, callback_data: str) -> None:
+    async def handle_callback(self, user_id: int, chat_id: int, callback_data: str) -> None:
         """Entry point for inline button clicks."""
         # 1. Routing to DomainRouter first
-        if self.router.route_callback(chat_id, callback_data):
+        if await self.router.route_callback(chat_id, callback_data):
             return
 
         # 2. Registration roles
         if callback_data.startswith('role_'):
-             self._handle_role_callback(chat_id, callback_data)
+             await self._handle_role_callback(chat_id, callback_data)
 
-    def _handle_role_callback(self, chat_id: int, callback_data: str):
+    async def _handle_role_callback(self, chat_id: int, callback_data: str):
         from aos.adapters.telegram_state import TelegramStateManager
         from aos.core.users import UniversalUserService
         state_manager = TelegramStateManager()
@@ -198,7 +213,7 @@ class TelegramAdapter:
         if callback_data == "role_done":
             roles = data.get("roles", [])
             if not roles:
-                self.send_message(chat_id, "❌ Please select at least one role before finishing.")
+                await self.send_message(str(chat_id), "❌ Please select at least one role before finishing.")
                 return
             
             user = user_service.register_user(
@@ -210,11 +225,11 @@ class TelegramAdapter:
             )
             
             if user:
-                self.send_message(chat_id, f"✅ <b>Welcome to A-OS, {user['name']}!</b>\n\nYour profile is ready. Use /domain to start.")
+                await self.send_message(str(chat_id), f"✅ <b>Welcome to A-OS, {user['name']}!</b>\n\nYour profile is ready. Use /domain to start.")
                 state_manager.clear_state(chat_id)
-                self.router.show_domain_selector(chat_id)
+                await self.router.show_domain_selector(chat_id)
             else:
-                self.send_message(chat_id, "❌ Registration failed. Perhaps your phone number is already in use?")
+                await self.send_message(str(chat_id), "❌ Registration failed. Perhaps your phone number is already in use?")
         else:
             role = callback_data.replace('role_', '')
             roles = data.get("roles", [])
@@ -226,15 +241,15 @@ class TelegramAdapter:
             state_manager.set_state(chat_id, "register_roles", data)
             
             roles_text = ", ".join(roles) if roles else "None"
-            self.send_message(chat_id, f"Selected: {roles_text}\n\nSelect more or click ✅ Done.")
+            await self.send_message(str(chat_id), f"Selected: {roles_text}\n\nSelect more or click ✅ Done.")
 
-    def _start_registration(self, chat_id: int):
+    async def _start_registration(self, chat_id: int):
         from aos.adapters.telegram_state import TelegramStateManager
         state_manager = TelegramStateManager()
         state_manager.set_state(chat_id, "register_name", {})
-        self.send_message(chat_id, "🏁 <b>Registration Started</b>\n\nWhat is your <b>full name</b>?")
+        await self.send_message(str(chat_id), "🏁 <b>Registration Started</b>\n\nWhat is your <b>full name</b>?")
 
-    def send_welcome(self, chat_id: int):
+    async def send_welcome(self, chat_id: int):
         welcome_text = (
             "🌍 <b>Welcome to Africa Offline OS (A-OS)</b>\n\n"
             "One platform for farming, transport, health, and community services. "
@@ -244,15 +259,15 @@ class TelegramAdapter:
             "📂 Already member? Use /domain to select a service.\n"
             "👤 Use /profile to see your settings."
         )
-        self.send_message(chat_id, welcome_text)
+        await self.send_message(str(chat_id), welcome_text)
 
-    def send_help(self, chat_id: int):
+    async def send_help(self, chat_id: int):
         from aos.core.users import UniversalUserService
         user_service = UniversalUserService()
         active_domain = user_service.get_active_domain(chat_id)
         
         if active_domain:
-            self.router.show_domain_help(chat_id, active_domain)
+            await self.router.show_domain_help(chat_id, active_domain)
         else:
             help_text = (
                 "❓ <b>Core Commands:</b>\n\n"
@@ -262,15 +277,15 @@ class TelegramAdapter:
                 "/profile - View your account info\n\n"
                 "<i>Select a domain to see specific service commands!</i>"
             )
-            self.send_message(chat_id, help_text)
+            await self.send_message(str(chat_id), help_text)
 
-    def _show_profile(self, chat_id: int):
+    async def _show_profile(self, chat_id: int):
         from aos.core.users import UniversalUserService
         user_service = UniversalUserService()
         user = user_service.get_user_by_chat_id(chat_id)
         
         if not user:
-            self.send_message(chat_id, "Account not found. Use /register to create one.")
+            await self.send_message(str(chat_id), "Account not found. Use /register to create one.")
             return
             
         profile_text = (
@@ -282,4 +297,4 @@ class TelegramAdapter:
             f"<b>Active Domain:</b> {user.get('active_domain', 'None')}\n\n"
             "Switch services using /domain."
         )
-        self.send_message(chat_id, profile_text)
+        await self.send_message(str(chat_id), profile_text)

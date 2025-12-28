@@ -52,5 +52,10 @@ class Settings(BaseSettings):
     # Resource configuration
     resource_check_interval: int = 30
 
+    # Africa's Talking configuration
+    at_username: str = "sandbox"
+    at_api_key: str = ""
+    at_environment: str = "sandbox"  # sandbox or production
+
 
 settings = Settings()

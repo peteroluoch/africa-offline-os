@@ -47,28 +47,3 @@ class USSDSessionManager:
         for sid in expired:
             del self._sessions[sid]
 
-
-class ProtocolAT:
-    """Africa's Talking USSD Protocol Handler."""
-
-    @staticmethod
-    def parse(payload: dict[str, Any]) -> ChannelRequest:
-        sid = payload.get("sessionId", "")
-        phone = payload.get("phoneNumber", "")
-        text = payload.get("text", "")
-
-        inputs = text.split("*") if text else []
-        latest = inputs[-1] if inputs else ""
-
-        return ChannelRequest(
-            session_id=sid,
-            sender=phone,
-            content=latest,
-            channel_type="ussd",
-            raw_payload=payload
-        )
-
-    @staticmethod
-    def format(response: ChannelResponse) -> dict[str, Any]:
-        prefix = "CON" if response.session_active else "END"
-        return {"text": f"{prefix} {response.content}"}

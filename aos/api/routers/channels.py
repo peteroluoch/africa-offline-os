@@ -3,10 +3,9 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
 
+from aos.adapters.africas_talking import SMSAdapter, USSDAdapter
 from aos.adapters.mocks.mock_sms_gateway import MockSMSGateway
 from aos.adapters.mocks.mock_ussd_gateway import MockUSSDGateway
-from aos.adapters.sms import SMSAdapter
-from aos.adapters.ussd import USSDAdapter
 from aos.api.state import transport_state
 from aos.core.channels.base import ChannelResponse
 from aos.core.security.auth import get_current_operator

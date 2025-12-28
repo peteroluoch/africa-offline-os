@@ -8,6 +8,8 @@ import logging
 import sqlite3
 from typing import Any, Optional, List, Dict
 
+from aos.core.utils.phone import normalize_phone
+
 logger = logging.getLogger(__name__)
 
 class UniversalUserService:
@@ -51,6 +53,7 @@ class UniversalUserService:
                     return None
 
             roles_json = json.dumps(roles or [])
+            phone = normalize_phone(phone)
 
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -102,6 +105,7 @@ class UniversalUserService:
     def get_user_by_phone(self, phone: str) -> Optional[Dict[str, Any]]:
         """Get user by phone number."""
         try:
+            phone = normalize_phone(phone)
             conn = sqlite3.connect(self.db_path)
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()

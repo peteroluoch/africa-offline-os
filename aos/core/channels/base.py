@@ -19,6 +19,7 @@ class ChannelRequest:
     sender: str
     content: str
     channel_type: str
+    country_code: str = "KE"  # Default to Kenya
     raw_payload: dict[str, Any] = field(default_factory=dict)
 
 
@@ -27,6 +28,7 @@ class ChannelResponse:
     """Standardized response to any communication channel."""
     content: str
     session_active: bool = False
+    country_code: str | None = None
     metadata: dict[str, Any] | None = None
 
 

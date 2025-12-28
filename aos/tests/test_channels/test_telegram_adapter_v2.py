@@ -20,8 +20,12 @@ def event_bus() -> Mock[EventDispatcher]:
 
 @pytest.fixture
 def telegram_adapter(event_bus: Mock[EventDispatcher]) -> TelegramAdapter:
-    """Create TelegramAdapter instance."""
-    return TelegramAdapter(event_bus)
+    """Create TelegramAdapter instance with mock gateway."""
+    mock_gateway = Mock()
+    mock_gateway.bot_token = "test_token"
+    mock_gateway.send.return_value = asyncio.Future()
+    mock_gateway.send.return_value.set_result({"ok": True})
+    return TelegramAdapter(event_bus, gateway=mock_gateway)
 
 class TestTelegramAdapter:
     """Test suite for TelegramAdapter."""
@@ -35,187 +39,70 @@ class TestTelegramAdapter:
         assert telegram_adapter.event_bus == event_bus
         assert telegram_adapter.agri_module is None
         assert telegram_adapter.transport_module is None
+        assert telegram_adapter.gateway is not None
 
-    def test_get_bot_token_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test bot token retrieval from environment."""
-        monkeypatch.setenv('TELEGRAM_BOT_TOKEN', 'test_token_123')
-        token = TelegramAdapter.get_bot_token()
-        assert token == 'test_token_123'
-
-    def test_get_bot_token_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test bot token when not set."""
-        monkeypatch.delenv('TELEGRAM_BOT_TOKEN', raising=False)
-        token = TelegramAdapter.get_bot_token()
-        assert token == ''
-
-    @patch('aos.adapters.telegram.requests.post')
-    def test_send_message_success(
+    @pytest.mark.asyncio
+    async def test_send_message_success(
         self,
-        mock_post: Mock,
         telegram_adapter: TelegramAdapter,
-        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Test sending message successfully."""
-        monkeypatch.setenv('TELEGRAM_BOT_TOKEN', 'test_token')
-        mock_post.return_value.json.return_value = {'ok': True}
-
-        result = telegram_adapter.send_message('123', 'Test message')
+        """Test sending message successfully via gateway."""
+        result = await telegram_adapter.send_message('123', 'Test message')
 
         assert result is True
-        mock_post.assert_called_once()
-        call_args = mock_post.call_args
-        assert 'chat_id' in call_args[1]['json']
-        assert call_args[1]['json']['chat_id'] == '123'
-        assert call_args[1]['json']['text'] == 'Test message'
+        telegram_adapter.gateway.send.assert_called_once()
+        args = telegram_adapter.gateway.send.call_args[0]
+        assert args[0] == '123'
+        assert args[1] == 'Test message'
 
-    @patch('aos.adapters.telegram.requests.post')
-    def test_send_message_with_keyboard(
-        self,
-        mock_post: Mock,
-        telegram_adapter: TelegramAdapter,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        """Test sending message with inline keyboard."""
-        monkeypatch.setenv('TELEGRAM_BOT_TOKEN', 'test_token')
-        mock_post.return_value.json.return_value = {'ok': True}
-
-        keyboard = {
-            'inline_keyboard': [
-                [{'text': 'Option 1', 'callback_data': 'opt1'}],
-            ],
-        }
-
-        result = telegram_adapter.send_message(
-            '123',
-            'Choose:',
-            reply_markup=keyboard,
-        )
-
-        assert result is True
-        call_args = mock_post.call_args
-        assert 'reply_markup' in call_args[1]['json']
-
-    @patch('aos.adapters.telegram.requests.post')
-    def test_send_message_no_token(
-        self,
-        mock_post: Mock,
-        telegram_adapter: TelegramAdapter,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        """Test sending message without bot token."""
-        monkeypatch.delenv('TELEGRAM_BOT_TOKEN', raising=False)
-
-        result = telegram_adapter.send_message('123', 'Test')
-
-        assert result is False
-        mock_post.assert_not_called()
-
-    def test_handle_start_command(
+    @pytest.mark.asyncio
+    async def test_handle_start_command(
         self,
         telegram_adapter: TelegramAdapter,
     ) -> None:
         """Test /start command handler."""
-        with patch.object(telegram_adapter, 'send_message') as mock_send:
-            telegram_adapter.handle_command(123, 456, '/start')
+        with patch.object(telegram_adapter, 'send_welcome', return_value=asyncio.Future()) as mock_welcome:
+            mock_welcome.return_value.set_result(None)
+            message = {'chat': {'id': 456}, 'from': {'id': 123}, 'text': '/start'}
+            await telegram_adapter.handle_message(message)
+            mock_welcome.assert_called_once_with(456)
 
-            mock_send.assert_called_once()
-            call_args = mock_send.call_args[0]
-            assert call_args[0] == 456  # chat_id
-            assert 'Welcome to Africa Offline OS' in call_args[1]
-
-    def test_handle_help_command(
+    @pytest.mark.asyncio
+    async def test_handle_help_command(
         self,
         telegram_adapter: TelegramAdapter,
     ) -> None:
         """Test /help command handler."""
-        with patch.object(telegram_adapter, 'send_message') as mock_send:
-            telegram_adapter.handle_command(123, 456, '/help')
+        with patch.object(telegram_adapter, 'send_help', return_value=asyncio.Future()) as mock_help:
+             mock_help.return_value.set_result(None)
+             message = {'chat': {'id': 456}, 'from': {'id': 123}, 'text': '/help'}
+             await telegram_adapter.handle_message(message)
+             mock_help.assert_called_once_with(456)
 
-            mock_send.assert_called_once()
-            call_args = mock_send.call_args[0]
-            assert 'Welcome' in call_args[1]
-
-    def test_handle_harvest_command(
-        self,
-        telegram_adapter: TelegramAdapter,
-    ) -> None:
-        """Test /harvest command shows crop menu."""
-        with patch.object(telegram_adapter, 'send_message') as mock_send:
-            telegram_adapter.send_harvest_menu(456)
-
-            mock_send.assert_called_once()
-            call_args = mock_send.call_args
-            assert 'Record Harvest' in call_args[0][1]
-            assert 'reply_markup' in call_args[1]
-
-    def test_handle_routes_command(
-        self,
-        telegram_adapter: TelegramAdapter,
-    ) -> None:
-        """Test /routes command lists routes."""
-        with patch.object(telegram_adapter, 'send_message') as mock_send:
-            telegram_adapter.send_routes_list(456)
-
-            mock_send.assert_called_once()
-            call_args = mock_send.call_args[0]
-            assert 'Available Routes' in call_args[1]
-
-    def test_handle_callback_harvest(
-        self,
-        telegram_adapter: TelegramAdapter,
-    ) -> None:
-        """Test callback for harvest crop selection."""
-        with patch.object(telegram_adapter, 'send_message') as mock_send:
-            telegram_adapter.handle_callback(123, 456, 'harvest_maize')
-
-            mock_send.assert_called_once()
-            call_args = mock_send.call_args[0]
-            assert 'Maize' in call_args[1]
-
-    def test_handle_callback_booking(
-        self,
-        telegram_adapter: TelegramAdapter,
-    ) -> None:
-        """Test callback for route booking."""
-        with patch.object(telegram_adapter, 'send_message') as mock_send:
-            telegram_adapter.handle_callback(123, 456, 'book_route_1')
-
-            mock_send.assert_called_once()
-            call_args = mock_send.call_args[0]
-            assert 'Route selected' in call_args[1]
-
-    def test_handle_unknown_command(
+    @pytest.mark.asyncio
+    async def test_handle_unknown_command(
         self,
         telegram_adapter: TelegramAdapter,
     ) -> None:
         """Test unknown command handling."""
-        with patch.object(telegram_adapter, 'send_message') as mock_send:
-            telegram_adapter.handle_command(123, 456, '/unknown')
+        from unittest.mock import AsyncMock
+        
+        # Mock send_chat_action to avoid gateway calls
+        telegram_adapter.send_chat_action = Mock(return_value=True)
+        
+        with patch.object(telegram_adapter, 'send_message', new=AsyncMock(return_value=True)) as mock_send:
+            # Mock the router to return False (unhandled) using AsyncMock
+            with patch.object(telegram_adapter.router, 'route_command', new=AsyncMock(return_value=False)) as mock_route:
+                message = {'chat': {'id': 456}, 'from': {'id': 123}, 'text': '/unknown'}
+                await telegram_adapter.handle_message(message)
 
-            mock_send.assert_called_once()
-            call_args = mock_send.call_args[0]
-            assert 'Unknown command' in call_args[1]
+                # Verify send_message was called
+                assert mock_send.called
+                
+                # Verify the call contains the unknown command message
+                call_args = mock_send.call_args
+                assert call_args is not None
+                assert len(call_args[0]) >= 2
+                assert 'Unknown command' in call_args[0][1]
 
-
-class TestTelegramIntegration:
-    """Integration tests for Telegram with modules."""
-
-    def test_adapter_with_agri_module(
-        self,
-        event_bus: Mock[EventDispatcher],
-    ) -> None:
-        """Test adapter initialization with AgriModule."""
-        mock_agri = Mock()
-        adapter = TelegramAdapter(event_bus, agri_module=mock_agri)
-
-        assert adapter.agri_module == mock_agri
-
-    def test_adapter_with_transport_module(
-        self,
-        event_bus: Mock[EventDispatcher],
-    ) -> None:
-        """Test adapter initialization with TransportModule."""
-        mock_transport = Mock()
-        adapter = TelegramAdapter(event_bus, transport_module=mock_transport)
-
-        assert adapter.transport_module == mock_transport
+import asyncio

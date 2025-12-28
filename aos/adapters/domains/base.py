@@ -29,11 +29,11 @@ class BaseDomain(ABC):
         pass
     
     @abstractmethod
-    def handle_command(self, chat_id: int, command: str, args: List[str]) -> bool:
+    async def handle_command(self, chat_id: int, command: str, args: List[str]) -> bool:
         """Handle a text command within this domain."""
         pass
     
     @abstractmethod
-    def handle_callback(self, chat_id: int, callback_data: str) -> bool:
+    async def handle_callback(self, chat_id: int, callback_data: str) -> bool:
         """Handle a callback from this domain's interactive elements."""
         pass

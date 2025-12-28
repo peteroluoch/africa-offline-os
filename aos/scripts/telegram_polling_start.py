@@ -81,8 +81,9 @@ def main():
     # Create and start polling service
     service = TelegramPollingService(adapter, poll_interval=1)
 
+    import asyncio
     try:
-        service.start_polling()
+        asyncio.run(service.start_polling())
     except KeyboardInterrupt:
         print("\n\n🛑 Shutting down...")
         service.stop_polling()

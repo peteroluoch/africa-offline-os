@@ -8,6 +8,7 @@ Adapted from Tenda's proven polling implementation.
 """
 import logging
 import time
+import asyncio
 from datetime import datetime
 
 import requests
@@ -47,7 +48,7 @@ class TelegramPollingService:
             'start_time': None
         }
 
-    def start_polling(self):
+    async def start_polling(self):
         """Start polling for Telegram updates."""
         self.running = True
         self.stats['start_time'] = datetime.now()
@@ -63,70 +64,45 @@ class TelegramPollingService:
         try:
             while self.running:
                 try:
-                    updates = self.get_updates()
+                    updates = await self.get_updates()
 
                     if updates:
                         self.stats['updates_received'] += len(updates)
                         logger.info(f"Received {len(updates)} update(s)")
 
                         for update in updates:
-                            self.process_update(update)
+                            await self.process_update(update)
 
-                    time.sleep(self.poll_interval)
+                    await asyncio.sleep(self.poll_interval)
 
                 except Exception as e:
                     self.stats['errors'] += 1
                     logger.error(f"Polling error: {e}")
-                    time.sleep(5)  # Back off on error
+                    await asyncio.sleep(5)  # Back off on error
 
-        except KeyboardInterrupt:
+        except asyncio.CancelledError:
             self.stop_polling()
 
-    def get_updates(self):
+    async def get_updates(self):
         """
-        Get updates from Telegram API.
-        
-        Returns:
-            List of update objects
+        Get updates from Telegram API via Gateway.
         """
         try:
-            token = self.adapter.bot_token
-            if not token:
-                logger.error("Bot token not configured")
-                return []
+            updates = await self.adapter.gateway.get_updates(
+                offset=self.last_update_id + 1,
+                timeout=self.timeout
+            )
 
-            url = f"https://api.telegram.org/bot{token}/getUpdates"
+            if updates:
+                # Update offset for next poll
+                self.last_update_id = updates[-1]['update_id']
+            return updates
 
-            payload = {
-                'offset': self.last_update_id + 1,
-                'timeout': self.timeout,
-                'allowed_updates': ['message', 'callback_query']
-            }
-
-            response = requests.post(url, json=payload, timeout=self.timeout + 5)
-            result = response.json()
-
-            if result.get('ok'):
-                updates = result.get('result', [])
-
-                if updates:
-                    # Update offset for next poll
-                    self.last_update_id = updates[-1]['update_id']
-
-                return updates
-            else:
-                error = result.get('description', 'Unknown error')
-                logger.error(f"Telegram API error: {error}")
-                return []
-
-        except requests.exceptions.Timeout:
-            # Expected for long polling
-            return []
         except Exception as e:
             logger.error(f"Error getting updates: {e}")
             return []
 
-    def process_update(self, update):
+    async def process_update(self, update):
         """
         Process single Telegram update.
         """
@@ -142,8 +118,14 @@ class TelegramPollingService:
                     logger.info(f"Message from {user_id}: {text[:50]}...")
                     self.stats['messages_processed'] += 1
 
-                    # Handle message using the new unified signature
-                    self.adapter.handle_message(message)
+                    # Send typing indicator immediately for better UX
+                    try:
+                        self.adapter.send_chat_action(chat_id, "typing")
+                    except:
+                        pass
+
+                    # Handle message using the new unified async signature
+                    await self.adapter.handle_message(message)
 
             # Handle callback queries (button clicks)
             elif 'callback_query' in update:
@@ -153,11 +135,20 @@ class TelegramPollingService:
                 callback_data = callback.get('data', '')
 
                 logger.info(f"Callback from {user_id}: {callback_data}")
-                self.adapter.handle_callback(user_id, chat_id, callback_data)
+                await self.adapter.handle_callback(user_id, chat_id, callback_data)
 
         except Exception as e:
             self.stats['errors'] += 1
             logger.error(f"Error processing update: {e}")
+
+    def get_status(self):
+        """Get current service status and statistics."""
+        return {
+            'running': self.running,
+            'last_update_id': self.last_update_id,
+            'stats': self.stats,
+            'uptime_seconds': (datetime.now() - self.stats['start_time']).total_seconds() if self.stats['start_time'] else 0
+        }
 
     def stop_polling(self):
         """Stop polling and display statistics."""

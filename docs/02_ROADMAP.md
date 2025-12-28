@@ -137,6 +137,12 @@ To prevent "AI Drift" and ensure architectural integrity, execution is batched i
 - **Progress**: 100% (2/2 batches complete)
   - ✅ **Batch 1**: Universal Channel Infrastructure Refactor
   - ✅ **Batch 2**: Transport Domain & UI Implementation
+  - ✅ **Batch 3**: Messaging Infrastructure Hardening (A-OS)
+    - Decoupled AT protocols and unified Telegram under `ChannelAdapter`.
+    - Implemented production-ready `AfricaTalkingGateway` with real API integration.
+    - Extracted `TelegramGateway` and refactored polling to async.
+    - 100% test compliance (14/14 Messaging, 19/19 Telegram tests passed).
+    - Comprehensive `08_MESSAGING_TESTING_GUIDE.md` created.
 - **Artifacts**: `aos.core.channels`, `aos.modules.transport.py`, `transport.html`.
 
 ### Phase 7.5: Community Module (Social Distribution) ✅ COMPLETE

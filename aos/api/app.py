@@ -270,6 +270,11 @@ def create_app() -> FastAPI:
     app.include_router(admin_users_router)
     app.include_router(policies_router)
 
+    @app.get("/")
+    async def root():
+        """Redirect root to login page."""
+        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+
     @app.post("/sys/ping")
     async def sys_ping(current_user: dict = Depends(get_current_operator)) -> dict:
         """Trigger a system ping event (Protected)."""

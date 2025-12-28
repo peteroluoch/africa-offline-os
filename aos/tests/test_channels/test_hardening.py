@@ -3,8 +3,7 @@ import asyncio
 import sqlite3
 from aos.adapters.mocks.mock_ussd_gateway import MockUSSDGateway
 from aos.adapters.mocks.mock_sms_gateway import MockSMSGateway
-from aos.adapters.ussd import USSDAdapter
-from aos.adapters.sms import SMSAdapter
+from aos.adapters.africas_talking import USSDAdapter, SMSAdapter
 from aos.modules.agri import AgriModule
 from aos.modules.agri_ussd import AgriUSSDHandler
 from aos.modules.agri_sms import AgriSMSHandler
@@ -37,18 +36,20 @@ def agri_module(db_conn):
 
 @pytest.fixture
 def ussd_adapter(agri_module):
+    from aos.core.channels.ussd import USSDSessionManager
     gateway = MockUSSDGateway()
-    adapter = USSDAdapter(gateway)
+    session_manager = USSDSessionManager()
+    adapter = USSDAdapter(gateway, session_manager)
     adapter.set_flow_handler(AgriUSSDHandler(agri_module))
     return adapter, gateway
 
 @pytest.fixture
-def sms_adapter():
+def sms_adapter(agri_module):
     gateway = MockSMSGateway()
     # Very tight rate limit for testing: 2 capacity, 0.1 fill rate
     limiter = TokenBucketLimiter(capacity=2, fill_rate=0.1)
     adapter = SMSAdapter(gateway, rate_limiter=limiter)
-    adapter.set_command_handler(AgriSMSHandler())
+    adapter.set_command_handler(AgriSMSHandler(agri_module))
     return adapter, gateway
 
 @pytest.mark.asyncio

@@ -34,7 +34,7 @@ class CommunityDomain(BaseDomain):
             {"command": "inquiry", "description": "Send a question to a group"}
         ]
     
-    def handle_callback(self, chat_id: int, callback_data: str) -> bool:
+    async def handle_callback(self, chat_id: int, callback_data: str) -> bool:
         """Handle callback queries (not implemented yet)."""
         return False
     
@@ -52,32 +52,32 @@ class CommunityDomain(BaseDomain):
 <i>Groups hold accounts. No individual registration needed.</i>
 """
     
-    def handle_command(self, chat_id: int, command: str, args: List[str]) -> bool:
+    async def handle_command(self, chat_id: int, command: str, args: List[str]) -> bool:
         """Handle community-specific commands."""
         if not self.adapter.community_module:
-            self.adapter.send_message(chat_id, "⚠️ Community module not initialized")
+            await self.adapter.send_message(str(chat_id), "⚠️ Community module not initialized")
             return True
         
         if command == "/groups":
-            return self._handle_groups(chat_id)
+            return await self._handle_groups(chat_id)
         elif command == "/discover":
-            return self._handle_discover(chat_id, args)
+            return await self._handle_discover(chat_id, args)
         elif command == "/events":
-            return self._handle_events(chat_id)
+            return await self._handle_events(chat_id)
         elif command == "/announcements":
-            return self._handle_announcements(chat_id)
+            return await self._handle_announcements(chat_id)
         elif command == "/inquiry":
-            return self._handle_inquiry_prompt(chat_id)
+            return await self._handle_inquiry_prompt(chat_id)
         
         return False
     
-    def _handle_groups(self, chat_id: int) -> bool:
+    async def _handle_groups(self, chat_id: int) -> bool:
         """List all registered groups."""
         groups = self.adapter.community_module.list_groups()
         
         if not groups:
-            self.adapter.send_message(
-                chat_id,
+            await self.adapter.send_message(
+                str(chat_id),
                 "📭 No community groups registered yet.\n\n"
                 "Groups can register via the web dashboard."
             )
@@ -94,14 +94,14 @@ class CommunityDomain(BaseDomain):
         if len(groups) > 10:
             message += f"<i>...and {len(groups) - 10} more groups</i>"
         
-        self.adapter.send_message(chat_id, message)
+        await self.adapter.send_message(str(chat_id), message)
         return True
     
-    def _handle_discover(self, chat_id: int, args: List[str]) -> bool:
+    async def _handle_discover(self, chat_id: int, args: List[str]) -> bool:
         """Discover groups by location or tags."""
         if not args:
-            self.adapter.send_message(
-                chat_id,
+            await self.adapter.send_message(
+                str(chat_id),
                 "🔍 <b>Group Discovery</b>\n\n"
                 "Usage: /discover [location or tag]\n\n"
                 "Examples:\n"
@@ -121,8 +121,8 @@ class CommunityDomain(BaseDomain):
             groups = self.adapter.community_module.discover_groups(tag_filter=[search_term])
         
         if not groups:
-            self.adapter.send_message(
-                chat_id,
+            await self.adapter.send_message(
+                str(chat_id),
                 f"📭 No groups found matching '{search_term}'"
             )
             return True
@@ -132,16 +132,16 @@ class CommunityDomain(BaseDomain):
             message += f"• <b>{group.name}</b>\n"
             message += f"  📍 {group.location}\n\n"
         
-        self.adapter.send_message(chat_id, message)
+        await self.adapter.send_message(str(chat_id), message)
         return True
     
-    def _handle_events(self, chat_id: int) -> bool:
+    async def _handle_events(self, chat_id: int) -> bool:
         """List upcoming events."""
         events = self.adapter.community_module.list_events()
         
         if not events:
-            self.adapter.send_message(
-                chat_id,
+            await self.adapter.send_message(
+                str(chat_id),
                 "📅 No upcoming events scheduled."
             )
             return True
@@ -156,16 +156,16 @@ class CommunityDomain(BaseDomain):
             message += f"  🕒 {event.start_time.strftime('%Y-%m-%d %H:%M')}\n"
             message += f"  🏷️ {event.event_type}\n\n"
         
-        self.adapter.send_message(chat_id, message)
+        await self.adapter.send_message(str(chat_id), message)
         return True
     
-    def _handle_announcements(self, chat_id: int) -> bool:
+    async def _handle_announcements(self, chat_id: int) -> bool:
         """List recent announcements."""
         announcements = self.adapter.community_module._announcements.list_all()
         
         if not announcements:
-            self.adapter.send_message(
-                chat_id,
+            await self.adapter.send_message(
+                str(chat_id),
                 "📢 No recent announcements."
             )
             return True
@@ -179,13 +179,13 @@ class CommunityDomain(BaseDomain):
             message += f"{urgency_icon} <b>{group_name}</b>\n"
             message += f"{ann.message}\n\n"
         
-        self.adapter.send_message(chat_id, message)
+        await self.adapter.send_message(str(chat_id), message)
         return True
     
-    def _handle_inquiry_prompt(self, chat_id: int) -> bool:
+    async def _handle_inquiry_prompt(self, chat_id: int) -> bool:
         """Prompt user to send an inquiry."""
-        self.adapter.send_message(
-            chat_id,
+        await self.adapter.send_message(
+            str(chat_id),
             "💬 <b>Send an Inquiry</b>\n\n"
             "Type your question and I'll check if there's a cached answer.\n\n"
             "Example: 'What time is Sunday service?'"

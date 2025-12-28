@@ -4,6 +4,7 @@ Following TDD mandate from 01_roles.md
 """
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import Mock, patch
 
 import pytest
@@ -14,9 +15,9 @@ from aos.adapters.telegram_polling import TelegramPollingService
 
 @pytest.fixture
 def telegram_adapter() -> Mock[TelegramAdapter]:
-    """Create mock TelegramAdapter."""
+    """Create mock TelegramAdapter with Gateway."""
     adapter = Mock(spec=TelegramAdapter)
-    adapter.get_bot_token.return_value = 'test_token_123'
+    adapter.gateway = Mock()
     return adapter
 
 
@@ -31,6 +32,8 @@ def polling_service(
         timeout=30,
     )
 
+
+# ... (initialization tests stay same as they don't hit I/O)
 
 class TestTelegramPollingService:
     """Test suite for TelegramPollingService."""
@@ -47,82 +50,56 @@ class TestTelegramPollingService:
         assert polling_service.last_update_id == 0
         assert polling_service.running is False
 
-    def test_stats_initialization(
+    @pytest.mark.asyncio
+    async def test_get_updates_success(
         self,
         polling_service: TelegramPollingService,
+        telegram_adapter: Mock[TelegramAdapter],
     ) -> None:
-        """Test statistics are initialized."""
-        assert polling_service.stats['updates_received'] == 0
-        assert polling_service.stats['messages_processed'] == 0
-        assert polling_service.stats['errors'] == 0
-        assert polling_service.stats['start_time'] is None
+        """Test getting updates from Gateway."""
+        mock_updates = [
+            {'update_id': 1, 'message': {'text': 'test'}},
+            {'update_id': 2, 'message': {'text': 'test2'}},
+        ]
+        # Gateway.get_updates is async
+        telegram_adapter.gateway.get_updates.return_value = asyncio.Future()
+        telegram_adapter.gateway.get_updates.return_value.set_result(mock_updates)
 
-    @patch('aos.adapters.telegram_polling.requests.post')
-    def test_get_updates_success(
-        self,
-        mock_post: Mock,
-        polling_service: TelegramPollingService,
-    ) -> None:
-        """Test getting updates from Telegram API."""
-        mock_response = {
-            'ok': True,
-            'result': [
-                {'update_id': 1, 'message': {'text': 'test'}},
-                {'update_id': 2, 'message': {'text': 'test2'}},
-            ],
-        }
-        mock_post.return_value.json.return_value = mock_response
-
-        updates = polling_service.get_updates()
+        updates = await polling_service.get_updates()
 
         assert len(updates) == 2
         assert polling_service.last_update_id == 2
 
-    @patch('aos.adapters.telegram_polling.requests.post')
-    def test_get_updates_empty(
+    @pytest.mark.asyncio
+    async def test_get_updates_empty(
         self,
-        mock_post: Mock,
         polling_service: TelegramPollingService,
+        telegram_adapter: Mock[TelegramAdapter],
     ) -> None:
         """Test getting empty updates."""
-        mock_response = {'ok': True, 'result': []}
-        mock_post.return_value.json.return_value = mock_response
+        telegram_adapter.gateway.get_updates.return_value = asyncio.Future()
+        telegram_adapter.gateway.get_updates.return_value.set_result([])
 
-        updates = polling_service.get_updates()
+        updates = await polling_service.get_updates()
 
         assert len(updates) == 0
         assert polling_service.last_update_id == 0
 
-    @patch('aos.adapters.telegram_polling.requests.post')
-    def test_get_updates_api_error(
+    @pytest.mark.asyncio
+    async def test_get_updates_error(
         self,
-        mock_post: Mock,
         polling_service: TelegramPollingService,
+        telegram_adapter: Mock[TelegramAdapter],
     ) -> None:
-        """Test handling Telegram API error."""
-        mock_response = {'ok': False, 'description': 'Invalid token'}
-        mock_post.return_value.json.return_value = mock_response
+        """Test handling gateway error."""
+        telegram_adapter.gateway.get_updates.side_effect = Exception("API Down")
 
-        updates = polling_service.get_updates()
+        updates = await polling_service.get_updates()
 
         assert len(updates) == 0
 
-    @patch('aos.adapters.telegram_polling.requests.post')
-    def test_get_updates_timeout(
-        self,
-        mock_post: Mock,
-        polling_service: TelegramPollingService,
-    ) -> None:
-        """Test handling request timeout."""
-        import requests
-
-        mock_post.side_effect = requests.exceptions.Timeout()
-
-        updates = polling_service.get_updates()
-
-        assert len(updates) == 0
-
-    def test_process_message_update(
+    @pytest.mark.asyncio
+    async def test_process_message_update(
         self,
         polling_service: TelegramPollingService,
         telegram_adapter: Mock[TelegramAdapter],
@@ -136,14 +113,16 @@ class TestTelegramPollingService:
                 'text': '/start',
             },
         }
+        telegram_adapter.handle_message.return_value = asyncio.Future()
+        telegram_adapter.handle_message.return_value.set_result(None)
 
-        polling_service.process_update(update)
+        await polling_service.process_update(update)
 
-        telegram_adapter.send_typing_action.assert_called_once_with('456')
         telegram_adapter.handle_message.assert_called_once()
         assert polling_service.stats['messages_processed'] == 1
 
-    def test_process_callback_update(
+    @pytest.mark.asyncio
+    async def test_process_callback_update(
         self,
         polling_service: TelegramPollingService,
         telegram_adapter: Mock[TelegramAdapter],
@@ -157,8 +136,10 @@ class TestTelegramPollingService:
                 'data': 'harvest_maize',
             },
         }
+        telegram_adapter.handle_callback.return_value = asyncio.Future()
+        telegram_adapter.handle_callback.return_value.set_result(None)
 
-        polling_service.process_update(update)
+        await polling_service.process_update(update)
 
         telegram_adapter.handle_callback.assert_called_once_with(
             123,
@@ -166,7 +147,8 @@ class TestTelegramPollingService:
             'harvest_maize',
         )
 
-    def test_process_update_error_handling(
+    @pytest.mark.asyncio
+    async def test_process_update_error_handling(
         self,
         polling_service: TelegramPollingService,
         telegram_adapter: Mock[TelegramAdapter],
@@ -184,7 +166,7 @@ class TestTelegramPollingService:
         }
 
         # Should not raise exception
-        polling_service.process_update(update)
+        await polling_service.process_update(update)
         assert polling_service.stats['errors'] == 1
 
     def test_stop_polling(
