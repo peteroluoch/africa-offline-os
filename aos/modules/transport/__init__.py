@@ -189,6 +189,64 @@ class TransportModule(Module):
             
         return filtered
 
+    def get_avoidance_summary(self, location_scope: Optional[str] = None) -> List[Dict]:
+        """
+        Get summary of zones to avoid (blocked or slow traffic).
+        Optimized for SMS/USSD display.
+        
+        Returns list of dicts with:
+        - zone_name: str
+        - zone_type: str
+        - reason: str ("blocked" or "slow")
+        - confidence: float (0.0-1.0)
+        - expires_at: datetime
+        """
+        now = datetime.utcnow()
+        avoidance_list = []
+        
+        # Get zones in scope
+        zones = self.discover_zones(location_scope=location_scope) if location_scope else self._zones.list_all()
+        
+        for zone in zones:
+            # Get active signals for this zone
+            all_signals = self._signals.list_all()
+            active_signals = [
+                s for s in all_signals 
+                if s.zone_id == zone.id and (s.expires_at is None or s.expires_at > now)
+            ]
+            
+            if not active_signals:
+                continue
+                
+            # Aggregate signal confidence by state
+            state_scores = {"flowing": 0.0, "slow": 0.0, "blocked": 0.0}
+            latest_expiry = None
+            
+            for s in active_signals:
+                if s.state in state_scores:
+                    state_scores[s.state] += s.confidence_score
+                if latest_expiry is None or (s.expires_at and s.expires_at > latest_expiry):
+                    latest_expiry = s.expires_at
+            
+            # Determine current state
+            current_state = max(state_scores, key=state_scores.get) if any(state_scores.values()) else "unknown"
+            confidence = state_scores.get(current_state, 0.0)
+            
+            # Only include if blocked or slow (not flowing)
+            if current_state in ["blocked", "slow"] and confidence > 0:
+                avoidance_list.append({
+                    "zone_name": zone.name,
+                    "zone_type": zone.type,
+                    "reason": current_state,
+                    "confidence": confidence,
+                    "expires_at": latest_expiry
+                })
+        
+        # Sort by severity (blocked first, then slow) and confidence
+        avoidance_list.sort(key=lambda x: (0 if x["reason"] == "blocked" else 1, -x["confidence"]))
+        
+        return avoidance_list
+
     # --- Backward Compatibility Shims ---
 
     def list_routes(self) -> List[Dict]:
