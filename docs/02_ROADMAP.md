@@ -39,7 +39,7 @@ To prevent "AI Drift" and ensure architectural integrity, execution is batched i
 > - `docs/02_ROADMAP.md` - Phase progress updates
 > - `CHANGELOG.md` - Feature additions/changes
 > - `task.md` - Task completion tracking
-> - Relevant technical docs (e.g., `06_TELEGRAM_BOT_INTEGRATION.md`)
+> - Relevant technical docs (e.g., `06_MESSAGING_AND_CHANNELS.md`)
 > - This rule is BINDING per `01_roles.md` and must be followed without user reminders.
 
 | Phase | Est. Batches | Target Style |
@@ -141,9 +141,9 @@ To prevent "AI Drift" and ensure architectural integrity, execution is batched i
     - Decoupled AT protocols and unified Telegram under `ChannelAdapter`.
     - Implemented production-ready `AfricaTalkingGateway` with real API integration.
     - Extracted `TelegramGateway` and refactored polling to async.
-    - 100% test compliance (14/14 Messaging, 19/19 Telegram tests passed).
-    - Comprehensive `08_MESSAGING_TESTING_GUIDE.md` created.
-- **Artifacts**: `aos.core.channels`, `aos.modules.transport.py`, `transport.html`.
+    - 100% test compliance (24/24 Messaging/Channel tests passed).
+    - Comprehensive `06_MESSAGING_AND_CHANNELS.md` updated and reconciled.
+- **Artifacts**: `aos.core.channels`, `aos.modules.transport.py`, `docs/06_MESSAGING_AND_CHANNELS.md`.
 
 ### Phase 7.5: Community Module (Social Distribution) ✅ COMPLETE
 - **Focus**: Trusted local groups (churches, mosques, committees), broadcasts, event scheduling, and member inquiry handling without account friction.
