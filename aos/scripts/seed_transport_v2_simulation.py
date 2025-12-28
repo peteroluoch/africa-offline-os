@@ -48,20 +48,20 @@ async def seed_simulation():
     logger.info("  ...Injecting Traffic Signals (Monday Morning Scenario)")
 
     # Scenario: Waiyaki Way is BLOCKED (Construction)
-    module.report_traffic_signal(waiyaki_id, "blocked", "user_254711000001", expires_in_minutes=60)
-    module.report_traffic_signal(waiyaki_id, "blocked", "agent_westlands", expires_in_minutes=60) # Agent confirms
+    module.report_traffic_signal(waiyaki_id, "blocked", "user_254711000001", expires_in_minutes=1440)
+    module.report_traffic_signal(waiyaki_id, "blocked", "agent_westlands", expires_in_minutes=1440) # Agent confirms
     logger.info("    ! Waiyaki Way -> BLOCKED (Confirmed by Agent)")
 
     # Scenario: Thika Road is FLOWING (Surprise!)
-    module.report_traffic_signal(thika_id, "flowing", "user_254722000002", expires_in_minutes=30)
+    module.report_traffic_signal(thika_id, "flowing", "user_254722000002", expires_in_minutes=1440)
     logger.info("    -> Thika Road -> FLOWING")
 
     # Scenario: Mombasa Road is SLOW
-    module.report_traffic_signal(mombasa_id, "slow", "user_254733000003", expires_in_minutes=30)
+    module.report_traffic_signal(mombasa_id, "slow", "user_254733000003", expires_in_minutes=1440)
     logger.info("    ~ Mombasa Road -> SLOW")
     
     # Scenario: CBD is Gridlock
-    module.report_traffic_signal(cdb_id, "blocked", "authority_police", expires_in_minutes=120)
+    module.report_traffic_signal(cdb_id, "blocked", "authority_police", expires_in_minutes=1440)
     logger.info("    ! CBD -> BLOCKED (Reported by Police)")
 
     # 4. Seed Availability (The Commuter View)
