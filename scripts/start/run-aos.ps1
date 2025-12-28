@@ -15,7 +15,7 @@ Set-Location $rootPath
 # ============================================
 # STEP 1: ENVIRONMENT VALIDATION
 # ============================================
-Write-Host "`n[1/5] Validating environment..." -ForegroundColor Yellow
+Write-Host "`n[1/6] Validating environment..." -ForegroundColor Yellow
 
 # Check Python
 $pythonVersion = python --version 2>$null
@@ -43,12 +43,32 @@ else {
 }
 
 # ============================================
-# STEP 2: DATABASE MIGRATIONS
+# STEP 2: VIRTUAL ENVIRONMENT SETUP
 # ============================================
-Write-Host "`n[2/5] Running database migrations..." -ForegroundColor Yellow
+Write-Host "`n[2/6] Setting up virtual environment..." -ForegroundColor Yellow
 
-# Run migrations via Python
-python -c "from aos.db.engine import connect; from aos.db.migrations import MigrationManager; from aos.db.migrations.registry import MIGRATIONS; from aos.core.config import Settings; s = Settings(); conn = connect(s.sqlite_path); mgr = MigrationManager(conn); mgr.apply_migrations(MIGRATIONS); print('[OK] Migrations applied')"
+# Check if virtual environment exists
+if (-not (Test-Path "aos_venv")) {
+    Write-Host "[INFO] Virtual environment not found. Creating..." -ForegroundColor Yellow
+    python -m venv aos_venv
+    .\aos_venv\Scripts\pip install --upgrade pip setuptools wheel
+    .\aos_venv\Scripts\pip install -r requirements.txt
+    Write-Host "[OK] Virtual environment created and dependencies installed" -ForegroundColor Green
+}
+else {
+    Write-Host "[OK] Virtual environment exists" -ForegroundColor Green
+    # Check if requirements are up to date
+    Write-Host "[INFO] Checking dependencies..." -ForegroundColor Yellow
+    .\aos_venv\Scripts\pip install -r requirements.txt --quiet
+}
+
+# ============================================
+# STEP 3: DATABASE MIGRATIONS
+# ============================================
+Write-Host "`n[3/6] Running database migrations..." -ForegroundColor Yellow
+
+# Run migrations via Python (using venv)
+.\aos_venv\Scripts\python -c "from aos.db.engine import connect; from aos.db.migrations import MigrationManager; from aos.db.migrations.registry import MIGRATIONS; from aos.core.config import Settings; s = Settings(); conn = connect(s.sqlite_path); mgr = MigrationManager(conn); mgr.apply_migrations(MIGRATIONS); print('[OK] Migrations applied')"
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "[OK] Database ready" -ForegroundColor Green
@@ -59,13 +79,13 @@ else {
 }
 
 # ============================================
-# STEP 3: WEB DASHBOARD STARTUP
+# STEP 4: WEB DASHBOARD STARTUP
 # ============================================
-Write-Host "`n[3/5] Starting Web Dashboard..." -ForegroundColor Yellow
+Write-Host "`n[4/6] Starting Web Dashboard..." -ForegroundColor Yellow
 
-# Start web server in new PowerShell window
+# Start web server in new PowerShell window (using venv)
 Write-Host "[LAUNCH] Starting dashboard on http://localhost:8000" -ForegroundColor Cyan
-$webCmd = "Set-Location '$rootPath'; python main.py"
+$webCmd = "Set-Location '$rootPath'; & '.\aos_venv\Scripts\python.exe' main.py"
 Start-Process -FilePath "powershell" -ArgumentList "-NoExit", "-Command", $webCmd -WindowStyle Normal
 
 # Wait for web server to start
@@ -99,15 +119,15 @@ if (-not $webHealthy) {
 }
 
 # ============================================
-# STEP 4: TELEGRAM BOT STARTUP
+# STEP 5: TELEGRAM BOT STARTUP
 # ============================================
-Write-Host "`n[4/5] Starting Telegram Bot..." -ForegroundColor Yellow
+Write-Host "`n[5/6] Starting Telegram Bot..." -ForegroundColor Yellow
 
 # Check if bot token exists
 $envContent = Get-Content ".env" -ErrorAction SilentlyContinue
 if ($envContent -match "TELEGRAM_BOT_TOKEN") {
     Write-Host "[LAUNCH] Starting Telegram polling service" -ForegroundColor Cyan
-    $botCmd = "Set-Location '$rootPath'; python aos/scripts/telegram_polling_start.py"
+    $botCmd = "Set-Location '$rootPath'; & '.\aos_venv\Scripts\python.exe' aos/scripts/telegram_polling_start.py"
     Start-Process -FilePath "powershell" -ArgumentList "-NoExit", "-Command", $botCmd -WindowStyle Normal
     
     Write-Host "[WAIT] Waiting for bot to initialize..." -ForegroundColor Yellow
@@ -120,9 +140,9 @@ else {
 }
 
 # ============================================
-# STEP 5: SYSTEM STATUS
+# STEP 6: SYSTEM STATUS
 # ============================================
-Write-Host "`n[5/5] System Status Check..." -ForegroundColor Yellow
+Write-Host "`n[6/6] System Status Check..." -ForegroundColor Yellow
 
 $services = @(
     @{ Name = "Web Dashboard"; Url = "http://localhost:8000/health"; Port = 8000 }
