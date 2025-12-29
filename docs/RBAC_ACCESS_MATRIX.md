@@ -79,23 +79,27 @@ Level 1: VIEWER (viewer in DB)
 | Regional Dashboard (/regional) | ❌ DENY | Admin-only |
 
 ### 4. OPERATOR (Level 2)
-**Scope**: Read-only access to assigned community
+**Scope**: Full CRUD access to assigned community (isolated)
+
+**Real-world role**: Field agent, church secretary, community organizer
 
 | Resource | Access | Notes |
 |----------|--------|-------|
 | Dashboard (/) | 🔀 REDIRECT | Auto-redirect to assigned community |
 | Security Policy (/security) | ❌ DENY | Admin-only |
 | Operators (/operators) | ❌ DENY | Admin-only |
-| Agri-Pulse (/agri) | ❌ DENY | No module access |
-| Fleet Link (/transport) | ❌ DENY | No module access |
+| Agri-Pulse (/agri) | ❌ DENY | Module-specific access only |
+| Fleet Link (/transport) | ❌ DENY | Module-specific access only |
 | Community-Pulse (/) | 🔀 REDIRECT | Auto-redirect to assigned community |
-| Community Detail (own) | ✅ READ | View only their assigned community |
+| Community Detail (own) | ✅ READ/WRITE | Full access to their assigned community |
 | Community Detail (other) | ❌ DENY | Isolated to own community |
 | Community Registration | ❌ DENY | Admin-only |
-| Member Management (own) | ✅ READ | View only their community members |
+| Member Management (own) | ✅ READ/WRITE | **Can add, edit, delete members** |
 | Member Management (other) | ❌ DENY | Isolated to own community |
-| Broadcast (own) | ❌ DENY | Read-only role |
-| Broadcast (other) | ❌ DENY | Read-only role |
+| Member Export (own) | ✅ EXPORT | Can export CSV for their community |
+| Broadcast (own) | ✅ SEND | **Can send broadcasts to their community** |
+| Broadcast (other) | ❌ DENY | Isolated to own community |
+| Broadcast History (own) | ✅ READ | View broadcast history |
 | Mesh Network (/sys/mesh) | ❌ DENY | System-level only |
 | UI Gallery (/sys/gallery) | ❌ DENY | Admin-only |
 | Telegram Users (/dashboard/users) | ❌ DENY | Admin-only |

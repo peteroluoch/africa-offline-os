@@ -243,8 +243,9 @@ async def export_members(
     search: str = None,
     operator=Depends(get_current_operator)
 ):
-    # RBAC: Enforce community isolation
-    if operator.get("role") == AosRole.COMMUNITY_ADMIN.value:
+    # RBAC: Community isolation handled by requires_community_access if group_id provided
+    # For isolated roles, enforce group_id requirement
+    if operator.get("role") in [AosRole.COMMUNITY_ADMIN.value, AosRole.OPERATOR.value]:
         user_comm_id = operator.get("community_id")
         if not group_id or group_id != user_comm_id:
             raise HTTPException(403, "Access denied: You must export from your own community.")
@@ -302,10 +303,10 @@ async def edit_member_form(
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
 
-    # RBAC: Enforce community isolation
-    if operator.get("role") == AosRole.COMMUNITY_ADMIN.value:
+    # RBAC: Enforce community isolation for COMMUNITY_ADMIN and OPERATOR
+    if operator.get("role") in [AosRole.COMMUNITY_ADMIN.value, AosRole.OPERATOR.value]:
         if member["community_id"] != operator.get("community_id"):
-            raise HTTPException(403, "Access denied: You do not manage this community.")
+            raise HTTPException(403, "Access denied: You do not have access to this community.")
 
     return templates.TemplateResponse("partials/community_member_edit.html", {
         "request": request,
@@ -331,11 +332,10 @@ async def update_member_details(
         if not res:
             raise HTTPException(404, "Member not found")
             
-        member_community_id = res[0]
-        
-        if operator.get("role") == AosRole.COMMUNITY_ADMIN.value:
-            if member_community_id != operator.get("community_id"):
-                raise HTTPException(403, "Access denied: You do not manage this community.")
+        # RBAC: Enforce community isolation for COMMUNITY_ADMIN and OPERATOR
+        if operator.get("role") in [AosRole.COMMUNITY_ADMIN.value, AosRole.OPERATOR.value]:
+            if res and res[0] != operator.get("community_id"):
+                raise HTTPException(403, "Access denied: You do not have access to this community.")
 
         community_state.module.update_community_member(
             member_id=member_id,

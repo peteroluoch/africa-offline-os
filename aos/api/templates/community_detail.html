@@ -30,7 +30,7 @@
 </div>
 
 <!-- Broadcast Form Section -->
-{% if user.role != 'operator' and user.role != 'viewer' %}
+{% if user.role != 'viewer' %}
 {% include "partials/broadcast_form.html" %}
 {% endif %}
 
