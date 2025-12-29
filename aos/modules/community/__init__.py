@@ -98,8 +98,14 @@ class CommunityModule:
             description: Optional description
             
         Returns:
-            Newly created CommunityGroupDTO
+            Newly created or existing CommunityGroupDTO
         """
+        # FAANG: Idempotency check to prevent duplicate groups by name in the same location
+        existing = self._groups.list_all()
+        for g in existing:
+            if g.name == name and g.location == location:
+                return g
+
         group = CommunityGroupDTO(
             id=f"GRP-{uuid.uuid4().hex[:8].upper()}",
             name=name,
