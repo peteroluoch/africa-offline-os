@@ -24,8 +24,8 @@
                     {% endif %}
                 </td>
                 <td>
-                    <span class="text-green-600">{{ broadcast.sent_count }}</span> /
-                    <span class="text-red-600">{{ broadcast.failed_count }}</span>
+                    <span class="aos-text-success">{{ broadcast.sent_count }}</span> /
+                    <span class="aos-text-danger">{{ broadcast.failed_count }}</span>
                 </td>
                 <td class="aos-text-muted aos-text-sm">
                     {{ broadcast.created_at.strftime('%Y-%m-%d %H:%M') if broadcast.created_at else 'N/A' }}

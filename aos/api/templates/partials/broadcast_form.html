@@ -100,11 +100,11 @@
         // Color code: green for free, yellow for moderate, red for expensive
         costDisplay.className = 'aos-text-sm font-semibold';
         if (totalCost === 0) {
-            costDisplay.classList.add('text-green-500');
+            costDisplay.classList.add('aos-text-success');
         } else if (totalCost < 50) {
-            costDisplay.classList.add('text-yellow-500');
+            costDisplay.classList.add('aos-text-warning');
         } else {
-            costDisplay.classList.add('text-red-500');
+            costDisplay.classList.add('aos-text-danger');
         }
     }
 
