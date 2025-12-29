@@ -1,0 +1,61 @@
+{% from "components/atoms/Card.html" import card %}
+{% from "components/molecules/Pagination.html" import pagination %}
+
+<div id="members-table-container">
+    {% call card(padding="0", class="aos-overflow-hidden") %}
+    <table class="aos-table">
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>Community Group</th>
+                <th>Channel</th>
+                <th>Joined On</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for member in members %}
+            <tr>
+                <td class="aos-font-mono aos-text-sm font-bold">{{ member.user_id }}</td>
+                <td><span class="aos-badge aos-badge-ghost">{{ member.group_name }}</span></td>
+                <td>
+                    <span
+                        class="aos-badge {% if member.channel == 'telegram' %}aos-badge-info{% elif member.channel == 'sms' %}aos-badge-primary{% else %}aos-badge-warning{% endif %}">
+                        {{ member.channel|upper }}
+                    </span>
+                </td>
+                <td class="aos-text-sm aos-text-muted">
+                    {{ member.joined_at.strftime('%Y-%m-%d') if member.joined_at else 'N/A' }}
+                </td>
+                <td>
+                    <div class="flex items-center gap-2">
+                        <button class="aos-btn aos-btn-ghost aos-size-sm" onclick="editMember('{{ member.id }}')">
+                            <span class="aos-btn-text">Edit</span>
+                        </button>
+                        <button class="aos-btn aos-btn-ghost aos-size-sm aos-text-danger hover:aos-bg-danger-fade"
+                            onclick="removeMember('{{ member.community_id }}', '{{ member.user_id }}', '{{ member.channel }}')">
+                            <span class="aos-btn-text">Remove</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="aos-text-center aos-py-8 aos-text-muted">
+                    No recipients found matching your search criteria.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="p-4 border-t border-white/5 flex items-center justify-between">
+        <span class="aos-text-xs aos-text-muted">Showing {{ members|length }} of {{ total }} recipients</span>
+        {{ pagination(
+        current_page=page,
+        total_pages=total_pages,
+        on_page_change="loadPage"
+        ) }}
+    </div>
+    {% endcall %}
+</div>

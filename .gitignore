@@ -1,0 +1,29 @@
+# Virtual Environment
+aos_venv/
+.venv/
+venv/
+ENV/
+
+# Python Caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Databases & Local State
+*.db
+*.db-shm
+*.db-wal
+*.log
+data/
+
+# Environment
+.env
+
+# System
+.DS_Store
+Thumbs.db

@@ -137,3 +137,12 @@ class TransportAvailabilityDTO(BaseModel):
     reported_by: str
     reported_at: datetime = Field(default_factory=datetime.utcnow)
     expires_at: datetime | None = None
+
+class CommunityMemberDTO(BaseModel):
+    """Represents a member of a community group."""
+    id: str
+    community_id: str
+    user_id: str
+    channel: str
+    active: bool = True
+    joined_at: datetime = Field(default_factory=datetime.utcnow)

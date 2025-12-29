@@ -1,0 +1,160 @@
+{% extends "dashboard.html" %}
+{% from "components/atoms/EliteButton.html" import elite_button %}
+{% from "components/atoms/Card.html" import card %}
+{% from "components/molecules/DataCard.html" import data_card %}
+{% from "components/molecules/Pagination.html" import pagination %}
+
+{% block content %}
+<header class="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+        <h1 class="aos-h1 mb-2">Member Directory</h1>
+        <p class="aos-text-muted aos-text-sm">Complete visibility across all community groups</p>
+    </div>
+    <div class="flex flex-wrap gap-3">
+        <button onclick="exportCSV()" class="aos-btn aos-btn-ghost aos-size-md">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                </path>
+            </svg>
+            <span class="aos-btn-text">Export CSV</span>
+        </button>
+        <a href="/community" class="aos-btn aos-btn-primary aos-size-md">
+            <span class="aos-btn-text">Manage Groups</span>
+        </a>
+    </div>
+</header>
+
+<!-- Filter Row -->
+{% call card(padding="6", class="mb-8") %}
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <div>
+        <label class="aos-label mb-2 block">Filter by Group</label>
+        <select name="group_id" class="aos-input" hx-get="/community/members" hx-target="#members-table-container"
+            hx-swap="outerHTML" hx-push-url="true" hx-include="[name='channel'], [name='search']">
+            <option value="">All Groups</option>
+            {% for group in all_groups %}
+            <option value="{{ group.id }}" {% if current_group==group.id %}selected{% endif %}>{{ group.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <label class="aos-label mb-2 block">Distribution Channel</label>
+        <select name="channel" class="aos-input" hx-get="/community/members" hx-target="#members-table-container"
+            hx-swap="outerHTML" hx-push-url="true" hx-include="[name='group_id'], [name='search']">
+            <option value="">All Channels</option>
+            <option value="sms" {% if current_channel=='sms' %}selected{% endif %}>SMS</option>
+            <option value="ussd" {% if current_channel=='ussd' %}selected{% endif %}>USSD</option>
+            <option value="telegram" {% if current_channel=='telegram' %}selected{% endif %}>Telegram</option>
+            <option value="whatsapp" {% if current_channel=='whatsapp' %}selected{% endif %}>WhatsApp</option>
+        </select>
+    </div>
+    <div class="md:col-span-2">
+        <label class="aos-label mb-2 block">Search Recipients</label>
+        <div class="relative">
+            <input type="text" id="member-search" name="search" class="aos-input pl-10"
+                placeholder="Search by phone number, ID or group name..." value="{{ current_search or '' }}"
+                hx-get="/community/members" hx-trigger="keyup changed delay:500ms, search"
+                hx-target="#members-table-container" hx-swap="outerHTML" hx-indicator="#search-indicator"
+                hx-push-url="true" hx-include="[name='group_id'], [name='channel']">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+            <div id="search-indicator"
+                class="htmx-indicator absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <svg class="animate-spin h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                </svg>
+            </div>
+        </div>
+    </div>
+</div>
+{% endcall %}
+
+<section class="aos-stack-md">
+    <div class="flex items-center justify-between">
+        <h2 class="aos-h2">Recipients</h2>
+    </div>
+
+    <div id="members-table-container">
+        {% include "partials/community_members_table.html" %}
+    </div>
+</section>
+
+<!-- Modal container -->
+<div id="modal-container" class="aos-modal-overlay" onclick="if(event.target === this) closeModal()">
+    <div class="aos-modal-content-wrapper">
+        <div id="modal-content">
+            <!-- Loaded via HTMX or JS -->
+        </div>
+    </div>
+</div>
+
+<script>
+    function loadPage(pageNum) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', pageNum);
+
+        // Instant HTMX partial update
+        htmx.ajax('GET', url.pathname + url.search, {
+            target: '#members-table-container',
+            swap: 'outerHTML',
+            pushUrl: true
+        });
+    }
+
+    function closeModal() {
+        document.getElementById('modal-container').style.display = 'none';
+        document.getElementById('modal-content').innerHTML = '';
+    }
+
+    function editMember(memberId) {
+        openModal();
+        const modalContent = document.getElementById('modal-content');
+        modalContent.innerHTML = '<div class="aos-py-8 aos-text-center"><span class="aos-text-muted">Loading recipient data...</span></div>';
+
+        fetch(`/community/members/${memberId}/edit`)
+            .then(response => response.text())
+            .then(html => {
+                modalContent.innerHTML = html;
+                // Re-initialize scripts in the fetched HTML if any
+                const scripts = modalContent.querySelectorAll('script');
+                scripts.forEach(oldScript => {
+                    const newScript = document.createElement('script');
+                    newScript.text = oldScript.text;
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+            });
+    }
+
+    function exportCSV() {
+        const search = document.getElementById('member-search').value;
+        const groupId = document.querySelector('[name="group_id"]').value;
+        const channel = document.querySelector('[name="channel"]').value;
+
+        let url = new URL('/community/members/export', window.location.origin);
+        if (search) url.searchParams.set('search', search);
+        if (groupId) url.searchParams.set('group_id', groupId);
+        if (channel) url.searchParams.set('channel', channel);
+
+        window.location.href = url.toString();
+    }
+
+    function removeMember(groupId, userId, channel) {
+        if (confirm(`Are you sure you want to remove recipient ${userId} from the distribution network?`)) {
+            fetch(`/community/${groupId}/members/${userId}?channel=${channel}`, {
+                method: 'DELETE'
+            }).then(response => {
+                if (response.ok) window.location.reload();
+                else alert('Failed to remove member');
+            });
+        }
+    }
+</script>
+{% endblock %}

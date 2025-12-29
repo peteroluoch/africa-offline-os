@@ -17,7 +17,7 @@ import json
 import sqlite3
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, List, Optional, Tuple, Dict
 
 from aos.bus.events import Event
 
@@ -25,8 +25,10 @@ from aos.db.models import (
     CommunityGroupDTO,
     CommunityEventDTO,
     CommunityAnnouncementDTO,
-    CommunityInquiryDTO
+    CommunityInquiryDTO,
+    CommunityMemberDTO
 )
+from .broadcast import BroadcastManager
 from aos.db.repository import (
     CommunityGroupRepository,
     CommunityEventRepository,
@@ -53,6 +55,23 @@ class CommunityModule:
         self._events = CommunityEventRepository(connection)
         self._announcements = CommunityAnnouncementRepository(connection)
         self._inquiries = CommunityInquiryRepository(connection)
+        self._broadcasts = BroadcastManager(connection)
+
+    def _log_activity(
+        self,
+        actor_id: str,
+        action: str,
+        target_id: str,
+        community_id: Optional[str] = None,
+        metadata: Optional[Dict] = None
+    ):
+        """Internal helper to record audit logs."""
+        log_id = f"LOG-{uuid.uuid4().hex[:8].upper()}"
+        self._db.execute("""
+            INSERT INTO community_activity_logs (id, actor_id, action, target_id, community_id, metadata)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (log_id, actor_id, action, target_id, community_id, json.dumps(metadata) if metadata else None))
+        self._db.commit()
 
     # --- Group Management ---
 
@@ -342,7 +361,8 @@ class CommunityModule:
         self,
         community_id: str,
         user_id: str,
-        channel: str
+        channel: str,
+        actor_id: str = "system"
     ) -> bool:
         """
         Add a user to a community.
@@ -374,13 +394,22 @@ class CommunityModule:
             VALUES (?, ?, ?, ?, 1)
         """, (member_id, community_id, user_id, channel))
         self._db.commit()
+        
+        self._log_activity(
+            actor_id=actor_id,
+            action="member_add",
+            target_id=member_id,
+            community_id=community_id,
+            metadata={"user_id": user_id, "channel": channel}
+        )
         return True
 
     def remove_member_from_community(
         self,
         community_id: str,
         user_id: str,
-        channel: str
+        channel: str,
+        actor_id: str = "system"
     ) -> bool:
         """
         Remove a user from a community (soft delete).
@@ -399,6 +428,47 @@ class CommunityModule:
             WHERE community_id = ? AND user_id = ? AND channel = ?
         """, (community_id, user_id, channel))
         self._db.commit()
+        
+        self._log_activity(
+            actor_id=actor_id,
+            action="member_remove",
+            target_id=f"{community_id}:{user_id}",
+            community_id=community_id,
+            metadata={"user_id": user_id, "channel": channel}
+        )
+        return True
+
+    def update_community_member(
+        self,
+        member_id: str,
+        user_id: str,
+        channel: str,
+        actor_id: str = "system"
+    ) -> bool:
+        """
+        Update member details.
+        
+        Args:
+            member_id: Internal member ID
+            user_id: New user identifier
+            channel: New channel type
+            
+        Returns:
+            True if updated successfully
+        """
+        self._db.execute("""
+            UPDATE community_members 
+            SET user_id = ?, channel = ? 
+            WHERE id = ?
+        """, (user_id, channel, member_id))
+        self._db.commit()
+        
+        self._log_activity(
+            actor_id=actor_id,
+            action="member_update",
+            target_id=member_id,
+            metadata={"user_id": user_id, "channel": channel}
+        )
         return True
 
     def get_community_members(
@@ -440,6 +510,81 @@ class CommunityModule:
         
         cursor = self._db.execute(query, params)
         return [row[0] for row in cursor.fetchall()]
+
+    def list_all_members(
+        self,
+        page: int = 1,
+        per_page: int = 50,
+        group_id: Optional[str] = None,
+        channel: Optional[str] = None,
+        search_query: Optional[str] = None
+    ) -> Dict:
+        """
+        List all community members with filtering and pagination.
+        
+        Args:
+            page: Page number
+            per_page: Items per page
+            group_id: Filter by community
+            channel: Filter by channel
+            search_query: Search by user_id
+            
+        Returns:
+            Dict with members and pagination info
+        """
+        query = "SELECT m.user_id, m.channel, m.joined_at, m.active, g.name as group_name, m.community_id, m.id FROM community_members m JOIN community_groups g ON m.community_id = g.id WHERE m.active = 1"
+        params = []
+        
+        if group_id:
+            query += " AND m.community_id = ?"
+            params.append(group_id)
+        if channel:
+            query += " AND m.channel = ?"
+            params.append(channel)
+        if search_query:
+            search_pattern = f"%{search_query}%"
+            # Deep search across User ID, Group Name
+            query += " AND (m.user_id LIKE ? OR g.name LIKE ?)"
+            params.extend([search_pattern, search_pattern])
+            
+            # Smart phone normalization for Kenyan numbers
+            if search_query.startswith('0') and len(search_query) > 1:
+                query = query[:-1] + " OR m.user_id LIKE ?)"
+                params.append(f"%+254{search_query[1:]}%")
+            
+        # Get total count
+        count_params = list(params)
+        count_query = query.replace("m.user_id, m.channel, m.joined_at, m.active, g.name as group_name, m.community_id, m.id", "COUNT(*)")
+        total = self._db.execute(count_query, count_params).fetchone()[0]
+        
+        total_pages = (total + per_page - 1) // per_page if total > 0 else 0
+        page = max(1, min(page, total_pages if total_pages > 0 else 1))
+        
+        # Add pagination
+        query += " ORDER BY m.joined_at DESC LIMIT ? OFFSET ?"
+        params.extend([per_page, (page - 1) * per_page])
+        
+        rows = self._db.execute(query, params).fetchall()
+        
+        members = []
+        for row in rows:
+            members.append({
+                "user_id": row[0],
+                "channel": row[1],
+                "joined_at": row[2] if isinstance(row[2], datetime) else datetime.fromisoformat(row[2]) if row[2] else None,
+                "active": row[3],
+                "group_name": row[4],
+                "community_id": row[5],
+                "id": row[6]
+            })
+            
+        return {
+            "members": members,
+            "total": total,
+            "page": page,
+            "per_page": per_page,
+            "total_pages": total_pages
+        }
 
     async def deliver_announcement(
         self,

@@ -5,9 +5,21 @@
 {% from "components/molecules/Pagination.html" import pagination %}
 
 {% block content %}
-<header class="mb-10">
-    <h1 class="aos-h1 mb-2">Community-Pulse</h1>
-    <p class="aos-text-muted aos-text-sm">trusted social distribution networks</p>
+<header class="mb-10 flex items-center justify-between">
+    <div>
+        <h1 class="aos-h1 mb-2">Community-Pulse</h1>
+        <p class="aos-text-muted aos-text-sm">trusted social distribution networks</p>
+    </div>
+    <div>
+        <a href="/community/members" class="aos-btn aos-btn-ghost aos-size-md">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                </path>
+            </svg>
+            <span class="aos-btn-text ml-2">Member Directory</span>
+        </a>
+    </div>
 </header>
 
 <!-- Metrics Row -->
@@ -56,7 +68,7 @@
                             <span class="aos-btn-text">Members</span>
                         </button>
                         <button class="aos-btn aos-btn-ghost aos-size-sm aos-text-primary"
-                            onclick="alert('Update feature coming soon!')">
+                            hx-get="/community/{{ group.id }}/edit" hx-target="#modal-content" onclick="openModal()">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
@@ -96,14 +108,16 @@
 </section>
 
 <!-- Modal container for registration form -->
-<div id="modal-container" class="aos-modal-overlay hidden">
-    {% call card(padding="6", glass=True, id="modal-content", class="aos-modal-content aos-stack-md") %}
-    <!-- Loaded via HTMX -->
-    {% endcall %}
+<div id="modal-container" class="aos-modal-overlay" onclick="if(event.target === this) closeModal()">
+    <div class="aos-modal-content-wrapper">
+        {% call card(padding="6", glass=True, id="modal-content", class="aos-modal-content aos-stack-md") %}
+        <!-- Loaded via HTMX -->
+        {% endcall %}
+    </div>
 </div>
 
 <!-- Delete Confirmation Modal -->
-<div id="delete-modal" class="aos-modal-overlay hidden">
+<div id="delete-modal" class="aos-modal-overlay" onclick="if(event.target === this) closeDeleteModal()">
     {% call card(padding="6", glass=True, class="aos-modal-content aos-stack-md max-w-md") %}
     <div class="aos-stack-sm">
         <div class="flex items-center gap-3 mb-4">
@@ -146,22 +160,26 @@
     }
 
     function openModal() {
-        document.getElementById('modal-container').classList.remove('hidden');
+        // Show modal by changing display from none to flex
+        document.getElementById('modal-container').style.display = 'flex';
     }
 
     function closeModal() {
-        document.getElementById('modal-container').classList.add('hidden');
+        // Hide modal by changing display to none
+        document.getElementById('modal-container').style.display = 'none';
     }
 
     function confirmDelete(groupId, groupName) {
         deleteGroupId = groupId;
         document.getElementById('delete-message').textContent =
             `Are you sure you want to deactivate "${groupName}"? This will retire all broadcasts but preserve audit data.`;
-        document.getElementById('delete-modal').classList.remove('hidden');
+        // Show delete modal
+        document.getElementById('delete-modal').style.display = 'flex';
     }
 
     function closeDeleteModal() {
-        document.getElementById('delete-modal').classList.add('hidden');
+        // Hide delete modal
+        document.getElementById('delete-modal').style.display = 'none';
         deleteGroupId = null;
     }
 

@@ -1,0 +1,96 @@
+{% from "components/atoms/Card.html" import card %}
+
+<div class="aos-stack-md">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="aos-h3">Edit Group: {{ group.name }}</h3>
+        <button class="aos-btn aos-btn-ghost aos-size-sm" onclick="closeModal()">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            <span class="aos-btn-text">Close</span>
+        </button>
+    </div>
+
+    <form id="edit-group-form" class="aos-stack-md">
+        <input type="hidden" name="group_id" value="{{ group.id }}">
+
+        <div class="aos-stack-sm">
+            <div>
+                <label class="aos-label" for="name">Group Name *</label>
+                <input type="text" id="name" name="name" class="aos-input" value="{{ group.name }}" required>
+            </div>
+
+            <div>
+                <label class="aos-label" for="group_type">Group Type *</label>
+                <select id="group_type" name="group_type" class="aos-input" required>
+                    <option value="church" {% if group.group_type=='church' %}selected{% endif %}>Church</option>
+                    <option value="mosque" {% if group.group_type=='mosque' %}selected{% endif %}>Mosque</option>
+                    <option value="youth-group" {% if group.group_type=='youth-group' %}selected{% endif %}>Youth Group
+                    </option>
+                    <option value="sacco" {% if group.group_type=='sacco' %}selected{% endif %}>SACCO</option>
+                    <option value="traders" {% if group.group_type=='traders' %}selected{% endif %}>Traders</option>
+                    <option value="women-group" {% if group.group_type=='women-group' %}selected{% endif %}>Women's
+                        Group</option>
+                    <option value="health" {% if group.group_type=='health' %}selected{% endif %}>Health</option>
+                    <option value="sports" {% if group.group_type=='sports' %}selected{% endif %}>Sports</option>
+                    <option value="cooperative" {% if group.group_type=='cooperative' %}selected{% endif %}>Cooperative
+                    </option>
+                    <option value="transport" {% if group.group_type=='transport' %}selected{% endif %}>Transport
+                    </option>
+                    <option value="arts" {% if group.group_type=='arts' %}selected{% endif %}>Arts & Culture</option>
+                    <option value="farmers" {% if group.group_type=='farmers' %}selected{% endif %}>Farmers</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="aos-label" for="location">Location</label>
+                <input type="text" id="location" name="location" class="aos-input" value="{{ group.location }}"
+                    placeholder="e.g., Kawangware, Nairobi">
+            </div>
+
+            <div>
+                <label class="aos-label" for="description">Description</label>
+                <textarea id="description" name="description" class="aos-input" rows="3"
+                    placeholder="Brief description of the group">{{ group.description }}</textarea>
+            </div>
+        </div>
+
+        <div class="flex gap-3 justify-end">
+            <button type="button" class="aos-btn aos-btn-ghost aos-size-md" onclick="closeModal()">
+                <span class="aos-btn-text">Cancel</span>
+            </button>
+            <button type="submit" class="aos-btn aos-btn-primary aos-size-md">
+                <span class="aos-btn-text">Save Changes</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Handle form submission
+    document.getElementById('edit-group-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const groupId = formData.get('group_id');
+
+        try {
+            const response = await fetch(`/community/${groupId}`, {
+                method: 'PUT',
+                body: formData
+            });
+
+            if (response.ok) {
+                closeModal();
+                // Scroll to top before reload
+                window.scrollTo({ top: 0, behavior: 'instant' });
+                setTimeout(() => window.location.reload(), 100);
+            } else {
+                alert('Failed to update group. Please try again.');
+            }
+        } catch (error) {
+            console.error('Update failed:', error);
+            alert('Failed to update group. Please try again.');
+        }
+    });
+</script>

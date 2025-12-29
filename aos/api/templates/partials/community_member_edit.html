@@ -1,0 +1,63 @@
+{% from "components/atoms/Card.html" import card %}
+
+{% call card(padding="6", glass=True, class="aos-stack-md") %}
+<div class="flex items-center justify-between mb-4">
+    <h3 class="aos-h3">Edit Hub Recipient</h3>
+    <button class="aos-text-muted hover:aos-text-primary" onclick="closeModal()">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+    </button>
+</div>
+
+<form id="edit-member-form" class="aos-stack-md">
+    <div class="aos-stack-sm">
+        <label class="aos-label">Community Group</label>
+        <input type="text" class="aos-input bg-white/5" value="{{ member.group_name }}" disabled>
+        <p class="aos-text-xs aos-text-muted">Distribution group cannot be changed from here.</p>
+    </div>
+
+    <div class="aos-stack-sm">
+        <label class="aos-label">User Identifier (Phone/ID)</label>
+        <input type="text" name="user_id" class="aos-input" value="{{ member.user_id }}" required>
+    </div>
+
+    <div class="aos-stack-sm">
+        <label class="aos-label">Primary Channel</label>
+        <select name="channel" class="aos-input" required>
+            <option value="sms" {% if member.channel=='sms' %}selected{% endif %}>SMS</option>
+            <option value="ussd" {% if member.channel=='ussd' %}selected{% endif %}>USSD</option>
+            <option value="telegram" {% if member.channel=='telegram' %}selected{% endif %}>Telegram</option>
+            <option value="whatsapp" {% if member.channel=='whatsapp' %}selected{% endif %}>WhatsApp</option>
+        </select>
+    </div>
+
+    <div class="flex gap-3 justify-end mt-6">
+        <button type="button" class="aos-btn aos-btn-ghost aos-size-md" onclick="closeModal()">
+            <span class="aos-btn-text">Cancel</span>
+        </button>
+        <button type="submit" class="aos-btn aos-btn-primary aos-size-md">
+            <span class="aos-btn-text">Save Changes</span>
+        </button>
+    </div>
+</form>
+
+<script>
+    document.getElementById('edit-member-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        fetch('/community/members/{{ member.id }}', {
+            method: 'PUT',
+            body: formData
+        }).then(response => {
+            if (response.ok) {
+                closeModal();
+                window.location.reload();
+            } else {
+                alert('Failed to update recipient details');
+            }
+        });
+    });
+</script>
+{% endcall %}

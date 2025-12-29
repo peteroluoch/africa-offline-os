@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import csv
+import io
+from datetime import datetime
 from fastapi import APIRouter, Depends, Request, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
 from aos.api.state import community_state
@@ -58,6 +61,50 @@ async def register_community_group(
         )
     return RedirectResponse(url="/community", status_code=303)
 
+@router.get("/{group_id}/edit", response_class=HTMLResponse)
+async def edit_group_form(
+    request: Request,
+    group_id: str,
+    operator=Depends(get_current_operator)
+):
+    """Show edit form for a group."""
+    group = None
+    if community_state.module:
+        group = community_state.module.get_group(group_id)
+    
+    return templates.TemplateResponse("partials/community_group_edit.html", {
+        "request": request,
+        "user": operator,
+        "group": group
+    })
+
+@router.put("/{group_id}")
+async def update_community_group(
+    group_id: str,
+    name: str = Form(...),
+    group_type: str = Form(...),
+    description: str = Form(""),
+    location: str = Form(""),
+    operator=Depends(get_current_operator)
+):
+    """Update a community group."""
+    if community_state.module:
+        group = community_state.module.get_group(group_id)
+        if group:
+            import json
+            # Update group fields
+            group.name = name
+            group.group_type = group_type
+            group.description = description
+            group.location = location
+            # Tags must be JSON string for SQLite
+            group.tags = json.dumps([group_type] if group_type else [])
+            
+            # Save updated group
+            community_state.module._groups.save(group)
+    
+    return RedirectResponse(url="/community", status_code=303)
+
 @router.delete("/{group_id}")
 async def delete_community_group(
     group_id: str,
@@ -73,6 +120,141 @@ async def delete_community_group(
             return {"status": "success"}
     
     raise HTTPException(status_code=404, detail="Group not found")
+
+@router.get("/members", response_class=HTMLResponse)
+async def members_dashboard(
+    request: Request,
+    page: int = 1,
+    group_id: str = None,
+    channel: str = None,
+    search: str = None,
+    operator=Depends(get_current_operator)
+):
+    """Dedicated member management dashboard."""
+    data = community_state.module.list_all_members(
+        page=page,
+        per_page=50,
+        group_id=group_id,
+        channel=channel,
+        search_query=search
+    ) if community_state.module else {
+        "members": [],
+        "total": 0,
+        "page": 1,
+        "per_page": 50,
+        "total_pages": 0
+    }
+    
+    # Get all groups for filter dropdown
+    all_groups = []
+    if community_state.module:
+        all_groups = [g for g in community_state.module._groups.list_all() if g.active]
+        
+    # If HTMX request, return only the table partial
+    if request.headers.get("hx-request") == "true":
+        return templates.TemplateResponse("partials/community_members_table.html", {
+            "request": request,
+            "members": data["members"],
+            "total": data["total"],
+            "page": data["page"],
+            "total_pages": data["total_pages"]
+        })
+
+    return templates.TemplateResponse("community_members.html", {
+        "request": request,
+        "user": operator,
+        "members": data["members"],
+        "total": data["total"],
+        "page": data["page"],
+        "total_pages": data["total_pages"],
+        "all_groups": all_groups,
+        "current_group": group_id,
+        "current_channel": channel,
+        "current_search": search
+    })
+
+@router.get("/members/export")
+async def export_members(
+    group_id: str = None,
+    channel: str = None,
+    search: str = None,
+    operator=Depends(get_current_operator)
+):
+    """Export members as CSV."""
+    data = community_state.module.list_all_members(
+        page=1,
+        per_page=1000000, # All members
+        group_id=group_id,
+        channel=channel,
+        search_query=search
+    ) if community_state.module else {"members": []}
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["User ID", "Group", "Channel", "Joined At", "Status"])
+    
+    for m in data["members"]:
+        writer.writerow([
+            m["user_id"],
+            m["group_name"],
+            m["channel"],
+            m["joined_at"].strftime('%Y-%m-%d %H:%M:%S') if m["joined_at"] else "N/A",
+            "Active" if m["active"] else "Inactive"
+        ])
+        
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=community_members_{datetime.now().strftime('%Y%m%d')}.csv"}
+    )
+
+@router.get("/members/{member_id}/edit", response_class=HTMLResponse)
+async def edit_member_form(
+    request: Request,
+    member_id: str,
+    operator=Depends(get_current_operator)
+):
+    """Fetch member edit modal content."""
+    member = None
+    if community_state.module:
+        res = community_state.module._db.execute(
+            "SELECT m.id, m.community_id, m.user_id, m.channel, g.name as group_name FROM community_members m JOIN community_groups g ON m.community_id = g.id WHERE m.id = ?",
+            (member_id,)
+        ).fetchone()
+        if res:
+            member = {
+                "id": res[0],
+                "community_id": res[1],
+                "user_id": res[2],
+                "channel": res[3],
+                "group_name": res[4]
+            }
+            
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+        
+    return templates.TemplateResponse("partials/community_member_edit.html", {
+        "request": request,
+        "member": member
+    })
+
+@router.put("/members/{member_id}")
+async def update_member_details(
+    member_id: str,
+    user_id: str = Form(...),
+    channel: str = Form(...),
+    operator=Depends(get_current_operator)
+):
+    """Update member details (Admin only)."""
+    if community_state.module:
+        community_state.module.update_community_member(
+            member_id=member_id,
+            user_id=user_id,
+            channel=channel,
+            actor_id=operator.id
+        )
+    return HTMLResponse(status_code=204)
 
 @router.get("/{group_id}/members", response_class=HTMLResponse)
 async def list_group_members(
@@ -105,10 +287,11 @@ async def add_group_member(
 ):
     """Add a member to a community group (Admin only)."""
     if community_state.module:
-        await community_state.module.add_member_to_community(
+        community_state.module.add_member_to_community(
             community_id=group_id,
             user_id=user_id,
-            channel=channel
+            channel=channel,
+            actor_id=operator.id
         )
     return RedirectResponse(url=f"/community/{group_id}/members", status_code=303)
 
@@ -121,12 +304,12 @@ async def remove_group_member(
 ):
     """Remove a member from a community group (Admin only)."""
     if community_state.module:
-        success = await community_state.module.remove_member_from_community(
+        community_state.module.remove_member_from_community(
             community_id=group_id,
             user_id=user_id,
-            channel=channel
+            channel=channel,
+            actor_id=operator.id
         )
-        if success:
-            return {"status": "success"}
+        return {"status": "success"}
     
     raise HTTPException(status_code=404, detail="Member not found")

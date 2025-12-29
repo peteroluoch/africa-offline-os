@@ -76,3 +76,30 @@
   --aos-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --aos-shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
 }
+
+/* Modal Overlay - FAANG Standard */
+.aos-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--aos-surface-overlay);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: var(--aos-spacing-8);
+}
+
+.aos-modal-overlay.aos-modal-visible {
+  display: flex;
+}
+
+.aos-modal-content-wrapper {
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  width: 100%;
+}

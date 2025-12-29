@@ -7,6 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import asyncio
+import uuid
 import sqlite3
 from aos.db.engine import connect
 from aos.bus.dispatcher import EventDispatcher
@@ -138,24 +139,52 @@ SAMPLE_GROUPS = [
 
 
 async def seed_community_groups():
-    """Seed the database with sample community groups."""
-    print("🌱 Seeding community groups...")
+    """Seed the database with sample community groups and members."""
+    print("[SEED] Seeding community groups...")
     
     # Connect to database
     conn = connect("aos.db")
     dispatcher = EventDispatcher()
     community_module = CommunityModule(dispatcher, conn)
     
+    # Track created group IDs
+    group_ids = []
+    
     # Register each group
     for idx, group_data in enumerate(SAMPLE_GROUPS, 1):
         try:
             group = await community_module.register_group(**group_data)
-            print(f"✅ [{idx}/15] Created: {group.name} ({group.group_type})")
+            group_ids.append(group.id)
+            print(f"[OK] [{idx}/15] Created Group: {group.name}")
         except Exception as e:
-            print(f"❌ [{idx}/15] Failed to create {group_data['name']}: {e}")
+            print(f"[FAIL] [{idx}/15] Failed to create {group_data['name']}: {e}")
+            
+    # Seed sample members
+    print("\n[MEMBER] Seeding community members...")
+    channels = ["sms", "ussd", "telegram", "whatsapp"]
+    member_count = 0
+    
+    for group_id in group_ids:
+        # 15 members per group
+        for i in range(15):
+            # Mix of formats: some with 07..., some with +254...
+            if i % 2 == 0:
+                user_id = f"0711{str(uuid.uuid4().int)[:6]}"
+            else:
+                user_id = f"+254722{str(uuid.uuid4().int)[:6]}"
+                
+            channel = channels[i % len(channels)]
+            
+            try:
+                community_module.add_member_to_community(group_id, user_id, channel)
+                member_count += 1
+            except Exception as e:
+                print(f"[WARN] Failed to add member {user_id}: {e}")
+            
+    print(f"[DONE] Seeded {member_count} members across {len(group_ids)} groups (~15 per group).")
     
     conn.close()
-    print("\n🎉 Seeding complete! Visit http://localhost:8000/community to see the groups.")
+    print("\n[ALL] Seeding complete! Visit http://localhost:8000/community to see the groups and members.")
 
 
 if __name__ == "__main__":

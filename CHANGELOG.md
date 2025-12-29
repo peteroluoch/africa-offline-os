@@ -6,12 +6,27 @@ Each phase is intentional and auditable.
 
 ---
 
-## [Unreleased]
+## [0.15.0] — Phase 13: Community Broadcasting (Foundations) (2025-12-29)
 
-### Planned
-- Phase 10: Governance & Quality Hardening
+### Added
+- **Member Directory**: Global recipient management with cross-field search and multi-segment filtering.
+- **FAANG-Grade Search**: Instant results via HTMX (`500ms` debounce) with smart phone number normalization (Kenyan format).
+- **Scalable Seeding**: Updated seed script to generate **~225 members** across 15 diverse groups for realistic QA.
+- **Audit Logging**: Implemented `community_activity_logs` table for immutable tracking of all member CRUD actions.
+- **UI Resilience**: Isolated table partials and implemented `outerHTML` swapping to eliminate UI layout distortion.
+
+### Changed
+- **Router Logic**: Refined HTMX detection logic (`hx-request: true`) to ensure clean partial delivery.
+- **Template System**: Migrated recipients view to a decoupled partial/directory architecture.
+
+### Fixed
+- **UI Distortion**: Resolved issue where sidebar/header would nest within the content area during real-time searches.
+- **Encoding Errors**: Removed non-standard emojis from seed and migration scripts to ensure compatibility with Windows terminals (cp1252).
+- **Missing Imports**: Added `uuid` and corrected migration attribute errors in system utilities.
 
 ---
+
+## [Unreleased]
 
 ## [0.14.0] — Phase 7.6 & 11: Transport v2 & Deployment Playbooks (2025-12-28)
 
