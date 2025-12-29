@@ -24,6 +24,7 @@
 | **9** | **Regional Aggregation** | Scale Without Cloud | 100% | ✅ **COMPLETE** |
 | **10**| **Governance & Quality** | Framework C Completion | 100% | ✅ **COMPLETE** |
 | **11**| **Deployment Playbooks** | Operational Readiness | 100% | ✅ **COMPLETE** |
+| **12**| **Test Stabilization** | TDD Foundation Hardening | 97% | 🔄 **IN PROGRESS** |
 
 ---
 
@@ -283,6 +284,26 @@ To prevent "AI Drift" and ensure architectural integrity, execution is batched i
   - `docs/playbooks/troubleshooting.md`
 - **Quality**: Production-ready operational documentation, ready for pilot deployment
 - **Next Steps**: Execute pilot in Nairobi (10-20 groups, 2 months)
+
+### Phase 12: Test Stabilization & TDD Foundation Hardening 🔄 IN PROGRESS
+- **Focus**: Eliminate test suite degradation and establish bulletproof TDD practices.
+- **Goal**: 100% test pass rate with zero hangs or flakiness.
+- **Status**: 97% (176/181 tests passing)
+- **Progress**:
+  - ✅ **Centralized State Management**: Consolidated `EventStream` singleton into `aos/api/state.py`
+  - ✅ **Improved Teardown**: Enhanced `reset_globals()` to properly stop all background managers
+  - ✅ **Fixed Auth Tests**: Resolved `get_current_operator` dependency issues
+  - ✅ **Fixed Repository Tests**: Standardized DTO field names (`password_hash`)
+  - ✅ **Fixed Health/Resilience**: Updated to modern `httpx.ASGITransport` API
+  - 🔄 **SSE Stream Tests**: 5 tests still failing (connection lifecycle issues)
+- **Artifacts**:
+  - [`docs/TDD_PREVENTION_GUIDE.md`](file:///c:/Users/LENOVO/Documents/africa-offline-os/docs/TDD_PREVENTION_GUIDE.md) - Prevention strategies
+  - Updated `aos/api/state.py` - Centralized singleton management
+  - Updated `aos/api/app.py` - Improved global state reset
+- **Next Steps**:
+  - Debug remaining SSE stream test failures
+  - Add `pytest-timeout` plugin
+  - Implement pre-commit hooks for test validation
 
 ---
 

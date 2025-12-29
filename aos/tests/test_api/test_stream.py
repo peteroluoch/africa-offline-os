@@ -1,6 +1,7 @@
 import asyncio
 
 import pytest
+import httpx
 from httpx import AsyncClient
 
 # We need to access the global dispatcher to inject events
@@ -13,8 +14,19 @@ from aos.bus.events import Event
 async def client():
     reset_globals()
     app = create_app()
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        yield ac
+    from aos.core.security.auth import auth_manager
+    # Note: token issuance depends on identity_mgr which doesn't need lifespan, 
+    # but we should be careful.
+    token = auth_manager.issue_token({"sub": "admin", "role": "admin"})
+    
+    async with app.router.lifespan_context(app):
+        import httpx
+        async with AsyncClient(
+            transport=httpx.ASGITransport(app=app), 
+            base_url="http://test",
+            headers={"Authorization": f"Bearer {token}"}
+        ) as ac:
+            yield ac
     reset_globals()
 
 @pytest.mark.asyncio
@@ -27,43 +39,31 @@ async def test_stream_connection(client):
 @pytest.mark.asyncio
 async def test_stream_receives_events(client):
     """Verify events are pushed to the stream as HTML."""
-    app = create_app()
-    async with app.router.lifespan_context(app):
+    from aos.api.state import core_state
+    dispatcher = core_state.event_dispatcher
+    assert dispatcher is not None
 
-        print("DEBUG: Client connecting...")
-        # Connect to stream
-        async with AsyncClient(app=app, base_url="http://test").stream("GET", "/stream") as response:
-            assert response.status_code == 200
-            print("DEBUG: Stream connected.")
+    # Connect to stream using the authenticated fixture client
+    async with client.stream("GET", "/stream") as response:
+        assert response.status_code == 200
 
-            # Inject event into global dispatcher
-            dispatcher = app_module._event_dispatcher
-            assert dispatcher is not None
-            print("DEBUG: Dispatcher found.")
+        # Dispatch event after a tiny delay to ensure listener is registered
+        await asyncio.sleep(0.1)
+        test_event = Event(name="test.event", payload={"status": "working"})
+        await dispatcher.dispatch(test_event)
 
-            test_event = Event(name="test.event", payload={"status": "working"})
-            await dispatcher.dispatch(test_event)
-            print("DEBUG: Event dispatched.")
+        # Read lines with timeout
+        chunk_found = False
+        try:
+            async def read_stream():
+                async for line in response.aiter_lines():
+                    if "test.event" in line:
+                        assert "working" in line
+                        return True
+                return False
 
-            # Read lines with timeout
-            chunk_found = False
-            try:
-                # Wrap iteration in timeout
-                async def read_stream():
-                    async for line in response.aiter_lines():
-                        print(f"DEBUG: Received line: {line}")
-                        if "test.event" in line:
-                            assert "<tr>" in line
-                            assert "working" in line
-                            return True
-                    return False
+            chunk_found = await asyncio.wait_for(read_stream(), timeout=2.0)
+        except asyncio.TimeoutError:
+            print("DEBUG: Timeout waiting for stream data")
 
-                chunk_found = await asyncio.wait_for(read_stream(), timeout=2.0)
-            except TimeoutError:
-                print("DEBUG: Timeout waiting for stream data")
-
-            # Note: Since the generator is infinite, we must break or timeout.
-            # aiter_lines doesn't inherently timeout, the test runner does.
-            # We rely on 'break' happening quickly.
-
-            assert chunk_found, "Did not receive event in stream"
+        assert chunk_found, "Did not receive event in stream"

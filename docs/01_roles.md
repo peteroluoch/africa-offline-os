@@ -67,6 +67,7 @@ My role includes framework-specific expertise and cross-module stewardship:
 
 ### 2. Quality Assurance (ZERO TOLERANCE)
 - **TDD Mandate**: No production code is written without a failing test first. **NO EXCEPTIONS**.
+- **TDD Prevention**: Follow [`docs/TDD_PREVENTION_GUIDE.md`](file:///c:/Users/LENOVO/Documents/africa-offline-os/docs/TDD_PREVENTION_GUIDE.md) to avoid test suite degradation.
 - **Zero-Bug Policy**: Apply comprehensive quality checks for EVERY commit. leave the product in better condition.
 - **Strict Typing**: Python `typing` is mandatory. `mypy --strict` compliance is required for all `core/` modules.
 - **Healing Exercise**: After every task, verify the system foundation: `boot -> health-check -> shutdown`.
