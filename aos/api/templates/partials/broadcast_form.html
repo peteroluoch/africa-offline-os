@@ -16,22 +16,34 @@
         </p>
     </div>
 
-    <!-- Channel (Hidden - Telegram only for v1) -->
-    <input type="hidden" name="channel" value="telegram">
+    <!-- Channel Selector -->
+    <div>
+        <label for="channel" class="aos-label">Broadcast Channel</label>
+        <select id="channel" name="channel" required class="aos-input aos-size-md w-full"
+            onchange="updateCostPreview()">
+            <option value="telegram">Telegram (Free)</option>
+            <option value="sms">SMS (KES 0.80/msg)</option>
+            <option value="ussd">USSD (KES 0.50/msg)</option>
+            <option value="whatsapp">WhatsApp (Free)</option>
+        </select>
+        <p class="aos-text-muted aos-text-sm mt-1">
+            Select the channel for this broadcast
+        </p>
+    </div>
 
     <!-- Cost Preview -->
     <div class="aos-card aos-card-info p-4">
         <div class="flex items-center justify-between">
             <span class="aos-text-sm">Recipients:</span>
-            <span class="aos-text-sm font-semibold">{{ member_count }}</span>
+            <span class="aos-text-sm font-semibold" id="recipient-count">{{ member_count }}</span>
         </div>
         <div class="flex items-center justify-between mt-2">
             <span class="aos-text-sm">Channel:</span>
-            <span class="aos-text-sm font-semibold">Telegram</span>
+            <span class="aos-text-sm font-semibold" id="channel-display">Telegram</span>
         </div>
         <div class="flex items-center justify-between mt-2">
             <span class="aos-text-sm">Estimated Cost:</span>
-            <span class="aos-text-sm font-semibold text-green-500">KES 0.00</span>
+            <span class="aos-text-sm font-semibold" id="cost-display">KES 0.00</span>
         </div>
     </div>
 
@@ -47,8 +59,55 @@
 {% endcall %}
 
 <script>
+    // Cost rates per channel (KES)
+    const CHANNEL_COSTS = {
+        'telegram': 0.00,
+        'whatsapp': 0.00,
+        'ussd': 0.50,
+        'sms': 0.80
+    };
+
+    // Channel display names
+    const CHANNEL_NAMES = {
+        'telegram': 'Telegram',
+        'whatsapp': 'WhatsApp',
+        'ussd': 'USSD',
+        'sms': 'SMS'
+    };
+
+    // Get recipient count from template
+    const recipientCount = {{ member_count }};
+
     // Character counter
     document.getElementById('message').addEventListener('input', function () {
         document.getElementById('char-count').textContent = this.value.length;
     });
+
+    // Update cost preview when channel changes
+    function updateCostPreview() {
+        const channelSelect = document.getElementById('channel');
+        const selectedChannel = channelSelect.value;
+        const costPerMessage = CHANNEL_COSTS[selectedChannel];
+        const totalCost = recipientCount * costPerMessage;
+
+        // Update channel display
+        document.getElementById('channel-display').textContent = CHANNEL_NAMES[selectedChannel];
+
+        // Update cost display with color coding
+        const costDisplay = document.getElementById('cost-display');
+        costDisplay.textContent = `KES ${totalCost.toFixed(2)}`;
+
+        // Color code: green for free, yellow for moderate, red for expensive
+        costDisplay.className = 'aos-text-sm font-semibold';
+        if (totalCost === 0) {
+            costDisplay.classList.add('text-green-500');
+        } else if (totalCost < 50) {
+            costDisplay.classList.add('text-yellow-500');
+        } else {
+            costDisplay.classList.add('text-red-500');
+        }
+    }
+
+    // Initialize cost preview on page load
+    updateCostPreview();
 </script>
