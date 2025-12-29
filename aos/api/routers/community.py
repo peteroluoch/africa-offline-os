@@ -87,7 +87,7 @@ async def community_dashboard(
 
 @router.get("/register", response_class=HTMLResponse)
 async def community_register_form(request: Request, operator=Depends(get_current_operator)):
-    if AosRole(operator.get("role", "viewer")).level < AosRole.ADMIN.level:
+    if AosRole(operator.get("role", "viewer")).level < AosRole.SYSTEM_ADMIN.level:
         raise HTTPException(403, "Access denied: Only system admins can register new communities.")
     return templates.TemplateResponse("partials/community_group_form.html", {"request": request, "user": operator})
 
@@ -100,7 +100,7 @@ async def register_community_group(
     location: str = Form(""),
     operator=Depends(get_current_operator)
 ):
-    if AosRole(operator.get("role", "viewer")).level < AosRole.ADMIN.level:
+    if AosRole(operator.get("role", "viewer")).level < AosRole.SYSTEM_ADMIN.level:
         raise HTTPException(403, "Access denied: Only system admins can register new communities.")
     if community_state.module:
         await community_state.module.register_group(

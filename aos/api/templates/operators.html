@@ -1,109 +1,170 @@
 {% extends "dashboard.html" %}
 
-{% block title %}Operators Management - A-OS{% endblock %}
+{% block title %}Operators Management | A-OS Kernel{% endblock %}
 
 {% block content %}
-<div class="aos-container">
-    <div class="aos-page-header">
-        <h1 class="aos-h1">Operators Management</h1>
-        <p class="aos-text-muted">Manage system operators and access control</p>
+<div class="aos-container aos-p-8">
+    <div class="aos-page-header aos-mb-8">
+        <h1 class="aos-h1">Operator Registry</h1>
+        <p class="aos-text-muted">Manage system identities, hierarchical roles, and community assignments.</p>
     </div>
 
-    <!-- Stats Cards -->
-    <div class="aos-grid aos-grid-cols-4 aos-gap-4 aos-mb-6">
-        <div class="aos-glass aos-p-4 aos-rounded-lg">
-            <div class="aos-text-muted aos-text-sm aos-mb-2">Total Operators</div>
-            <div class="aos-h2 aos-text-primary">1</div>
+    <!-- Stats -->
+    <div class="aos-grid aos-grid-cols-1 md:aos-grid-cols-3 aos-gap-6 aos-mb-8">
+        <div class="aos-glass aos-p-6">
+            <span class="aos-text-muted aos-text-xs uppercase tracking-widest font-bold">Total Identities</span>
+            <div class="aos-text-3xl font-bold aos-text-primary">{{ operators|length }}</div>
         </div>
-        <div class="aos-glass aos-p-4 aos-rounded-lg">
-            <div class="aos-text-muted aos-text-sm aos-mb-2">Active Sessions</div>
-            <div class="aos-h2 aos-text-success">1</div>
+        <div class="aos-glass aos-p-6">
+            <span class="aos-text-muted aos-text-xs uppercase tracking-widest font-bold">Pending Approval</span>
+            <div class="aos-text-3xl font-bold aos-text-warning">
+                {% set pending = 0 %}
+                {% for op in operators %}
+                {% if op.role == 'operator' and not op.community_id %}
+                {% set pending = pending + 1 %}
+                {% endif %}
+                {% endfor %}
+                {{ pending }}
+            </div>
         </div>
-        <div class="aos-glass aos-p-4 aos-rounded-lg">
-            <div class="aos-text-muted aos-text-sm aos-mb-2">Admin Roles</div>
-            <div class="aos-h2 aos-text-info">1</div>
-        </div>
-        <div class="aos-glass aos-p-4 aos-rounded-lg">
-            <div class="aos-text-muted aos-text-sm aos-mb-2">Last Login</div>
-            <div class="aos-h2 aos-text-warning">Now</div>
-        </div>
-    </div>
-
-    <!-- Current Operator Info -->
-    <div class="aos-glass aos-p-6 aos-rounded-lg aos-mb-6">
-        <h2 class="aos-h3 aos-mb-4">Current Operator</h2>
-        <div class="space-y-3">
-            <div class="flex justify-between items-center py-2 border-b border-slate-700/50">
-                <span class="aos-text-muted aos-text-sm">Username</span>
-                <span class="aos-font-semibold aos-text-primary">{{ user.username }}</span>
-            </div>
-            <div class="flex justify-between items-center py-2 border-b border-slate-700/50">
-                <span class="aos-text-muted aos-text-sm">Role</span>
-                <span
-                    class="inline-block px-3 py-1 text-xs font-semibold rounded-lg bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                    Administrator
-                </span>
-            </div>
-            <div class="flex justify-between items-center py-2 border-b border-slate-700/50">
-                <span class="aos-text-muted aos-text-sm">Permissions</span>
-                <span class="aos-font-semibold">Full Access</span>
-            </div>
-            <div class="flex justify-between items-center py-2">
-                <span class="aos-text-muted aos-text-sm">Session Status</span>
-                <span
-                    class="inline-block px-3 py-1 text-xs font-semibold rounded-lg bg-green-500/20 text-green-300 border border-green-500/30">
-                    Active
-                </span>
-            </div>
+        <div class="aos-glass aos-p-6">
+            <span class="aos-text-muted aos-text-xs uppercase tracking-widest font-bold">Active Organizations</span>
+            <div class="aos-text-3xl font-bold aos-text-success">{{ available_communities|length }}</div>
         </div>
     </div>
 
-    <!-- Operator Management Features -->
-    <div class="aos-grid aos-grid-cols-2 aos-gap-6">
-        <div class="aos-glass aos-p-6 aos-rounded-lg">
-            <h3 class="aos-h3 aos-mb-4">🔐 Access Control</h3>
-            <p class="aos-text-muted aos-mb-4">
-                Manage operator permissions and role-based access control (RBAC).
-            </p>
-            <ul class="space-y-2 aos-text-muted aos-text-sm">
-                <li>✅ JWT-based authentication</li>
-                <li>✅ Role-based permissions</li>
-                <li>✅ Session management</li>
-                <li>✅ Audit logging</li>
-            </ul>
+    <!-- Operators Table -->
+    <div class="aos-glass aos-rounded-2xl aos-overflow-hidden">
+        <div class="aos-p-6 border-b border-slate-700/50 flex justify-between items-center bg-slate-800/20">
+            <h2 class="aos-h3">System Operators</h2>
+            <div class="aos-text-xs aos-text-muted">FAANG Security Standard: RBAC Active</div>
         </div>
 
-        <div class="aos-glass aos-p-6 aos-rounded-lg">
-            <h3 class="aos-h3 aos-mb-4">📊 Activity Monitoring</h3>
-            <p class="aos-text-muted aos-mb-4">
-                Track operator activities and system access patterns.
-            </p>
-            <ul class="space-y-2 aos-text-muted aos-text-sm">
-                <li>✅ Login/logout tracking</li>
-                <li>✅ Action audit trail</li>
-                <li>✅ Failed login attempts</li>
-                <li>✅ Session duration monitoring</li>
-            </ul>
-        </div>
-    </div>
-
-    <!-- Future Features -->
-    <div class="aos-glass aos-p-6 aos-rounded-lg mt-6">
-        <h3 class="aos-h3 aos-mb-4">🚀 Coming Soon</h3>
-        <div class="aos-grid aos-grid-cols-3 aos-gap-4">
-            <div class="aos-p-4 bg-slate-800/30 aos-rounded-lg">
-                <div class="text-blue-400 aos-font-semibold aos-mb-2">Multi-Operator Support</div>
-                <p class="aos-text-muted aos-text-sm">Add and manage multiple system operators</p>
-            </div>
-            <div class="aos-p-4 bg-slate-800/30 aos-rounded-lg">
-                <div class="text-green-400 aos-font-semibold aos-mb-2">Advanced RBAC</div>
-                <p class="aos-text-muted aos-text-sm">Granular permission management</p>
-            </div>
-            <div class="aos-p-4 bg-slate-800/30 aos-rounded-lg">
-                <div class="text-purple-400 aos-font-semibold aos-mb-2">2FA Authentication</div>
-                <p class="aos-text-muted aos-text-sm">Two-factor authentication support</p>
-            </div>
-        </div>
+        <table class="aos-table w-full">
+            <thead>
+                <tr class="aos-bg-surface-elevated">
+                    <th class="aos-p-4 text-left aos-text-muted aos-text-xs uppercase">Username</th>
+                    <th class="aos-p-4 text-left aos-text-muted aos-text-xs uppercase">Current Role</th>
+                    <th class="aos-p-4 text-left aos-text-muted aos-text-xs uppercase">Assigned Community</th>
+                    <th class="aos-p-4 text-left aos-text-muted aos-text-xs uppercase">Identity Created</th>
+                    <th class="aos-p-4 text-right aos-text-muted aos-text-xs uppercase">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for op in operators %}
+                <tr class="border-b border-slate-700/30 hover:bg-slate-700/10 transition-colors">
+                    <td class="aos-p-4">
+                        <div class="font-bold aos-text-primary">{{ op.username }}</div>
+                        <div class="aos-text-xs aos-text-muted">{{ op.id[:8] }}...</div>
+                    </td>
+                    <td class="aos-p-4">
+                        {% if op.role == 'root' %}
+                        <span
+                            class="px-2 py-1 rounded bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold uppercase">Root</span>
+                        {% elif op.role == 'super_admin' or op.role == 'admin' %}
+                        <span
+                            class="px-2 py-1 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs font-bold uppercase">Admin</span>
+                        {% elif op.role == 'community_admin' %}
+                        <span
+                            class="px-2 py-1 rounded bg-purple-500/20 text-purple-400 border border-purple-500/30 text-xs font-bold uppercase">Group
+                            Lead</span>
+                        {% else %}
+                        <span
+                            class="px-2 py-1 rounded bg-slate-500/20 text-slate-400 border border-slate-500/30 text-xs font-bold uppercase">Field
+                            Agent</span>
+                        {% endif %}
+                    </td>
+                    <td class="aos-p-4 aos-text-sm">
+                        {% if op.community_name %}
+                        <span class="aos-text-muted italic">{{ op.community_name }}</span>
+                        {% else %}
+                        <span class="text-orange-400/70 text-xs">Unassigned</span>
+                        {% endif %}
+                    </td>
+                    <td class="aos-p-4 aos-text-muted aos-text-xs">
+                        {{ op.created_at[:10] }}
+                    </td>
+                    <td class="aos-p-4 text-right">
+                        {% if op.username != user.username and op.role != 'root' %}
+                        <button
+                            onclick="openManageModal('{{ op.id }}', '{{ op.username }}', '{{ op.role }}', '{{ op.community_id }}')"
+                            class="aos-btn aos-btn-sm aos-btn-primary">
+                            Manage
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
+
+<!-- Management Modal -->
+<div id="manageModal"
+    class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center z-50">
+    <div class="aos-glass aos-p-8 aos-rounded-3xl w-full max-w-md shadow-2xl border border-white/10">
+        <h2 class="aos-h2 aos-mb-2">Adjust Permissions</h2>
+        <p class="aos-text-muted aos-mb-6 text-sm">Identity: <span id="modalUsername"
+                class="aos-text-primary font-bold"></span></p>
+
+        <form id="manageForm" action="" method="POST" class="space-y-6">
+            <div>
+                <label class="block aos-text-xs uppercase aos-text-muted font-bold aos-mb-2">Security Role</label>
+                <select name="role_name" id="modalRole"
+                    class="w-full aos-glass aos-p-3 aos-rounded-lg border border-white/10 text-white">
+                    {% for role in available_roles %}
+                    <option value="{{ role }}">{{ role|replace('_', ' ')|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div id="communitySelectGroup">
+                <label class="block aos-text-xs uppercase aos-text-muted font-bold aos-mb-2">Community
+                    Assignment</label>
+                <select name="community_id" id="modalCommunity"
+                    class="w-full aos-glass aos-p-3 aos-rounded-lg border border-white/10 text-white">
+                    <option value="">Global (No specific group)</option>
+                    {% for comm in available_communities %}
+                    <option value="{{ comm.id }}">{{ comm.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="aos-flex aos-gap-4 aos-mt-8">
+                <button type="button" onclick="closeManageModal()" class="aos-btn aos-btn-ghost flex-1">Cancel</button>
+                <button type="submit" class="aos-btn aos-btn-primary flex-1">Apply Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openManageModal(id, username, role, commId) {
+        const modal = document.getElementById('manageModal');
+        const form = document.getElementById('manageForm');
+        document.getElementById('modalUsername').textContent = username;
+        document.getElementById('modalRole').value = role;
+        document.getElementById('modalCommunity').value = commId || '';
+
+        form.action = `/operators/${id}/update-role`;
+        modal.classList.remove('hidden');
+    }
+
+    function closeManageModal() {
+        document.getElementById('manageModal').classList.add('hidden');
+    }
+
+    // Auto-hide community select for system admins
+    document.getElementById('modalRole').addEventListener('change', function (e) {
+        const commGroup = document.getElementById('communitySelectGroup');
+        if (['root', 'admin', 'super_admin'].includes(e.target.value)) {
+            commGroup.style.opacity = '0.5';
+            commGroup.style.pointerEvents = 'none';
+        } else {
+            commGroup.style.opacity = '1';
+            commGroup.style.pointerEvents = 'all';
+        }
+    });
+</script>
 {% endblock %}

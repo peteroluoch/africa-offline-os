@@ -186,6 +186,7 @@ from aos.api.routers.regional import router as regional_router
 from aos.api.routers.resource import router as resource_router
 from aos.api.routers.transport import router as transport_router
 from aos.api.routers.admin_users import router as admin_users_router
+from aos.api.routers.operators import router as operators_router
 from aos.api.routers.policies import router as policies_router
 from aos.core.security.auth import get_current_operator
 
@@ -196,6 +197,10 @@ def create_app() -> FastAPI:
         version="0.1.0",
         lifespan=lifespan,
     )
+
+    # Register RBAC middleware (MUST be before routes)
+    from aos.api.middleware.rbac import rbac_route_guard
+    app.middleware("http")(rbac_route_guard)
 
     # Static files for Design System
     static_path = Path(__file__).parent / "static"
@@ -214,6 +219,7 @@ def create_app() -> FastAPI:
     app.include_router(resource_router)
     app.include_router(regional_router)
     app.include_router(admin_users_router)
+    app.include_router(operators_router)
     app.include_router(policies_router)
 
     @app.get("/")
@@ -286,7 +292,24 @@ def create_app() -> FastAPI:
 
     @app.get("/dashboard")
     async def dashboard(request: Request, current_user: dict = Depends(get_current_operator)):
-        """Render the kernel dashboard (Protected)."""
+        """Render the kernel dashboard (Protected) with role-based redirection."""
+        from aos.core.security.auth import AosRole
+        
+        user_role = current_user.get("role")
+        community_id = current_user.get("community_id")
+
+        # Redirect limited roles to their specific community base
+        if user_role in [AosRole.COMMUNITY_ADMIN.value, AosRole.OPERATOR.value]:
+            if community_id:
+                return RedirectResponse(url=f"/community/{community_id}", status_code=status.HTTP_303_SEE_OTHER)
+            else:
+                # User is a field agent but hasn't been assigned to a group yet
+                return templates.TemplateResponse(
+                    "unassigned.html",
+                    {"request": request, "user": current_user}
+                )
+        
+        # ROOT and ADMIN see the kernel overview
         return templates.TemplateResponse(
             "dashboard.html",
             {"request": request, "user": current_user}
@@ -310,14 +333,6 @@ def create_app() -> FastAPI:
         return templates.TemplateResponse(
             "mesh.html",
             {"request": request, "user": current_user, "peers": peers}
-        )
-
-    @app.get("/operators")
-    async def operators_management(request: Request, current_user: dict = Depends(get_current_operator)):
-        """Operator management page."""
-        return templates.TemplateResponse(
-            "operators.html",
-            {"request": request, "user": current_user}
         )
 
     @app.get("/security")

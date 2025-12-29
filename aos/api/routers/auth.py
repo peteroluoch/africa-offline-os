@@ -17,6 +17,13 @@ async def login_page(request: Request):
     """Serve login page."""
     return templates.TemplateResponse("login.html", {"request": request})
 
+@router.get("/signup", response_class=HTMLResponse)
+async def signup_page(request: Request, db: sqlite3.Connection = Depends(get_db)):
+    """Serve signup page with community selection."""
+    cursor = db.execute("SELECT id, name FROM community_groups WHERE active=1")
+    communities = [{"id": r[0], "name": r[1]} for r in cursor.fetchall()]
+    return templates.TemplateResponse("signup.html", {"request": request, "communities": communities})
+
 @router.post("/auth/login")
 async def login(
     username: str = Form(...),
@@ -101,3 +108,52 @@ async def logout():
     )
     print("[Auth] Logout successful. Session cleared.")
     return response
+
+@router.post("/auth/signup")
+async def signup(
+    username: str = Form(...),
+    password: str = Form(...),
+    community_id: str = Form(...),
+    db: sqlite3.Connection = Depends(get_db)
+):
+    """
+    Self-Registration for Field Agents.
+    Defaults to 'operator' role for safety.
+    """
+    try:
+        from aos.core.security.password import get_password_hash
+        import uuid
+        from datetime import UTC, datetime
+
+        # 1. Check if username exists
+        check = db.execute("SELECT id FROM operators WHERE username=?", (username,)).fetchone()
+        if check:
+            return HTMLResponse(
+                content="<html><body><h1>Signup Failed</h1><p>Username already taken</p><a href='/signup'>Try again</a></body></html>",
+                status_code=400
+            )
+
+        # 2. Get the 'operator' role ID
+        role_row = db.execute("SELECT id FROM roles WHERE name='operator'").fetchone()
+        if not role_row:
+             return HTMLResponse(content="System misconfigured: Operator role missing.", status_code=500)
+        
+        role_id = role_row[0]
+        op_id = str(uuid.uuid4())
+        pw_hash = get_password_hash(password)
+
+        # 3. Create the user
+        db.execute(
+            "INSERT INTO operators (id, username, password_hash, role_id, community_id, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (op_id, username, pw_hash, role_id, community_id, datetime.now(UTC).isoformat())
+        )
+        db.commit()
+
+        print(f"[Auth] New field agent registered: {username}")
+        
+        # 4. Redirect to login with success message
+        return RedirectResponse(url="/login?msg=Signup+success!+Please+login.", status_code=status.HTTP_303_SEE_OTHER)
+
+    except Exception as e:
+        print(f"[Auth] Signup Error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error during registration")

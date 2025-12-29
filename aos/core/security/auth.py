@@ -10,8 +10,8 @@ from aos.core.security.identity import NodeIdentityManager
 
 
 class AosRole(str, Enum):
-    ROOT = "root"              # Full kernel access (Super Admin)
-    ADMIN = "admin"            # Regional / Organization management
+    ROOT = "super_admin"       # Full kernel access (Super Admin) - Matches DB 'super_admin'
+    SYSTEM_ADMIN = "admin"     # Regional / Organization management
     COMMUNITY_ADMIN = "community_admin"  # Single community management
     OPERATOR = "operator"      # Data entry and field operations
     VIEWER = "viewer"          # Read-only access
@@ -21,7 +21,7 @@ class AosRole(str, Enum):
         """Numeric level for hierarchical comparison."""
         return {
             AosRole.ROOT: 5,
-            AosRole.ADMIN: 4,
+            AosRole.SYSTEM_ADMIN: 4,
             AosRole.COMMUNITY_ADMIN: 3,
             AosRole.OPERATOR: 2,
             AosRole.VIEWER: 1
@@ -170,7 +170,7 @@ def requires_community_access(group_id_param: str = "group_id"):
         except ValueError:
             user_role = AosRole.VIEWER
 
-        if user_role.level >= AosRole.ADMIN.level:
+        if user_role.level >= AosRole.SYSTEM_ADMIN.level:
             return current_user
 
         # 2. Extract group_id from path or query
@@ -181,7 +181,7 @@ def requires_community_access(group_id_param: str = "group_id"):
         # 3. Check community_id match
         user_community_id = current_user.get("community_id")
         
-        if user_role == AosRole.COMMUNITY_ADMIN:
+        if user_role in [AosRole.COMMUNITY_ADMIN, AosRole.OPERATOR]:
             if not target_group_id:
                 # If they didn't specify a group, we can't let them see "all"
                 raise HTTPException(
@@ -194,12 +194,12 @@ def requires_community_access(group_id_param: str = "group_id"):
             
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied: You do not manage this community."
+                detail="Access denied: You do not have access to this community."
             )
 
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Operation requires administrative privileges."
+            detail="Operation requires additional privileges."
         )
 
     return access_checker

@@ -94,7 +94,8 @@
 
         <!-- Navigation Groups -->
         <nav class="flex-1 space-y-2 overflow-y-auto px-2">
-            <!-- Monitoring Group -->
+            <!-- Monitoring Group - VIEWER and above -->
+            {% if user.role in ['super_admin', 'admin', 'viewer'] %}
             {{ collapsible_menu_group(
             title="Monitoring",
             icon='<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -116,8 +117,10 @@
             }
             ]
             ) }}
+            {% endif %}
 
-            <!-- Security & Access Group -->
+            <!-- Security & Access Group - SYSTEM_ADMIN and above only -->
+            {% if user.role in ['super_admin', 'admin'] %}
             {{ collapsible_menu_group(
             title="Security & Access",
             icon='<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,8 +152,10 @@
             }
             ]
             ) }}
+            {% endif %}
 
-            <!-- Domain Modules Group -->
+            <!-- Domain Modules Group - SYSTEM_ADMIN and above only -->
+            {% if user.role in ['super_admin', 'admin'] %}
             {{ collapsible_menu_group(
             title="Domain Modules",
             icon='<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -206,8 +211,10 @@
             }
             ]
             ) }}
+            {% endif %}
 
-            <!-- Administration Group -->
+            <!-- Administration Group - SYSTEM_ADMIN and above only -->
+            {% if user.role in ['super_admin', 'admin'] %}
             {{ collapsible_menu_group(
             title="Administration",
             icon='<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -261,6 +268,7 @@
             }
             ]
             ) }}
+            {% endif %}
         </nav>
 
         <!-- Resource Widget -->

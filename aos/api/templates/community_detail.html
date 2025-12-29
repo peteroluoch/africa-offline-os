@@ -10,6 +10,7 @@
         <p class="aos-text-muted aos-text-sm">{{ group.location }} • {{ member_count }} members</p>
     </div>
     <div>
+        {% if user.role == 'root' or user.role == 'admin' or user.role == 'super_admin' %}
         <a href="/community" class="aos-btn aos-btn-ghost aos-size-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18">
@@ -17,6 +18,7 @@
             </svg>
             <span class="aos-btn-text ml-2">Back to Communities</span>
         </a>
+        {% endif %}
     </div>
 </header>
 
@@ -28,7 +30,9 @@
 </div>
 
 <!-- Broadcast Form Section -->
+{% if user.role != 'operator' and user.role != 'viewer' %}
 {% include "partials/broadcast_form.html" %}
+{% endif %}
 
 <!-- Broadcast History Section -->
 <section class="aos-stack-md mt-10">

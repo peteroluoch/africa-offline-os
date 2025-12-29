@@ -21,7 +21,7 @@ templates = Jinja2Templates(directory="aos/api/templates")
 async def users_list(
     request: Request, 
     db: sqlite3.Connection = Depends(get_db),
-    current_user: dict = Depends(requires_role(AosRole.ADMIN))
+    current_user: dict = Depends(requires_role(AosRole.SYSTEM_ADMIN))
 ):
     """Display all Telegram users."""
     user_service = UniversalUserService()

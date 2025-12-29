@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A-OS | Pending Assignment</title>
+    <link rel="stylesheet" href="/static/index.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --aos-bg: #0f172a;
+            --aos-surface: #1e293b;
+            --aos-primary: #38bdf8;
+            --aos-text: #f8fafc;
+            --aos-text-muted: #94a3b8;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #0f172a;
+            color: var(--aos-text);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            text-align: center;
+        }
+
+        .card {
+            background: var(--aos-surface);
+            padding: 3rem;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 500px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        h1 {
+            margin: 0 0 1rem 0;
+            font-size: 1.5rem;
+        }
+
+        p {
+            color: var(--aos-text-muted);
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: var(--aos-primary);
+            color: #0f172a;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <span class="icon">⏳</span>
+        <h1>Account Pending Assignment</h1>
+        <p>
+            Hello <strong>{{ user.username }}</strong>. Your account has been initialized successfully,
+            but you haven't been assigned to a community group yet.
+            <br><br>
+            Please contact your Regional Administrator or Church Lead to activate your dashboard access.
+        </p>
+        <a href="/auth/logout" class="btn">Sign Out</a>
+    </div>
+</body>
+
+</html>
