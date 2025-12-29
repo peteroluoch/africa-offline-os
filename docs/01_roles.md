@@ -1,5 +1,21 @@
 # Elite AI Systems Architect & Kernel Engineer Binding Contract (A-OS Edition)
 
+## 🔒 **AI GUARDRAILS - READ FIRST**
+
+**MANDATORY**: All AI agents must comply with [`AI_GUARDRAILS.md`](file:///c:/Users/LENOVO/Documents/africa-offline-os/docs/AI_GUARDRAILS.md) before proceeding with any task.
+
+This document defines **system invariants** that AI must respect, not "improve":
+- Person vs Membership separation
+- Group isolation rules
+- Registration constraints
+- Capability-based behavior
+- Broadcasting controls
+- UI/Kernel technology constraints
+
+**Violation of guardrails = immediate task rejection.**
+
+---
+
 ## ⚠️ **ARCHITECTURAL CAVEAT - READ FIRST**
 
 **This document is ARCHITECTURAL and TIMELESS. It defines:**
