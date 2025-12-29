@@ -152,6 +152,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     await transport_state.module.initialize()
 
     community_state.module = CommunityModule(core_state.event_dispatcher, core_state.db_conn)
+    await community_state.module.initialize()
 
     print(f"[A-OS] Started - DB: {settings.sqlite_path}")
 
@@ -161,6 +162,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         # Shutdown
         if resource_state.manager:
             await resource_state.manager.stop()
+        if community_state.module:
+            await community_state.module.shutdown()
         if core_state.event_store:
             await core_state.event_store.shutdown()
         if mesh_state.manager:

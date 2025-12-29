@@ -98,9 +98,12 @@
 
 <!-- Modal container -->
 <div id="modal-container" class="aos-modal-overlay" onclick="if(event.target === this) closeModal()">
-    <div class="aos-modal-content-wrapper">
-        <div id="modal-content">
-            <!-- Loaded via HTMX or JS -->
+    <div class="aos-modal-content-wrapper w-full max-w-4xl px-4">
+        <div id="modal-content"
+            class="aos-bg-glass backdrop-blur-lg rounded-2xl border border-white/10 overflow-hidden">
+            <div class="aos-py-12 aos-text-center">
+                <span class="aos-text-muted">Loading recipient profile...</span>
+            </div>
         </div>
     </div>
 </div>
@@ -118,28 +121,17 @@
         });
     }
 
-    function closeModal() {
-        document.getElementById('modal-container').style.display = 'none';
-        document.getElementById('modal-content').innerHTML = '';
+    function openModal() {
+        document.getElementById('modal-container').style.display = 'flex';
     }
 
-    function editMember(memberId) {
-        openModal();
-        const modalContent = document.getElementById('modal-content');
-        modalContent.innerHTML = '<div class="aos-py-8 aos-text-center"><span class="aos-text-muted">Loading recipient data...</span></div>';
-
-        fetch(`/community/members/${memberId}/edit`)
-            .then(response => response.text())
-            .then(html => {
-                modalContent.innerHTML = html;
-                // Re-initialize scripts in the fetched HTML if any
-                const scripts = modalContent.querySelectorAll('script');
-                scripts.forEach(oldScript => {
-                    const newScript = document.createElement('script');
-                    newScript.text = oldScript.text;
-                    oldScript.parentNode.replaceChild(newScript, oldScript);
-                });
-            });
+    function closeModal() {
+        document.getElementById('modal-container').style.display = 'none';
+        document.getElementById('modal-content').innerHTML = `
+            <div class="aos-py-12 aos-text-center">
+                <span class="aos-text-muted">Loading recipient profile...</span>
+            </div>
+        `;
     }
 
     function exportCSV() {
@@ -153,17 +145,6 @@
         if (channel) url.searchParams.set('channel', channel);
 
         window.location.href = url.toString();
-    }
-
-    function removeMember(groupId, userId, channel) {
-        if (confirm(`Are you sure you want to remove recipient ${userId} from the distribution network?`)) {
-            fetch(`/community/${groupId}/members/${userId}?channel=${channel}`, {
-                method: 'DELETE'
-            }).then(response => {
-                if (response.ok) window.location.reload();
-                else alert('Failed to remove member');
-            });
-        }
     }
 </script>
 {% endblock %}

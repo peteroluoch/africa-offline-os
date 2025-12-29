@@ -29,11 +29,15 @@
                 </td>
                 <td>
                     <div class="flex items-center gap-2">
-                        <button class="aos-btn aos-btn-ghost aos-size-sm" onclick="editMember('{{ member.id }}')">
+                        <button class="aos-btn aos-btn-ghost aos-size-sm"
+                            hx-get="/community/members/{{ member.id }}/edit" hx-target="#modal-content"
+                            onclick="openModal()">
                             <span class="aos-btn-text">Edit</span>
                         </button>
                         <button class="aos-btn aos-btn-ghost aos-size-sm aos-text-danger hover:aos-bg-danger-fade"
-                            onclick="removeMember('{{ member.community_id }}', '{{ member.user_id }}', '{{ member.channel }}')">
+                            hx-delete="/community/{{ member.community_id }}/members/{{ member.user_id }}?channel={{ member.channel }}"
+                            data-aos-confirm="Remove recipient '{{ member.user_id }}' from the distribution network?"
+                            hx-target="closest tr" hx-swap="outerHTML swap:400ms">
                             <span class="aos-btn-text">Remove</span>
                         </button>
                     </div>

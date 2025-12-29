@@ -99,17 +99,12 @@ async def test_admin_cannot_message_other_community(community_module):
         admin_id="admin-b"
     )
     
-    # Create announcement for Community B
-    ann_b = await community_module.publish_announcement(
-        group_id=comm_b.id,
-        message="Message for Community B"
-    )
-    
-    # Admin A tries to deliver Community B's announcement
+    # Admin A tries to publish to Community B
     with pytest.raises(ValueError, match="not authorized"):
-        await community_module.deliver_announcement(
-            announcement_id=ann_b.id,
-            admin_id="admin-a"  # Wrong admin!
+        await community_module.publish_announcement(
+            group_id=comm_b.id,
+            message="Message for Community B",
+            actor_id="admin-a"  # Wrong admin!
         )
 
 
@@ -136,22 +131,39 @@ async def test_cross_community_isolation(community_module):
     # Add user456 to Community B only
     community_module.add_member_to_community(comm_b.id, "user456", "telegram")
     
-    # Create announcement for Community A
+    # Init worker manually to prevent auto-start
+    # ... actually fixture starts module which starts worker.
+    # But for controlled testing, we can just let it run or force process.
+    
+    # Publish as Admin A (Queues it)
     ann_a = await community_module.publish_announcement(
         group_id=comm_a.id,
-        message="Message for Community A"
+        message="Message for Community A",
+        actor_id="admin-a"
     )
+
+    # Force Worker Processing (Deterministic)
+    # We find the queued broadcast and process it
+    broadcast_id = community_module._broadcasts._db.execute(
+        "SELECT id FROM broadcasts WHERE idempotency_key = ?", (ann_a.id,)
+    ).fetchone()[0]
     
-    # Deliver to Community A
-    result = await community_module.deliver_announcement(
-        announcement_id=ann_a.id,
-        admin_id="admin-a"
+    await community_module._worker._process_broadcast(broadcast_id)
+    
+    # Assert: Check deliveries in DB
+    deliveries = community_module._broadcasts.fetch_pending_deliveries(broadcast_id, limit=100)
+    # Note: fetch_pending returns PENDING. _process_broadcast marks them SENT if dispatch succeeds.
+    # If dispatch succeeds (EventDispatcher is mocked or real?), they move to 'sent'.
+    
+    # Let's check the database directly for ANY status
+    cursor = community_module._db.execute(
+        "SELECT m.user_id FROM broadcast_deliveries d JOIN community_members m ON d.member_id = m.id WHERE d.broadcast_id = ?",
+        (broadcast_id,)
     )
+    recipients = [row[0] for row in cursor.fetchall()]
     
-    # Assert: Only user123 receives it (NOT user456)
-    assert "user123" in result["recipients"]
-    assert "user456" not in result["recipients"]
-    assert result["community_id"] == comm_a.id
+    assert "user123" in recipients
+    assert "user456" not in recipients
 
 
 @pytest.mark.asyncio
@@ -173,34 +185,47 @@ async def test_same_phone_different_communities(community_module):
     community_module.add_member_to_community(comm_a.id, "user123", "sms")
     community_module.add_member_to_community(comm_b.id, "user123", "telegram")
     
-    # Message to Community A
+    # Message to Community A (Admin A)
     ann_a = await community_module.publish_announcement(
         group_id=comm_a.id,
-        message="Message A"
+        message="Message A",
+        actor_id="admin-a"
     )
-    result_a = await community_module.deliver_announcement(ann_a.id, "admin-a")
+    # Get Broadcast ID A
+    brd_a = community_module._broadcasts._db.execute(
+        "SELECT id FROM broadcasts WHERE idempotency_key = ?", (ann_a.id,)
+    ).fetchone()[0]
+    # Process A
+    await community_module._worker._process_broadcast(brd_a)
     
-    # Assert: user123 gets it via SMS channel
-    assert "user123" in result_a["recipients"]
-    assert result_a["community_id"] == comm_a.id
-    
-    # Message to Community B
+    # Assert A: user123 gets it via SMS
+    cursor = community_module._db.execute(
+        "SELECT m.user_id, d.channel FROM broadcast_deliveries d JOIN community_members m ON d.member_id = m.id WHERE d.broadcast_id = ?",
+        (brd_a,)
+    )
+    res_a = cursor.fetchall() # [(user123, sms)]
+    assert any(r[0] == "user123" and r[1] == "sms" for r in res_a)
+
+    # Message to Community B (Admin B)
     ann_b = await community_module.publish_announcement(
         group_id=comm_b.id,
-        message="Message B"
+        message="Message B",
+        actor_id="admin-b"
     )
-    result_b = await community_module.deliver_announcement(ann_b.id, "admin-b")
+    # Get Broadcast ID B
+    brd_b = community_module._broadcasts._db.execute(
+        "SELECT id FROM broadcasts WHERE idempotency_key = ?", (ann_b.id,)
+    ).fetchone()[0]
+    # Process B
+    await community_module._worker._process_broadcast(brd_b)
     
-    # Assert: user123 gets it via Telegram channel
-    assert "user123" in result_b["recipients"]
-    assert result_b["community_id"] == comm_b.id
-    
-    # Verify channel filtering works
-    members_sms = community_module.get_community_members(comm_a.id, channel="sms")
-    members_telegram = community_module.get_community_members(comm_b.id, channel="telegram")
-    
-    assert "user123" in members_sms
-    assert "user123" in members_telegram
+    # Assert B: user123 gets it via Telegram
+    cursor = community_module._db.execute(
+        "SELECT m.user_id, d.channel FROM broadcast_deliveries d JOIN community_members m ON d.member_id = m.id WHERE d.broadcast_id = ?",
+        (brd_b,)
+    )
+    res_b = cursor.fetchall() # [(user123, telegram)]
+    assert any(r[0] == "user123" and r[1] == "telegram" for r in res_b)
 
 
 # ========== INVARIANT 4: Fail Closed ==========
@@ -222,19 +247,12 @@ async def test_fail_closed_on_missing_community(community_module, db_conn):
     """
     ❌ INVARIANT 4: Missing community → fail closed
     """
-    # Create announcement with orphaned group_id
-    cursor = db_conn.cursor()
-    cursor.execute("""
-        INSERT INTO community_announcements (id, group_id, message)
-        VALUES ('ANN-TEST', 'ORPHAN-GROUP', 'Test message')
-    """)
-    db_conn.commit()
-    
-    # Attempt delivery
+    # Attempt delivery (Should fail due to invalid group check inside publish)
     with pytest.raises(ValueError, match="Invalid community"):
-        await community_module.deliver_announcement(
-            announcement_id="ANN-TEST",
-            admin_id="admin-a"
+        await community_module.publish_announcement(
+            group_id="ORPHAN-GROUP", # Does not exist
+            message="Test",
+            actor_id="admin-a"
         )
 
 
@@ -287,19 +305,24 @@ async def test_empty_community_safe_delivery(community_module):
         name="Community A", tags=["church"], location="Nairobi", admin_id="admin-a"
     )
     
-    # Create announcement for empty community
+    # Publish (Admin A)
     ann = await community_module.publish_announcement(
         group_id=comm_a.id,
-        message="Message to empty community"
+        message="Message to empty community",
+        actor_id="admin-a"
     )
     
-    # Deliver
-    result = await community_module.deliver_announcement(ann.id, "admin-a")
+    # Process
+    brd_id = community_module._broadcasts._db.execute(
+        "SELECT id FROM broadcasts WHERE idempotency_key = ?", (ann.id,)
+    ).fetchone()[0]
+    await community_module._worker._process_broadcast(brd_id)
     
-    # Assert: Safe handling
-    assert result["delivered"] == 0
-    assert result["recipients"] == []
-    assert result["community_id"] == comm_a.id
+    # Assert: 0 deliveries
+    count = community_module._broadcasts._db.execute(
+        "SELECT COUNT(*) FROM broadcast_deliveries WHERE broadcast_id = ?", (brd_id,)
+    ).fetchone()[0]
+    assert count == 0
 
 
 @pytest.mark.asyncio

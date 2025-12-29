@@ -1,63 +1,77 @@
 {% from "components/atoms/Card.html" import card %}
+{% from "components/atoms/EliteButton.html" import elite_button %}
 
-{% call card(padding="6", glass=True, class="aos-stack-md") %}
-<div class="flex items-center justify-between mb-4">
-    <h3 class="aos-h3">Edit Hub Recipient</h3>
-    <button class="aos-text-muted hover:aos-text-primary" onclick="closeModal()">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
-    </button>
+<div class=" aos-stack-md">
+    <div class="flex items-center justify-between mb-2">
+        <div>
+            <h3 class="aos-h3 mb-1">Edit Hub Recipient</h3>
+            <p class="aos-text-muted aos-text-sm">Technical identifier and delivery channel settings</p>
+        </div>
+        <button class="aos-text-muted hover:aos-text-primary transition-colors" onclick="closeModal()">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+
+    {% call card(padding="6", glass=True, class="aos-bg-surface-elevated border-white/5") %}
+    <form hx-put="/community/members/{{ member.id }}" hx-target="#members-table-container" hx-swap="outerHTML"
+        hx-on::after-request="if(event.detail.successful) closeModal()" class="aos-stack-lg">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="aos-stack-sm">
+                <label class="aos-label">Community Group</label>
+                <div
+                    class="aos-input bg-white/5 aos-text-muted flex items-center px-4 h-12 rounded-xl border border-white/5 cursor-not-allowed">
+                    {{ member.group_name }}
+                </div>
+                <p class="aos-text-[10px] aos-text-muted/60 uppercase tracking-tighter">Registration group is locked</p>
+            </div>
+
+            <div class="aos-stack-sm">
+                <label class="aos-label text-primary-400">Recipient ID (Unique)</label>
+                <div class="relative">
+                    <input type="text" name="user_id" class="aos-input pl-10 h-12" value="{{ member.user_id }}"
+                        required>
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="aos-stack-sm md:col-span-2">
+                <label class="aos-label">Delivery Channel</label>
+                <select name="channel" class="aos-input h-12" required>
+                    <option value="sms" {% if member.channel=='sms' %}selected{% endif %}>SMS (Legacy Direct)</option>
+                    <option value="ussd" {% if member.channel=='ussd' %}selected{% endif %}>USSD (Interactive Session)
+                    </option>
+                    <option value="telegram" {% if member.channel=='telegram' %}selected{% endif %}>Telegram (Secured
+                        Data)</option>
+                    <option value="whatsapp" {% if member.channel=='whatsapp' %}selected{% endif %}>WhatsApp (Official
+                        B2C)</option>
+                </select>
+                <p class="aos-text-xs aos-text-muted mt-2 px-1">Ensure the recipient has the required hardware for this
+                    channel.</p>
+            </div>
+        </div>
+
+        <div class="flex gap-4 justify-end pt-6 border-t border-white/5">
+            <button type="button" class="aos-btn aos-btn-ghost aos-size-md" onclick="closeModal()">
+                <span class="aos-btn-text">Discard Changes</span>
+            </button>
+            {{ elite_button(
+            text="Save Recipient Details",
+            type="submit",
+            variant="primary",
+            size="md",
+            icon='<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>'
+            ) }}
+        </div>
+    </form>
+    {% endcall %}
 </div>
-
-<form id="edit-member-form" class="aos-stack-md">
-    <div class="aos-stack-sm">
-        <label class="aos-label">Community Group</label>
-        <input type="text" class="aos-input bg-white/5" value="{{ member.group_name }}" disabled>
-        <p class="aos-text-xs aos-text-muted">Distribution group cannot be changed from here.</p>
-    </div>
-
-    <div class="aos-stack-sm">
-        <label class="aos-label">User Identifier (Phone/ID)</label>
-        <input type="text" name="user_id" class="aos-input" value="{{ member.user_id }}" required>
-    </div>
-
-    <div class="aos-stack-sm">
-        <label class="aos-label">Primary Channel</label>
-        <select name="channel" class="aos-input" required>
-            <option value="sms" {% if member.channel=='sms' %}selected{% endif %}>SMS</option>
-            <option value="ussd" {% if member.channel=='ussd' %}selected{% endif %}>USSD</option>
-            <option value="telegram" {% if member.channel=='telegram' %}selected{% endif %}>Telegram</option>
-            <option value="whatsapp" {% if member.channel=='whatsapp' %}selected{% endif %}>WhatsApp</option>
-        </select>
-    </div>
-
-    <div class="flex gap-3 justify-end mt-6">
-        <button type="button" class="aos-btn aos-btn-ghost aos-size-md" onclick="closeModal()">
-            <span class="aos-btn-text">Cancel</span>
-        </button>
-        <button type="submit" class="aos-btn aos-btn-primary aos-size-md">
-            <span class="aos-btn-text">Save Changes</span>
-        </button>
-    </div>
-</form>
-
-<script>
-    document.getElementById('edit-member-form').addEventListener('submit', function (e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-
-        fetch('/community/members/{{ member.id }}', {
-            method: 'PUT',
-            body: formData
-        }).then(response => {
-            if (response.ok) {
-                closeModal();
-                window.location.reload();
-            } else {
-                alert('Failed to update recipient details');
-            }
-        });
-    });
-</script>
-{% endcall %}

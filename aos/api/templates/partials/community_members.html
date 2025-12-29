@@ -1,79 +1,125 @@
 {% from "components/atoms/Card.html" import card %}
 {% from "components/atoms/EliteButton.html" import elite_button %}
 
-<div class="aos-stack-md">
-    <div class="flex items-center justify-between mb-4">
-        <h3 class="aos-h3">{{ group.name }} - Members</h3>
+<div class="aos-stack-lg p-2 md:p-4">
+    <div class="flex items-center justify-between mb-2">
+        <div>
+            <h3 class="aos-h3 mb-1">{{ group.name }}</h3>
+            <p class="aos-text-muted aos-text-sm">Manage community distribution recipients</p>
+        </div>
         <button class="aos-btn aos-btn-ghost aos-size-sm" onclick="closeModal()">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
             <span class="aos-btn-text">Close</span>
         </button>
     </div>
 
-    <!-- Add Member Form -->
-    <form hx-post="/community/{{ group.id }}/members" hx-target="#members-list" hx-swap="beforeend"
-        class="aos-stack-sm mb-6">
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="aos-label">User ID (Phone/Chat ID)</label>
-                <input type="text" name="user_id" class="aos-input" placeholder="+254712345678" required>
+    <!-- Quick Add Form -->
+    {% call card(padding="6", class="aos-bg-glass backdrop-blur-md border-primary/20") %}
+    <form hx-post="/community/{{ group.id }}/members" hx-target="#modal-content" hx-swap="innerHTML"
+        class="aos-stack-md">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="aos-stack-xs">
+                <label class="aos-label">Recipient ID</label>
+                <div class="relative">
+                    <input type="text" name="user_id" class="aos-input aos-size-md pl-10" placeholder="+254712345678"
+                        required>
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
             </div>
-            <div>
-                <label class="aos-label">Channel</label>
-                <select name="channel" class="aos-input" required>
-                    <option value="sms">SMS</option>
-                    <option value="ussd">USSD</option>
-                    <option value="telegram">Telegram</option>
-                    <option value="whatsapp">WhatsApp</option>
+            <div class="aos-stack-xs">
+                <label class="aos-label">Preferred Channel</label>
+                <select name="channel" class="aos-input aos-size-md" required>
+                    <option value="sms">SMS (Direct Mobile)</option>
+                    <option value="ussd">USSD (Interactive)</option>
+                    <option value="telegram">Telegram (Bot)</option>
+                    <option value="whatsapp">WhatsApp (Official)</option>
                 </select>
             </div>
         </div>
-        <button type="submit" class="aos-btn aos-btn-primary aos-size-sm">
-            <span class="aos-btn-text">Add Member</span>
-        </button>
-    </form>
-
-    <!-- Members List -->
-    <div id="members-list">
-        {% if members %}
-        <table class="aos-table">
-            <thead>
-                <tr>
-                    <th>User ID</th>
-                    <th>Channel</th>
-                    <th>Added</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for member in members %}
-                <tr id="member-{{ member.user_id }}">
-                    <td class="aos-font-mono aos-text-sm">{{ member.user_id }}</td>
-                    <td><span class="aos-badge aos-badge-info">{{ member.channel }}</span></td>
-                    <td class="aos-text-sm aos-text-muted">{{ member.created_at.strftime('%Y-%m-%d') if
-                        member.created_at else 'N/A' }}</td>
-                    <td>
-                        <button class="aos-btn aos-btn-ghost aos-size-sm aos-text-danger"
-                            hx-delete="/community/{{ group.id }}/members/{{ member.user_id }}?channel={{ member.channel }}"
-                            hx-confirm="Remove this member from the group?" hx-target="#member-{{ member.user_id }}"
-                            hx-swap="outerHTML swap:1s">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                            <span class="aos-btn-text">Remove</span>
-                        </button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <div class="aos-text-center aos-py-8 aos-text-muted">
-            No members in this group yet. Add the first member above.
+        <div class="flex justify-end pt-2">
+            {{ elite_button(
+            text="Add to Group",
+            type="submit",
+            variant="primary",
+            size="md",
+            icon='<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>'
+            ) }}
         </div>
-        {% endif %}
+    </form>
+    {% endcall %}
+
+    <!-- Members Registry -->
+    <div class="aos-stack-sm">
+        <h4 class="aos-label-sm uppercase tracking-wider text-primary/70">Current Recipients</h4>
+        <div id="members-list-container" class="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+            {% if members %}
+            <table class="aos-table">
+                <thead>
+                    <tr>
+                        <th class="aos-text-xs">Recipient</th>
+                        <th class="aos-text-xs">Channel</th>
+                        <th class="aos-text-xs">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in members %}
+                    <tr id="member-{{ member.user_id }}" class="group/row">
+                        <td class="aos-font-mono aos-text-sm">{{ member.user_id }}</td>
+                        <td>
+                            <span class="aos-badge aos-badge-info aos-size-xs uppercase">{{ member.channel }}</span>
+                        </td>
+                        <td>
+                            <button
+                                class="aos-btn aos-btn-ghost aos-size-sm aos-text-danger opacity-0 group-hover/row:opacity-100 transition-opacity"
+                                hx-delete="/community/{{ group.id }}/members/{{ member.user_id }}?channel={{ member.channel }}"
+                                data-aos-confirm="Remove this recipient from the distribution network?"
+                                hx-target="#member-{{ member.user_id }}" hx-swap="outerHTML swap:400ms">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                    </path>
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="aos-text-center aos-py-12 aos-bg-glass rounded-lg border border-dashed border-gray-700">
+                <p class="aos-text-muted">No recipients found in this community database.</p>
+                <p class="aos-text-xs aos-text-muted/50 mt-1">Use the form above to register your first member.</p>
+            </div>
+            {% endif %}
+        </div>
     </div>
 </div>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+</style>

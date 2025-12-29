@@ -34,7 +34,7 @@ from aos.db.repository import (
     CommunityInquiryRepository,
 )
 
-from .broadcast import BroadcastManager
+from .broadcast import BroadcastManager, BroadcastWorker
 
 if TYPE_CHECKING:
     from aos.bus.dispatcher import EventDispatcher
@@ -56,6 +56,15 @@ class CommunityModule:
         self._announcements = CommunityAnnouncementRepository(connection)
         self._inquiries = CommunityInquiryRepository(connection)
         self._broadcasts = BroadcastManager(connection)
+        self._worker = BroadcastWorker(self._broadcasts, dispatcher)
+
+    async def initialize(self):
+        """Initialize the module and start background workers."""
+        self._worker.start()
+
+    async def shutdown(self):
+        """Gracefully stop background workers."""
+        await self._worker.stop()
 
     def _log_activity(
         self,
@@ -361,10 +370,13 @@ class CommunityModule:
         message: str,
         urgency: str = "normal",
         expires_at: datetime | None = None,
-        target_audience: str = "public"
+        target_audience: str = "public",
+        actor_id: str = "system"
     ) -> CommunityAnnouncementDTO:
         """
         Publish an announcement for a group.
+        
+        SECURITY: Enforces admin->community isolation.
         
         Args:
             group_id: Group ID
@@ -372,10 +384,21 @@ class CommunityModule:
             urgency: normal or urgent
             expires_at: Optional expiry timestamp
             target_audience: public or members
+            actor_id: ID of the user publishing (must be group admin)
             
         Returns:
             Newly created CommunityAnnouncementDTO
         """
+        # 0. Security Check
+        group = self._groups.get_by_id(group_id)
+        if not group:
+            raise ValueError(f"Invalid community: {group_id}")
+            
+        if actor_id != "system" and group.admin_id != actor_id:
+            # We allow "system" for automated messages, but human actors must match
+             raise ValueError(f"Admin {actor_id} not authorized for community {group.id}")
+
+        # 1. Create the domain announcement record (Audit Persistence)
         announcement = CommunityAnnouncementDTO(
             id=f"ANN-{uuid.uuid4().hex[:8].upper()}",
             group_id=group_id,
@@ -386,10 +409,26 @@ class CommunityModule:
         )
         self._announcements.save(announcement)
 
+        # 2. Queue the resilient broadcast (FAANG-grade Resilience)
+        # We use the announcement ID as the idempotency key to prevent double-queuing
+        broadcast_id = self._broadcasts.create_broadcast(
+            community_id=group_id,
+            message=message,
+            channels=["sms", "ussd"], # Default channels for community
+            actor_id=actor_id, 
+            idempotency_key=announcement.id
+        )
+
+        # 3. Mark for auto-approval/queueing for immediate processing
+        self._broadcasts.approve_broadcast(broadcast_id, actor_id)
+        self._broadcasts.queue_broadcast(broadcast_id, actor_id)
+
+        # 4. Dispatch the creation event (for real-time dashboard updates)
         await self._dispatcher.dispatch(Event(
             name="COMMUNITY_ANNOUNCEMENT_CREATED",
             payload={
                 "id": announcement.id,
+                "broadcast_id": broadcast_id,
                 "group_id": group_id,
                 "message": message,
                 "urgency": urgency

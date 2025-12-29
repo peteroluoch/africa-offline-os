@@ -379,8 +379,85 @@
         </div>
     </main>
 
+    <!-- Global Premium Confirmation Modal -->
+    <div id="confirm-modal" class="aos-modal-overlay hidden" style="z-index: 1000;"
+        onclick="if(event.target === this) cancelConfirm()">
+        <div class="aos-modal-content-wrapper w-full max-w-md px-4">
+            {% call card(padding="8", glass=True, class="aos-modal-content aos-stack-md") %}
+            <div class="flex items-center gap-4 mb-4">
+                <div class="p-3 rounded-full bg-red-500/10 text-red-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                        </path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="aos-h3 mb-1">Confirm Action</h3>
+                    <p class="aos-text-xs aos-text-muted uppercase tracking-widest">Security Clearance Required</p>
+                </div>
+            </div>
+
+            <p id="confirm-modal-message" class="aos-text-base aos-text-secondary leading-relaxed mb-6"></p>
+
+            <div class="flex gap-3 justify-end">
+                <button class="aos-btn aos-btn-ghost aos-size-md" onclick="cancelConfirm()">
+                    <span class="aos-btn-text">Cancel</span>
+                </button>
+                <button id="confirm-modal-button" class="aos-btn aos-btn-danger aos-size-md">
+                    <span class="aos-btn-text">Confirm & Execute</span>
+                </button>
+            </div>
+            {% endcall %}
+        </div>
+    </div>
+
     <!-- Navigation Search Script -->
     <script>
+        let currentConfirmDetail = null;
+
+        function cancelConfirm() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            document.getElementById('confirm-modal').style.display = 'none';
+            currentConfirmDetail = null;
+        }
+
+        document.getElementById('confirm-modal-button').addEventListener('click', function () {
+            if (currentConfirmDetail) {
+                currentConfirmDetail.issueRequest();
+                cancelConfirm();
+            }
+        });
+
+        // Premium Confirmation System
+        window.addEventListener('htmx:confirm', function (evt) {
+            // Handle both hx-confirm (standard) and data-aos-confirm (custom override)
+            const question = evt.detail.question || evt.target.getAttribute('data-aos-confirm');
+
+            if (question) {
+                // STOP the native browser confirm() dialog dead in its tracks
+                evt.preventDefault();
+
+                currentConfirmDetail = evt.detail;
+                const modal = document.getElementById('confirm-modal');
+                const message = document.getElementById('confirm-modal-message');
+
+                if (modal && message) {
+                    message.textContent = question;
+                    modal.classList.remove('hidden');
+                    modal.style.display = 'flex';
+                }
+            }
+        });
+
+        // Fallback for non-HTMX custom confirmations
+        document.body.addEventListener('click', function (e) {
+            const target = e.target.closest('[data-aos-confirm]');
+            if (target && !target.hasAttribute('hx-delete') && !target.hasAttribute('hx-post')) {
+                const question = target.getAttribute('data-aos-confirm');
+                // Handle manual trigger here if needed
+            }
+        });
         document.addEventListener('DOMContentLoaded', () => {
             const searchInput = document.getElementById('nav-search');
 

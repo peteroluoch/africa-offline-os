@@ -42,10 +42,10 @@ async def community_dashboard(
     if community_state.module:
         group_types = community_state.module.get_group_types()
 
-    # Mock some counts for the dashboard
-    broadcasts_count = 0
     if community_state.module:
-        broadcasts_count = len(community_state.module._announcements.list_all())
+        # Count actual broadcasts from the queue table
+        res = community_state.module._db.execute("SELECT COUNT(*) FROM broadcasts").fetchone()
+        broadcasts_count = res[0] if res else 0
 
     context = {
         "request": request,
@@ -269,6 +269,7 @@ async def edit_member_form(
 
 @router.put("/members/{member_id}")
 async def update_member_details(
+    request: Request,
     member_id: str,
     user_id: str = Form(...),
     channel: str = Form(...),
@@ -280,9 +281,12 @@ async def update_member_details(
             member_id=member_id,
             user_id=user_id,
             channel=channel,
-            actor_id=operator.id
+            actor_id=operator.get("sub")
         )
-    return HTMLResponse(status_code=204)
+
+    # Return the refreshed table partial for the Member Directory
+    # We use default pagination (page 1) for the refresh
+    return await members_dashboard(request, operator=operator)
 
 @router.get("/{group_id}/members", response_class=HTMLResponse)
 async def list_group_members(
@@ -297,7 +301,9 @@ async def list_group_members(
     if community_state.module:
         group = community_state.module.get_group(group_id)
         if group:
-            members = community_state.module.get_community_members(group_id)
+            # Use list_all_members to get dictionaries with user_id, channel, etc.
+            result = community_state.module.list_all_members(group_id=group_id, per_page=1000)
+            members = result.get("members", [])
 
     return templates.TemplateResponse("partials/community_members.html", {
         "request": request,
@@ -308,6 +314,7 @@ async def list_group_members(
 
 @router.post("/{group_id}/members")
 async def add_group_member(
+    request: Request,
     group_id: str,
     user_id: str = Form(...),
     channel: str = Form(...),
@@ -319,9 +326,10 @@ async def add_group_member(
             community_id=group_id,
             user_id=user_id,
             channel=channel,
-            actor_id=operator.id
+            actor_id=operator.get("sub")
         )
-    return RedirectResponse(url=f"/community/{group_id}/members", status_code=303)
+    # Return the refreshed member list partial directly
+    return await list_group_members(request, group_id, operator)
 
 @router.delete("/{group_id}/members/{user_id}")
 async def remove_group_member(
@@ -336,8 +344,8 @@ async def remove_group_member(
             community_id=group_id,
             user_id=user_id,
             channel=channel,
-            actor_id=operator.id
+            actor_id=operator.get("sub")
         )
-        return {"status": "success"}
+        return HTMLResponse(status_code=204)
 
     raise HTTPException(status_code=404, detail="Member not found")

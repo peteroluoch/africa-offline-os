@@ -72,50 +72,21 @@
 
 <!-- Modal container for registration form -->
 <div id="modal-container" class="aos-modal-overlay" onclick="if(event.target === this) closeModal()">
-    <div class="aos-modal-content-wrapper">
-        {% call card(padding="6", glass=True, id="modal-content", class="aos-modal-content aos-stack-md") %}
+    <div class="aos-modal-content-wrapper w-full max-w-4xl px-4">
+        {% call card(padding="0", glass=True, id="modal-content", class="aos-modal-content aos-stack-md w-full
+        overflow-hidden") %}
         <!-- Loaded via HTMX -->
+        <div class="aos-py-12 aos-text-center">
+            <span class="aos-text-muted">Loading...</span>
+        </div>
         {% endcall %}
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div id="delete-modal" class="aos-modal-overlay" onclick="if(event.target === this) closeDeleteModal()">
-    {% call card(padding="6", glass=True, class="aos-modal-content aos-stack-md max-w-md") %}
-    <div class="aos-stack-sm">
-        <div class="flex items-center gap-3 mb-4">
-            <div class="p-3 rounded-full bg-red-500/10">
-                <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
-                    </path>
-                </svg>
-            </div>
-            <div>
-                <h3 class="aos-h3 mb-1">Confirm Deletion</h3>
-                <p class="aos-text-sm aos-text-muted">This action cannot be undone</p>
-            </div>
-        </div>
-
-        <p class="aos-text-base mb-6" id="delete-message">
-            Are you sure you want to deactivate this community group? This will retire all broadcasts but preserve audit
-            data.
-        </p>
-
-        <div class="flex gap-3 justify-end">
-            <button class="aos-btn aos-btn-ghost aos-size-md" onclick="closeDeleteModal()">
-                <span class="aos-btn-text">Cancel</span>
-            </button>
-            <button class="aos-btn aos-btn-danger aos-size-md" id="confirm-delete-btn">
-                <span class="aos-btn-text">Delete Group</span>
-            </button>
-        </div>
-    </div>
-    {% endcall %}
-</div>
+<!-- Delete modal removed - now using global premium modal -->
 
 <script>
-    let deleteGroupId = null;
+    // let deleteGroupId removed
 
     // Pagination handler
     function loadPage(pageNum) {
@@ -149,52 +120,7 @@
         document.getElementById('modal-container').style.display = 'none';
     }
 
-    function confirmDelete(groupId, groupName) {
-        deleteGroupId = groupId;
-        document.getElementById('delete-message').textContent =
-            `Are you sure you want to deactivate "${groupName}"? This will retire all broadcasts but preserve audit data.`;
-        // Show delete modal
-        document.getElementById('delete-modal').style.display = 'flex';
-    }
-
-    function closeDeleteModal() {
-        // Hide delete modal
-        document.getElementById('delete-modal').style.display = 'none';
-        deleteGroupId = null;
-    }
-
-    // Handle actual deletion
-    document.getElementById('confirm-delete-btn').addEventListener('click', async function () {
-        if (!deleteGroupId) return;
-
-        try {
-            const response = await fetch(`/community/${deleteGroupId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                // Remove the row from the table
-                const row = document.querySelector(`button[onclick*="${deleteGroupId}"]`)?.closest('tr');
-                if (row) {
-                    row.style.transition = 'opacity 0.3s';
-                    row.style.opacity = '0';
-                    setTimeout(() => row.remove(), 300);
-                }
-                closeDeleteModal();
-
-                // Reload page to update counts and scroll to top
-                setTimeout(() => {
-                    window.location.reload();
-                }, 500);
-            }
-        } catch (error) {
-            console.error('Delete failed:', error);
-            alert('Failed to delete group. Please try again.');
-        }
-    });
+    // Confirm Delete logic moved to global HTMX confirm
 
     // Scroll to top on page load
     window.addEventListener('DOMContentLoaded', function () {
