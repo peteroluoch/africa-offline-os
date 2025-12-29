@@ -34,6 +34,51 @@
 {% include "partials/broadcast_form.html" %}
 {% endif %}
 
+<!-- Member Management Section -->
+{% if user.role != 'viewer' %}
+<section class="aos-stack-md mt-10">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="aos-h2">Member Management</h2>
+        <div class="flex gap-4">
+            <a href="/community/members?group_id={{ group.id }}" class="aos-btn aos-btn-ghost aos-size-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                    </path>
+                </svg>
+                <span class="aos-btn-text ml-2">View All Members</span>
+            </a>
+            <a href="/community/members/add?group_id={{ group.id }}" class="aos-btn aos-btn-primary aos-size-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                <span class="aos-btn-text ml-2">Add Member</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="aos-glass aos-p-6 aos-rounded-lg">
+        <p class="aos-text-muted">
+            Manage your community members, update contact information, and track engagement.
+        </p>
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="aos-p-4 bg-slate-800/30 aos-rounded-lg">
+                <div class="aos-text-2xl font-bold aos-text-primary">{{ member_count }}</div>
+                <div class="aos-text-sm aos-text-muted mt-1">Total Members</div>
+            </div>
+            <div class="aos-p-4 bg-slate-800/30 aos-rounded-lg">
+                <div class="aos-text-2xl font-bold aos-text-success">Active</div>
+                <div class="aos-text-sm aos-text-muted mt-1">Community Status</div>
+            </div>
+            <div class="aos-p-4 bg-slate-800/30 aos-rounded-lg">
+                <div class="aos-text-2xl font-bold aos-text-info">{{ group.location }}</div>
+                <div class="aos-text-sm aos-text-muted mt-1">Location</div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
 <!-- Broadcast History Section -->
 <section class="aos-stack-md mt-10">
     <h2 class="aos-h2 mb-6">Broadcast History</h2>
