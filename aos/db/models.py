@@ -18,7 +18,7 @@ class OperatorDTO(BaseModel):
     id: str
     username: str
     role_id: str
-    hashed_password: str
+    password_hash: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_login: datetime | None = None
 

@@ -1,18 +1,27 @@
+{% from "components/atoms/EliteButton.html" import elite_button %}
+{% from "components/molecules/FormField.html" import form_field %}
+
 <form hx-post="/agri/farmer" hx-target="#farmer-list-container" hx-swap="innerHTML" class="space-y-6"
     onsubmit="setTimeout(() => { document.getElementById('agri-modal').classList.add('hidden') }, 500)">
-    <h3 class="aos-text-sm font-bold text-[var(--aos-primary-base)] uppercase tracking-widest mb-4">Register New Farmer
-    </h3>
 
-    {% include "components/molecules/FormField.html" with label="Full Name" name="name" placeholder="John Doe"
-    required=True %}
-    {% include "components/molecules/FormField.html" with label="Location / Sub-county" name="location"
-    placeholder="Suba North" required=True %}
-    {% include "components/molecules/FormField.html" with label="Contact Number" name="contact" placeholder="+254..."
-    required=True %}
+    <div class="flex items-center justify-between mb-6 pb-4 border-b border-[var(--aos-surface-border)]">
+        <h3 class="aos-h3">Register New Farmer</h3>
+        <button type="button"
+            class="aos-btn aos-btn-ghost aos-size-sm p-3 hover:aos-bg-surface-elevated rounded-full transition-all"
+            onclick="document.getElementById('agri-modal').classList.add('hidden')">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
 
-    <div class="pt-4 flex justify-end gap-3">
-        {% include "components/atoms/EliteButton.html" with label="Cancel" variant="outline" type="button"
-        attributes='onclick="document.getElementById(\'agri-modal\').classList.add(\'hidden\')"' %}
-        {% include "components/atoms/EliteButton.html" with label="Save Farmer" variant="primary" type="submit" %}
+    {{ form_field(label="Full Name", name="name", placeholder="John Doe", required=True) }}
+    {{ form_field(label="Location / Sub-county", name="location", placeholder="Suba North", required=True) }}
+    {{ form_field(label="Contact Number", name="contact", placeholder="+254...", required=True) }}
+
+    <div class="pt-8 flex justify-end space-x-4 border-t border-[var(--aos-surface-border)]">
+        {{ elite_button(text="Cancel", variant="outline",
+        onclick="document.getElementById('agri-modal').classList.add('hidden')", class="px-8") }}
+        {{ elite_button(text="Save Farmer", variant="primary", type="submit", class="px-8") }}
     </div>
 </form>

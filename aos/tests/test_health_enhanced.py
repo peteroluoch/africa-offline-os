@@ -99,7 +99,8 @@ class TestHealthUptimeTracking:
             # 3. Second run (restart)
             app2 = create_app()
             async with app2.router.lifespan_context(app2):
-                async with httpx.AsyncClient(app=app2, base_url="http://test") as client:
+                transport = httpx.ASGITransport(app=app2)
+                async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
                     resp = await client.get("/health")
                     data = resp.json()
                     uptime = data["metrics"]["uptime_s"]

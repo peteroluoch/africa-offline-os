@@ -19,6 +19,8 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional, Tuple
 
+from aos.bus.events import Event
+
 from aos.db.models import (
     CommunityGroupDTO,
     CommunityEventDTO,
@@ -93,22 +95,73 @@ class CommunityModule:
         )
         self._groups.save(group)
         
-        await self._dispatcher.dispatch("COMMUNITY_GROUP_REGISTERED", {
-            "id": group.id,
-            "name": name,
-            "location": location,
-            "tags": tags
-        })
+        await self._dispatcher.dispatch(Event(
+            name="COMMUNITY_GROUP_REGISTERED",
+            payload={
+                "id": group.id,
+                "name": name,
+                "location": location,
+                "tags": tags
+            }
+        ))
         
         return group
+
+    async def deactivate_group(self, group_id: str, admin_id: str) -> bool:
+        """
+        Soft-delete (deactivate) a community group.
+        
+        SECURITY: Must be root or the group's admin.
+        """
+        group = self.get_group(group_id)
+        if not group:
+            return False
+            
+        group.active = False
+        self._groups.save(group)
+        
+        await self._dispatcher.dispatch(Event(
+            name="COMMUNITY_GROUP_DEACTIVATED",
+            payload={
+                "id": group_id,
+                "admin_id": admin_id
+            }
+        ))
+        return True
 
     def get_group(self, group_id: str) -> Optional[CommunityGroupDTO]:
         """Retrieve a group by ID."""
         return self._groups.get_by_id(group_id)
 
-    def list_groups(self) -> List[CommunityGroupDTO]:
-        """List all registered groups."""
-        return self._groups.list_all()
+    def list_groups(self, page: int = 1, per_page: int = 10) -> dict:
+        """List registered groups with pagination.
+        
+        Args:
+            page: Page number (1-indexed)
+            per_page: Items per page
+            
+        Returns:
+            Dict with 'groups', 'total', 'page', 'per_page', 'total_pages'
+        """
+        # Only get active groups
+        all_groups = [g for g in self._groups.list_all() if g.active]
+        total = len(all_groups)
+        total_pages = (total + per_page - 1) // per_page  # Ceiling division
+        
+        # Validate page number
+        page = max(1, min(page, total_pages if total_pages > 0 else 1))
+        
+        # Calculate slice
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        
+        return {
+            "groups": all_groups[start_idx:end_idx],
+            "total": total,
+            "page": page,
+            "per_page": per_page,
+            "total_pages": total_pages
+        }
 
     def discover_groups(
         self,
@@ -189,12 +242,15 @@ class CommunityModule:
         )
         self._events.save(event)
         
-        await self._dispatcher.dispatch("COMMUNITY_EVENT_PUBLISHED", {
-            "id": event.id,
-            "group_id": group_id,
-            "title": title,
-            "start_time": start_time.isoformat()
-        })
+        await self._dispatcher.dispatch(Event(
+            name="COMMUNITY_EVENT_PUBLISHED",
+            payload={
+                "id": event.id,
+                "group_id": group_id,
+                "title": title,
+                "start_time": start_time.isoformat()
+            }
+        ))
         
         return event
 
@@ -268,12 +324,15 @@ class CommunityModule:
         )
         self._announcements.save(announcement)
         
-        await self._dispatcher.dispatch("COMMUNITY_ANNOUNCEMENT_CREATED", {
-            "id": announcement.id,
-            "group_id": group_id,
-            "message": message,
-            "urgency": urgency
-        })
+        await self._dispatcher.dispatch(Event(
+            name="COMMUNITY_ANNOUNCEMENT_CREATED",
+            payload={
+                "id": announcement.id,
+                "group_id": group_id,
+                "message": message,
+                "urgency": urgency
+            }
+        ))
         
         return announcement
 
@@ -436,13 +495,16 @@ class CommunityModule:
             }
         
         # 4. Emit delivery event (adapters listen and send)
-        await self._dispatcher.dispatch("COMMUNITY_MESSAGE_DELIVER", {
-            "announcement_id": announcement_id,
-            "community_id": community_id,
-            "message": announcement.message,
-            "recipients": recipients,  # Pre-scoped by kernel
-            "urgency": announcement.urgency
-        })
+        await self._dispatcher.dispatch(Event(
+            name="COMMUNITY_MESSAGE_DELIVER",
+            payload={
+                "announcement_id": announcement_id,
+                "community_id": community_id,
+                "message": announcement.message,
+                "recipients": recipients,  # Pre-scoped by kernel
+                "urgency": announcement.urgency
+            }
+        ))
         
         return {
             "delivered": len(recipients),

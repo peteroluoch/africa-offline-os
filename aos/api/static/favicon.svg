@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Background -->
+  <rect width="64" height="64" fill="#0A1128" rx="8"/>
+  
+  <!-- Circuit pattern overlay -->
+  <defs>
+    <pattern id="circuit" x="0" y="0" width="16" height="16" patternUnits="userSpaceOnUse">
+      <path d="M0 8h4M12 8h4M8 0v4M8 12v4" stroke="#1a2847" stroke-width="0.5" opacity="0.3"/>
+    </pattern>
+  </defs>
+  <rect width="64" height="64" fill="url(#circuit)"/>
+  
+  <!-- Glow effect -->
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="africaGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF6B35;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F7931E;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Simplified Africa continent silhouette -->
+  <g filter="url(#glow)">
+    <path d="M 32 12 
+             C 34 12, 36 13, 37 15
+             L 39 18
+             C 40 20, 41 22, 42 24
+             L 44 28
+             C 45 30, 46 32, 46 34
+             L 46 38
+             C 46 40, 45 42, 44 44
+             L 42 47
+             C 41 49, 39 50, 37 51
+             L 34 52
+             C 32 53, 30 53, 28 52
+             L 25 51
+             C 23 50, 21 49, 20 47
+             L 18 44
+             C 17 42, 16 40, 16 38
+             L 16 34
+             C 16 32, 17 30, 18 28
+             L 20 24
+             C 21 22, 22 20, 23 18
+             L 25 15
+             C 26 13, 28 12, 30 12
+             Z" 
+          fill="url(#africaGradient)" 
+          stroke="#FFB84D" 
+          stroke-width="0.5"
+          opacity="0.95"/>
+  </g>
+  
+  <!-- A-OS text (very small) -->
+  <text x="32" y="58" font-family="Arial, sans-serif" font-size="6" font-weight="bold" 
+        fill="#FF6B35" text-anchor="middle" opacity="0.8">A-OS</text>
+</svg>

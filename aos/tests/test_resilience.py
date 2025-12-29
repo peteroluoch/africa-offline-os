@@ -31,7 +31,8 @@ async def test_resilience_disk_death(tmp_path):
         app = create_app()
         async with app.router.lifespan_context(app):
             # 1. Verify healthy initially
-            async with httpx.AsyncClient(app=app, base_url="http://test") as client:
+            transport = httpx.ASGITransport(app=app)
+            async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
                 resp = await client.get("/health")
                 assert resp.json()["db_status"] == "healthy"
 
@@ -47,7 +48,8 @@ async def test_resilience_disk_death(tmp_path):
                 broken_db.execute.side_effect = raise_io_error
                 
                 # Replace global connection with the broken mock
-                with patch("aos.api.app._db_conn", broken_db):
+                from aos.api.state import core_state
+                with patch.object(core_state, "db_conn", broken_db):
                     # 3. Verify health endpoint reports 'unavailable' instead of crashing
                     resp = await client.get("/health")
                     assert resp.status_code == 200

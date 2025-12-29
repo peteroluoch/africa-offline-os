@@ -7,7 +7,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from aos.core.users import UniversalUserService
 from aos.core.security.auth import get_current_operator, requires_role, AosRole
-from aos.api.app import get_db
+from aos.api.dependencies import get_db
 import logging
 import sqlite3
 import json

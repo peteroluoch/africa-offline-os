@@ -8,6 +8,7 @@ from aos.bus.dispatcher import EventDispatcher
 from aos.db.migrations import _003_create_agri_tables
 from aos.db.models import FarmerDTO, HarvestDTO
 from aos.modules.agri import AgriModule
+from unittest.mock import MagicMock
 
 
 @pytest.fixture
@@ -21,8 +22,15 @@ def dispatcher():
     return EventDispatcher()
 
 @pytest.fixture
-def agri_module(dispatcher, db_conn):
-    return AgriModule(dispatcher, db_conn)
+def encryptor():
+    mock = MagicMock()
+    mock.encrypt.side_effect = lambda x: x # Identity encryption for tests
+    mock.decrypt.side_effect = lambda x: x
+    return mock
+
+@pytest.fixture
+def agri_module(dispatcher, db_conn, encryptor):
+    return AgriModule(dispatcher, db_conn, encryptor=encryptor)
 
 @pytest.mark.asyncio
 async def test_register_farmer(agri_module, dispatcher):

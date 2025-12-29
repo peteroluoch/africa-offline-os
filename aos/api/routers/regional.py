@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from aos.api.app import get_db
+from aos.api.dependencies import get_db
 from aos.core.security.auth import get_current_operator
 from aos.core.aggregation import RegionalAggregator
 

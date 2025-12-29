@@ -110,7 +110,7 @@ class OperatorRepository(BaseRepository[OperatorDTO]):
         self.conn.execute("""
             INSERT OR REPLACE INTO operators (id, username, password_hash, role_id, created_at, last_login)
             VALUES (?, ?, ?, ?, ?, ?)
-        """, (operator.id, operator.username, operator.hashed_password, operator.role_id, operator.created_at, operator.last_login))
+        """, (operator.id, operator.username, operator.password_hash, operator.role_id, operator.created_at, operator.last_login))
         self.conn.commit()
 
 class FarmerRepository(BaseRepository[FarmerDTO], SecureRepositoryMixin):

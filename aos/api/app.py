@@ -226,6 +226,15 @@ def create_app() -> FastAPI:
             await core_state.event_dispatcher.dispatch(event)
             return {"status": "ping_sent", "id": event.id}
         return {"status": "error"}
+    
+    @app.get("/favicon.ico", include_in_schema=False)
+    async def favicon():
+        """Serve the favicon."""
+        from fastapi.responses import FileResponse
+        favicon_path = Path(__file__).parent / "static" / "favicon.svg"
+        if favicon_path.exists():
+            return FileResponse(favicon_path, media_type="image/svg+xml")
+        return {"status": "not_found"}
 
     @app.get("/health")
     def health() -> dict:

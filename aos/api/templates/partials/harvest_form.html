@@ -1,57 +1,80 @@
+{% from "components/atoms/EliteButton.html" import elite_button %}
+{% from "components/molecules/FormField.html" import form_field %}
+
 <form hx-post="/agri/harvest" hx-swap="outerHTML" class="space-y-6">
     <input type="hidden" name="farmer_id" value="{{ farmer_id }}">
 
+    <div class="flex items-center justify-between mb-6 pb-4 border-b border-[var(--aos-surface-border)]">
+        <h3 class="aos-h3">Record Harvest</h3>
+        <button type="button"
+            class="aos-btn aos-btn-ghost aos-size-sm p-3 hover:aos-bg-surface-elevated rounded-full transition-all"
+            onclick="document.getElementById('agri-modal').classList.add('hidden')">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+
     <div class="space-y-2">
-        <label class="aos-text-xs font-bold aos-text-muted uppercase tracking-widest pl-1">Crop Type</label>
-        <select name="crop_id"
-            class="w-full bg-[var(--aos-surface-base)] border border-[var(--aos-surface-border)] text-[var(--aos-neutral-100)] rounded-[var(--aos-radius-xl)] px-4 py-3 focus:outline-none focus:border-[var(--aos-primary-base)] transition-colors appearance-none cursor-pointer">
-            {% for crop in crops %}
-            <option value="{{ crop.id }}">{{ crop.name }}</option>
-            {% endfor %}
-        </select>
+        <label class="block aos-text-xs font-bold aos-text-muted uppercase tracking-widest aos-text-mono px-1">Crop
+            Type</label>
+        <div class="relative">
+            <select name="crop_id" class="aos-input appearance-none pr-10">
+                {% for crop in crops %}
+                <option value="{{ crop.id }}">{{ crop.name }}</option>
+                {% endfor %}
+            </select>
+            <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </div>
+        </div>
     </div>
 
     <div class="grid grid-cols-2 gap-4">
-        {% include "components/molecules/FormField.html" with label="Quantity" name="quantity" type="number"
-        placeholder="50.0" attributes='step="0.1" inputmode="decimal"' %}
+        {{ form_field(label="Quantity", name="quantity", type="number", placeholder="50.0", required=True) }}
+
         <div class="space-y-2">
-            <label class="aos-text-xs font-bold aos-text-muted uppercase tracking-widest pl-1">Unit</label>
-            <select name="unit"
-                class="w-full bg-[var(--aos-surface-base)] border border-[var(--aos-surface-border)] text-[var(--aos-neutral-100)] rounded-[var(--aos-radius-xl)] px-4 py-3 focus:outline-none focus:border-[var(--aos-primary-base)] transition-colors appearance-none cursor-pointer">
-                <option value="kg">kg</option>
-                <option value="bags">Bags (50kg)</option>
-                <option value="tonnes">Tonnes</option>
-            </select>
+            <label
+                class="block aos-text-xs font-bold aos-text-muted uppercase tracking-widest aos-text-mono px-1">Unit</label>
+            <div class="relative">
+                <select name="unit" class="aos-input appearance-none pr-10">
+                    <option value="kg">kg</option>
+                    <option value="bags">Bags (50kg)</option>
+                    <option value="tonnes">Tonnes</option>
+                </select>
+                <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="space-y-2">
-        <label class="aos-text-xs font-bold aos-text-muted uppercase tracking-widest pl-1">Quality Grade</label>
-        <div class="grid grid-cols-3 gap-2">
+        <label class="block aos-text-xs font-bold aos-text-muted uppercase tracking-widest aos-text-mono px-1">Quality
+            Grade</label>
+        <div class="grid grid-cols-3 gap-3">
+            {% for grade in ['A', 'B', 'C'] %}
             <label class="cursor-pointer group">
-                <input type="radio" name="quality_grade" value="A" class="hidden peer" checked>
+                <input type="radio" name="quality_grade" value="{{ grade }}" class="hidden peer" {% if grade=='A'
+                    %}checked{% endif %}>
                 <div
-                    class="bg-[var(--aos-surface-base)] border border-[var(--aos-surface-border)] p-3 text-center rounded-[var(--aos-radius-xl)] peer-checked:bg-[var(--aos-primary-base)]/10 peer-checked:border-[var(--aos-primary-base)] peer-checked:text-[var(--aos-primary-base)] transition-all aos-text-muted">
-                    Grade A</div>
+                    class="bg-[var(--aos-surface-elevated)] border border-[var(--aos-surface-border)] p-4 text-center rounded-[var(--aos-radius-xl)] 
+                            peer-checked:bg-[var(--aos-primary-base)]/10 peer-checked:border-[var(--aos-primary-base)] 
+                            peer-checked:text-[var(--aos-primary-base)] peer-checked:aos-glow-primary transition-all aos-text-muted font-bold">
+                    Grade {{ grade }}
+                </div>
             </label>
-            <label class="cursor-pointer group">
-                <input type="radio" name="quality_grade" value="B" class="hidden peer">
-                <div
-                    class="bg-[var(--aos-surface-base)] border border-[var(--aos-surface-border)] p-3 text-center rounded-[var(--aos-radius-xl)] peer-checked:bg-[var(--aos-primary-base)]/10 peer-checked:border-[var(--aos-primary-base)] peer-checked:text-[var(--aos-primary-base)] transition-all aos-text-muted">
-                    Grade B</div>
-            </label>
-            <label class="cursor-pointer group">
-                <input type="radio" name="quality_grade" value="C" class="hidden peer">
-                <div
-                    class="bg-[var(--aos-surface-base)] border border-[var(--aos-surface-border)] p-3 text-center rounded-[var(--aos-radius-xl)] peer-checked:bg-[var(--aos-primary-base)]/10 peer-checked:border-[var(--aos-primary-base)] peer-checked:text-[var(--aos-primary-base)] transition-all aos-text-muted">
-                    Grade C</div>
-            </label>
+            {% endfor %}
         </div>
     </div>
 
-    <div class="pt-4 flex justify-end gap-3">
-        {% include "components/atoms/EliteButton.html" with label="Cancel" variant="outline" type="button"
-        attributes='onclick="document.getElementById(\'agri-modal\').classList.add(\'hidden\')"' %}
-        {% include "components/atoms/EliteButton.html" with label="Record Harvest" variant="primary" type="submit" %}
+    <div class="pt-8 flex justify-end space-x-4 border-t border-[var(--aos-surface-border)]">
+        {{ elite_button(text="Cancel", variant="outline",
+        onclick="document.getElementById('agri-modal').classList.add('hidden')", class="px-8") }}
+        {{ elite_button(text="Record Harvest", variant="primary", type="submit", class="px-8") }}
     </div>
 </form>

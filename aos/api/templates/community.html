@@ -2,6 +2,7 @@
 {% from "components/atoms/EliteButton.html" import elite_button %}
 {% from "components/atoms/Card.html" import card %}
 {% from "components/molecules/DataCard.html" import data_card %}
+{% from "components/molecules/Pagination.html" import pagination %}
 
 {% block content %}
 <header class="mb-10">
@@ -11,7 +12,7 @@
 
 <!-- Metrics Row -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-    {{ data_card(label="Active Groups", value=groups|length|string, status="info") }}
+    {{ data_card(label="Active Groups", value=total|string, status="info") }}
     {{ data_card(label="Broadcasts", value=broadcasts_count|default(0)|string, unit="30d", status="success") }}
     {{ data_card(label="Inquiry Hits", value=inquiry_hits|default(0)|string, status="warning") }}
 </div>
@@ -50,11 +51,27 @@
                 <td class="aos-text-sm aos-text-muted">{{ group.created_at.strftime('%Y-%m-%d') }}</td>
                 <td>
                     <div class="flex items-center gap-2">
-                        <button class="aos-btn aos-btn-ghost aos-size-sm">
-                            <span class="aos-btn-text">View</span>
+                        <button class="aos-btn aos-btn-ghost aos-size-sm" hx-get="/community/{{ group.id }}/members"
+                            hx-target="#modal-content" onclick="openModal()">
+                            <span class="aos-btn-text">Members</span>
                         </button>
-                        <button class="aos-btn aos-btn-ghost aos-size-sm aos-text-danger">
-                            <span class="aos-btn-text">Review</span>
+                        <button class="aos-btn aos-btn-ghost aos-size-sm aos-text-primary"
+                            onclick="alert('Update feature coming soon!')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                                </path>
+                            </svg>
+                            <span class="aos-btn-text">Update</span>
+                        </button>
+                        <button class="aos-btn aos-btn-ghost aos-size-sm aos-text-danger hover:aos-bg-danger-fade"
+                            onclick="confirmDelete('{{ group.id }}', '{{ group.name }}')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                </path>
+                            </svg>
+                            <span class="aos-btn-text">Delete</span>
                         </button>
                     </div>
                 </td>
@@ -68,6 +85,13 @@
             {% endfor %}
         </tbody>
     </table>
+
+    {# Add pagination if there are multiple pages #}
+    {{ pagination(
+    current_page=page,
+    total_pages=total_pages,
+    on_page_change="loadPage"
+    ) }}
     {% endcall %}
 </section>
 
@@ -78,12 +102,105 @@
     {% endcall %}
 </div>
 
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="aos-modal-overlay hidden">
+    {% call card(padding="6", glass=True, class="aos-modal-content aos-stack-md max-w-md") %}
+    <div class="aos-stack-sm">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="p-3 rounded-full bg-red-500/10">
+                <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                    </path>
+                </svg>
+            </div>
+            <div>
+                <h3 class="aos-h3 mb-1">Confirm Deletion</h3>
+                <p class="aos-text-sm aos-text-muted">This action cannot be undone</p>
+            </div>
+        </div>
+
+        <p class="aos-text-base mb-6" id="delete-message">
+            Are you sure you want to deactivate this community group? This will retire all broadcasts but preserve audit
+            data.
+        </p>
+
+        <div class="flex gap-3 justify-end">
+            <button class="aos-btn aos-btn-ghost aos-size-md" onclick="closeDeleteModal()">
+                <span class="aos-btn-text">Cancel</span>
+            </button>
+            <button class="aos-btn aos-btn-danger aos-size-md" id="confirm-delete-btn">
+                <span class="aos-btn-text">Delete Group</span>
+            </button>
+        </div>
+    </div>
+    {% endcall %}
+</div>
+
 <script>
+    let deleteGroupId = null;
+
+    // Pagination handler
+    function loadPage(pageNum) {
+        window.location.href = `/community?page=${pageNum}`;
+    }
+
     function openModal() {
         document.getElementById('modal-container').classList.remove('hidden');
     }
+
     function closeModal() {
         document.getElementById('modal-container').classList.add('hidden');
     }
+
+    function confirmDelete(groupId, groupName) {
+        deleteGroupId = groupId;
+        document.getElementById('delete-message').textContent =
+            `Are you sure you want to deactivate "${groupName}"? This will retire all broadcasts but preserve audit data.`;
+        document.getElementById('delete-modal').classList.remove('hidden');
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('delete-modal').classList.add('hidden');
+        deleteGroupId = null;
+    }
+
+    // Handle actual deletion
+    document.getElementById('confirm-delete-btn').addEventListener('click', async function () {
+        if (!deleteGroupId) return;
+
+        try {
+            const response = await fetch(`/community/${deleteGroupId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                // Remove the row from the table
+                const row = document.querySelector(`button[onclick*="${deleteGroupId}"]`)?.closest('tr');
+                if (row) {
+                    row.style.transition = 'opacity 0.3s';
+                    row.style.opacity = '0';
+                    setTimeout(() => row.remove(), 300);
+                }
+                closeDeleteModal();
+
+                // Reload page to update counts and scroll to top
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            }
+        } catch (error) {
+            console.error('Delete failed:', error);
+            alert('Failed to delete group. Please try again.');
+        }
+    });
+
+    // Scroll to top on page load
+    window.addEventListener('DOMContentLoaded', function () {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
 </script>
 {% endblock %}

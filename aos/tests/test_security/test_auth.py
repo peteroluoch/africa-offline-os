@@ -1,4 +1,4 @@
-
+import json
 import pytest
 
 from aos.core.security.auth import AuthManager
@@ -64,7 +64,11 @@ async def test_get_current_operator_dependency(auth_manager, monkeypatch):
     from aos.core.security import auth
     monkeypatch.setattr(auth, "auth_manager", auth_manager)
 
-    payload = await get_current_operator(credentials)
+    from unittest.mock import MagicMock
+    request = MagicMock()
+    request.cookies = {}
+
+    payload = await get_current_operator(request, credentials)
     assert payload["sub"] == "admin"
 
 @pytest.mark.asyncio
@@ -75,8 +79,12 @@ async def test_get_current_operator_invalid(auth_manager, monkeypatch):
     from aos.core.security import auth
     monkeypatch.setattr(auth, "auth_manager", auth_manager)
 
+    from unittest.mock import MagicMock
+    request = MagicMock()
+    request.cookies = {}
+
     with pytest.raises(HTTPException) as exc:
-        await get_current_operator(credentials)
+        await get_current_operator(request, credentials)
     assert exc.value.status_code == 401
 
 def test_tampered_token(auth_manager):
@@ -94,4 +102,4 @@ def test_tampered_token(auth_manager):
     with pytest.raises(ValueError, match="Invalid signature"):
         auth_manager.verify_token(tampered_token)
 
-import json
+

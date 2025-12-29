@@ -1,38 +1,56 @@
-<div class="aos-flex aos-flex-between aos-flex-center">
-    <h3 class="aos-title-sm">Register Community Group</h3>
-    <button class="aos-button aos-button-ghost aos-button-sm" onclick="closeModal()">✕</button>
+{% from "components/atoms/EliteButton.html" import elite_button %}
+
+<div class="flex items-center justify-between mb-8 pb-4 border-b border-[var(--aos-surface-border)]">
+    <h3 class="aos-h3">Register Community Group</h3>
+    <button class="aos-btn aos-btn-ghost aos-size-sm p-3 hover:aos-bg-surface-elevated rounded-full transition-all"
+        onclick="closeModal()">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+    </button>
 </div>
 
-<form action="/community/register" method="POST" class="aos-stack-md">
-    <div class="aos-stack-xs">
-        <label for="name" class="aos-text-secondary aos-text-xs uppercase">Group Name</label>
+<form action="/community/register" method="POST" class="space-y-6">
+    <div class="space-y-2">
+        <label for="name" class="aos-text-muted aos-text-xs uppercase font-black tracking-widest block px-1">Group
+            Name</label>
         <input type="text" id="name" name="name" class="aos-input" placeholder="e.g. St Mark's Church" required>
     </div>
 
-    <div class="aos-stack-xs">
-        <label for="group_type" class="aos-text-secondary aos-text-xs uppercase">Group Type</label>
-        <select id="group_type" name="group_type" class="aos-input">
-            <option value="church">Church</option>
-            <option value="mosque">Mosque</option>
-            <option value="committee">Village Committee</option>
-            <option value="sacco">SACCO</option>
-            <option value="other">Other</option>
-        </select>
+    <div class="space-y-2">
+        <label for="group_type" class="aos-text-muted aos-text-xs uppercase font-black tracking-widest block px-1">Group
+            Type</label>
+        <div class="relative">
+            <select id="group_type" name="group_type" class="aos-input appearance-none pr-10">
+                <option value="church">Church</option>
+                <option value="mosque">Mosque</option>
+                <option value="committee">Village Committee</option>
+                <option value="sacco">SACCO</option>
+                <option value="other">Other</option>
+            </select>
+            <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </div>
+        </div>
     </div>
 
-    <div class="aos-stack-xs">
-        <label for="location" class="aos-text-secondary aos-text-xs uppercase">Location</label>
+    <div class="space-y-2">
+        <label for="location"
+            class="aos-text-muted aos-text-xs uppercase font-black tracking-widest block px-1">Location</label>
         <input type="text" id="location" name="location" class="aos-input" placeholder="e.g. Kawangware, Nairobi">
     </div>
 
-    <div class="aos-stack-xs">
-        <label for="description" class="aos-text-secondary aos-text-xs uppercase">Description</label>
+    <div class="space-y-2">
+        <label for="description"
+            class="aos-text-muted aos-text-xs uppercase font-black tracking-widest block px-1">Description</label>
         <textarea id="description" name="description" class="aos-input" rows="3"
             placeholder="Brief purpose or location..."></textarea>
     </div>
 
-    <div class="aos-flex aos-flex-end aos-gap-sm pt-4">
-        <button type="button" class="aos-button aos-button-secondary" onclick="closeModal()">Cancel</button>
-        <button type="submit" class="aos-button aos-button-primary">Register Group</button>
+    <div class="flex items-center justify-end space-x-6 pt-8 mt-4 border-t border-[var(--aos-surface-border)]">
+        {{ elite_button(text="Cancel", variant="outline", onclick="closeModal()", class="px-10") }}
+        {{ elite_button(text="Register Group", type="submit", variant="primary", class="px-10") }}
     </div>
 </form>

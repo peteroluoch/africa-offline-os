@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from aos.api.app import get_db
+from aos.api.dependencies import get_db
 from aos.core.security.auth import auth_manager
 from aos.core.security.password import verify_password
 
@@ -30,7 +30,12 @@ async def login(
     try:
         print(f"[Auth] Attempting login for: {username}")
         cursor = db.execute(
-            "SELECT id, username, password_hash, role_id FROM operators WHERE username=?",
+            """
+            SELECT o.id, o.username, o.password_hash, r.name 
+            FROM operators o
+            JOIN roles r ON o.role_id = r.id
+            WHERE o.username=?
+            """,
             (username,)
         )
         row = cursor.fetchone()

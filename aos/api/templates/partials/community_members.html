@@ -1,0 +1,79 @@
+{% from "components/atoms/Card.html" import card %}
+{% from "components/atoms/EliteButton.html" import elite_button %}
+
+<div class="aos-stack-md">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="aos-h3">{{ group.name }} - Members</h3>
+        <button class="aos-btn aos-btn-ghost aos-size-sm" onclick="closeModal()">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            <span class="aos-btn-text">Close</span>
+        </button>
+    </div>
+
+    <!-- Add Member Form -->
+    <form hx-post="/community/{{ group.id }}/members" hx-target="#members-list" hx-swap="beforeend"
+        class="aos-stack-sm mb-6">
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="aos-label">User ID (Phone/Chat ID)</label>
+                <input type="text" name="user_id" class="aos-input" placeholder="+254712345678" required>
+            </div>
+            <div>
+                <label class="aos-label">Channel</label>
+                <select name="channel" class="aos-input" required>
+                    <option value="sms">SMS</option>
+                    <option value="ussd">USSD</option>
+                    <option value="telegram">Telegram</option>
+                    <option value="whatsapp">WhatsApp</option>
+                </select>
+            </div>
+        </div>
+        <button type="submit" class="aos-btn aos-btn-primary aos-size-sm">
+            <span class="aos-btn-text">Add Member</span>
+        </button>
+    </form>
+
+    <!-- Members List -->
+    <div id="members-list">
+        {% if members %}
+        <table class="aos-table">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Channel</th>
+                    <th>Added</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for member in members %}
+                <tr id="member-{{ member.user_id }}">
+                    <td class="aos-font-mono aos-text-sm">{{ member.user_id }}</td>
+                    <td><span class="aos-badge aos-badge-info">{{ member.channel }}</span></td>
+                    <td class="aos-text-sm aos-text-muted">{{ member.created_at.strftime('%Y-%m-%d') if
+                        member.created_at else 'N/A' }}</td>
+                    <td>
+                        <button class="aos-btn aos-btn-ghost aos-size-sm aos-text-danger"
+                            hx-delete="/community/{{ group.id }}/members/{{ member.user_id }}?channel={{ member.channel }}"
+                            hx-confirm="Remove this member from the group?" hx-target="#member-{{ member.user_id }}"
+                            hx-swap="outerHTML swap:1s">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            <span class="aos-btn-text">Remove</span>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="aos-text-center aos-py-8 aos-text-muted">
+            No members in this group yet. Add the first member above.
+        </div>
+        {% endif %}
+    </div>
+</div>

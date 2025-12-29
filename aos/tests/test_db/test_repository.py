@@ -33,14 +33,23 @@ def test_node_repository_upsert(db_conn):
 
 def test_operator_repository_save(db_conn):
     repo = OperatorRepository(db_conn)
-    op = OperatorDTO(id="op1", sub="sub-123", role="admin")
+    # Get the admin role ID from the database (bootstrapped in migration)
+    cursor = db_conn.execute("SELECT id FROM roles WHERE name='admin'")
+    role_id = cursor.fetchone()[0]
+    
+    op = OperatorDTO(
+        id="op1", 
+        username="test_op", 
+        role_id=role_id, 
+        password_hash="hash"
+    )
 
     repo.save(op)
 
     fetched = repo.get_by_id("op1")
     assert fetched is not None
-    assert fetched.sub == "sub-123"
-    assert fetched.role == "admin"
+    assert fetched.username == "test_op"
+    assert fetched.role_id == role_id
 
 def test_list_all_records(db_conn):
     repo = NodeRepository(db_conn)
