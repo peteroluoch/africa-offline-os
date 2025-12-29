@@ -6,9 +6,18 @@
 
 {% block content %}
 <header class="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-    <div>
-        <h1 class="aos-h1 mb-2">Member Directory</h1>
-        <p class="aos-text-muted aos-text-sm">Complete visibility across all community groups</p>
+    <div class="flex items-center gap-4">
+        <a href="/community" class="aos-btn aos-btn-ghost aos-size-sm group">
+            <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18">
+                </path>
+            </svg>
+        </a>
+        <div>
+            <h1 class="aos-h1 mb-1">Member Directory</h1>
+            <p class="aos-text-muted aos-text-sm">Complete visibility across all community groups</p>
+        </div>
     </div>
     <div class="flex flex-wrap gap-3">
         <button onclick="exportCSV()" class="aos-btn aos-btn-ghost aos-size-md">
