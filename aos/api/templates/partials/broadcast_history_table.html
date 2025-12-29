@@ -1,0 +1,43 @@
+<div class="aos-table-container">
+    <table class="aos-table">
+        <thead>
+            <tr>
+                <th>Message</th>
+                <th>Status</th>
+                <th>Sent/Failed</th>
+                <th>Created</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for broadcast in recent_broadcasts %}
+            <tr>
+                <td class="max-w-xs truncate">{{ broadcast.message }}</td>
+                <td>
+                    {% if broadcast.status == 'completed' %}
+                    <span class="aos-badge aos-badge-success">Completed</span>
+                    {% elif broadcast.status == 'processing' %}
+                    <span class="aos-badge aos-badge-warning">Processing</span>
+                    {% elif broadcast.status == 'queued' %}
+                    <span class="aos-badge aos-badge-info">Queued</span>
+                    {% else %}
+                    <span class="aos-badge aos-badge-default">{{ broadcast.status }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="text-green-600">{{ broadcast.sent_count }}</span> /
+                    <span class="text-red-600">{{ broadcast.failed_count }}</span>
+                </td>
+                <td class="aos-text-muted aos-text-sm">
+                    {{ broadcast.created_at.strftime('%Y-%m-%d %H:%M') if broadcast.created_at else 'N/A' }}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" class="text-center aos-text-muted py-8">
+                    No broadcasts yet. Send your first message above!
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

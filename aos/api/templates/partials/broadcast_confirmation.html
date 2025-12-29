@@ -1,0 +1,47 @@
+{% from "components/atoms/Card.html" import card %}
+
+<div class="aos-modal-overlay" onclick="if(event.target === this) this.remove()">
+    <div class="aos-modal-content-wrapper w-full max-w-md px-4">
+        {% call card(padding="6", glass=True, class="aos-stack-md") %}
+        <h3 class="aos-h3 mb-4">⚠️ Broadcast Confirmation Required</h3>
+
+        <div class="aos-stack-sm aos-text-sm">
+            <div class="flex justify-between">
+                <span class="aos-text-muted">Estimated Cost:</span>
+                <span class="font-semibold">KES {{ cost }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="aos-text-muted">Recipients:</span>
+                <span class="font-semibold">{{ recipient_count }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="aos-text-muted">Channels:</span>
+                <span class="font-semibold">{{ channels }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="aos-text-muted">Message Length:</span>
+                <span class="font-semibold">{{ message_length }} chars</span>
+            </div>
+        </div>
+
+        <div class="flex gap-4 mt-6">
+            <button onclick="this.closest('.aos-modal-overlay').remove()"
+                class="aos-btn aos-btn-ghost aos-size-md flex-1">
+                <span class="aos-btn-text">Cancel</span>
+            </button>
+
+            <form hx-post="/community/{{ group_id }}/broadcast/confirm" hx-target="#broadcast-history-container"
+                hx-swap="afterbegin" class="flex-1">
+                <input type="hidden" name="message" value="{{ message }}">
+                <input type="hidden" name="channel" value="{{ channel }}">
+                <input type="hidden" name="cost_confirmed" value="true">
+
+                <button type="submit" class="aos-btn aos-btn-primary aos-size-md w-full"
+                    onclick="this.closest('.aos-modal-overlay').remove()">
+                    <span class="aos-btn-text">Confirm & Send</span>
+                </button>
+            </form>
+        </div>
+        {% endcall %}
+    </div>
+</div>

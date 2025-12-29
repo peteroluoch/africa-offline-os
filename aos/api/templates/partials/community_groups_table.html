@@ -33,6 +33,9 @@
                 </td>
                 <td>
                     <div class="flex items-center gap-2">
+                        <a href="/community/{{ group.id }}" class="aos-btn aos-btn-primary aos-size-sm">
+                            <span class="aos-btn-text">View</span>
+                        </a>
                         <button class="aos-btn aos-btn-ghost aos-size-sm" hx-get="/community/{{ group.id }}/members"
                             hx-target="#modal-content" onclick="openModal()">
                             <span class="aos-btn-text">Members</span>

@@ -364,3 +364,188 @@ async def remove_group_member(
         return HTMLResponse(status_code=204)
 
     raise HTTPException(status_code=404, detail="Member not found")
+
+
+# ========== BROADCAST UI ENDPOINTS ==========
+
+@router.get("/{group_id}", response_class=HTMLResponse)
+async def community_detail(
+    group_id: str,
+    request: Request,
+    operator=Depends(get_current_operator)
+):
+    """Community detail page with broadcast UI."""
+    if not community_state.module:
+        raise HTTPException(500, "Community module not initialized")
+    
+    # Get group
+    group = community_state.module.get_group(group_id)
+    if not group:
+        raise HTTPException(404, "Group not found")
+    
+    # Get member count
+    members = community_state.module.get_community_members(group_id)
+    member_count = len(members)
+    
+    # Get broadcast stats for this group
+    broadcast_stats = {"pending": 0, "sent": 0, "failed": 0}
+    status_res = community_state.module._db.execute("""
+        SELECT d.status, COUNT(*) 
+        FROM broadcast_deliveries d
+        JOIN broadcasts b ON d.broadcast_id = b.id
+        WHERE b.community_id = ?
+        GROUP BY d.status
+    """, (group_id,)).fetchall()
+    
+    for status, count in status_res:
+        if status in broadcast_stats:
+            broadcast_stats[status] = count
+    
+    # Get recent broadcasts
+    recent_broadcasts_raw = community_state.module._db.execute("""
+        SELECT id, message, status, sent_count, failed_count, created_at
+        FROM broadcasts
+        WHERE community_id = ?
+        ORDER BY created_at DESC
+        LIMIT 10
+    """, (group_id,)).fetchall()
+    
+    recent_broadcasts = [
+        {
+            "id": row[0],
+            "message": row[1],
+            "status": row[2],
+            "sent_count": row[3],
+            "failed_count": row[4],
+            "created_at": datetime.fromisoformat(row[5].replace(' ', 'T')) if row[5] else None
+        }
+        for row in recent_broadcasts_raw
+    ]
+    
+    return templates.TemplateResponse("community_detail.html", {
+        "request": request,
+        "user": operator,
+        "group": group,
+        "member_count": member_count,
+        "broadcast_stats": broadcast_stats,
+        "recent_broadcasts": recent_broadcasts
+    })
+
+
+@router.post("/{group_id}/broadcast", response_class=HTMLResponse)
+async def send_broadcast(
+    group_id: str,
+    request: Request,
+    message: str = Form(...),
+    channel: str = Form("telegram"),
+    cost_confirmed: bool = Form(False),
+    operator=Depends(get_current_operator)
+):
+    """Send broadcast with cost guardrail."""
+    if not community_state.module:
+        raise HTTPException(500, "Community module not initialized")
+    
+    try:
+        # Attempt to publish (will raise ValueError if cost confirmation needed)
+        announcement = await community_state.module.publish_announcement(
+            group_id=group_id,
+            message=message,
+            actor_id=operator.get("sub"),
+            cost_confirmed=cost_confirmed
+        )
+        
+        # Success - return success toast
+        return templates.TemplateResponse("partials/broadcast_success.html", {
+            "request": request,
+            "group_id": group_id,
+            "announcement_id": announcement.id
+        })
+        
+    except ValueError as e:
+        error_msg = str(e)
+        if "COST_CONFIRMATION_REQUIRED" in error_msg:
+            # Parse cost details from error message
+            parts = error_msg.split("|")
+            cost = parts[1].split(":")[1].strip().replace("KES ", "")
+            recipients = parts[2].split(":")[1].strip()
+            channels = parts[3].split(":")[1].strip()
+            msg_length = parts[4].split(":")[1].strip().split()[0]
+            
+            # Return confirmation modal
+            return templates.TemplateResponse("partials/broadcast_confirmation.html", {
+                "request": request,
+                "group_id": group_id,
+                "message": message,
+                "channel": channel,
+                "cost": cost,
+                "recipient_count": recipients,
+                "channels": channels,
+                "message_length": msg_length
+            })
+        else:
+            raise HTTPException(400, str(e))
+
+
+@router.post("/{group_id}/broadcast/confirm", response_class=HTMLResponse)
+async def confirm_broadcast(
+    group_id: str,
+    request: Request,
+    message: str = Form(...),
+    channel: str = Form("telegram"),
+    operator=Depends(get_current_operator)
+):
+    """Confirm and send expensive broadcast."""
+    if not community_state.module:
+        raise HTTPException(500, "Community module not initialized")
+    
+    # Send with cost_confirmed=True
+    announcement = await community_state.module.publish_announcement(
+        group_id=group_id,
+        message=message,
+        actor_id=operator.get("sub"),
+        cost_confirmed=True
+    )
+    
+    # Return success toast
+    return templates.TemplateResponse("partials/broadcast_success.html", {
+        "request": request,
+        "group_id": group_id,
+        "announcement_id": announcement.id
+    })
+
+
+@router.get("/{group_id}/broadcasts", response_class=HTMLResponse)
+async def get_broadcast_history(
+    group_id: str,
+    request: Request,
+    operator=Depends(get_current_operator)
+):
+    """Fetch broadcast history for HTMX refresh."""
+    if not community_state.module:
+        raise HTTPException(500, "Community module not initialized")
+    
+    # Get recent broadcasts
+    recent_broadcasts_raw = community_state.module._db.execute("""
+        SELECT id, message, status, sent_count, failed_count, created_at
+        FROM broadcasts
+        WHERE community_id = ?
+        ORDER BY created_at DESC
+        LIMIT 10
+    """, (group_id,)).fetchall()
+    
+    recent_broadcasts = [
+        {
+            "id": row[0],
+            "message": row[1],
+            "status": row[2],
+            "sent_count": row[3],
+            "failed_count": row[4],
+            "created_at": datetime.fromisoformat(row[5].replace(' ', 'T')) if row[5] else None
+        }
+        for row in recent_broadcasts_raw
+    ]
+    
+    return templates.TemplateResponse("partials/broadcast_history_table.html", {
+        "request": request,
+        "recent_broadcasts": recent_broadcasts
+    })

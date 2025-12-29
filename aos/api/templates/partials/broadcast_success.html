@@ -1,0 +1,58 @@
+{% from "components/atoms/Card.html" import card %}
+
+<div class="aos-toast aos-toast-success" style="animation: slideIn 0.3s ease-out;">
+    <div class="flex items-center gap-3">
+        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        <div>
+            <p class="font-semibold">Broadcast Queued Successfully!</p>
+            <p class="aos-text-sm aos-text-muted">Your message is being processed and will be delivered shortly.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-remove toast after 5 seconds
+    setTimeout(() => {
+        document.querySelector('.aos-toast')?.remove();
+    }, 5000);
+
+    // Clear form
+    document.getElementById('message').value = '';
+    document.getElementById('char-count').textContent = '0';
+
+    // Refresh broadcast history
+    htmx.ajax('GET', '/community/{{ group_id }}/broadcasts', { target: '#broadcast-history-container', swap: 'innerHTML' });
+</script>
+
+<style>
+    @keyframes slideIn {
+        from {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .aos-toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        background: var(--aos-surface-elevated);
+        border: 1px solid var(--aos-border-subtle);
+        border-radius: var(--aos-radius-lg);
+        padding: 1rem 1.5rem;
+        box-shadow: var(--aos-shadow-lg);
+        max-width: 400px;
+    }
+
+    .aos-toast-success {
+        border-left: 4px solid var(--aos-success);
+    }
+</style>

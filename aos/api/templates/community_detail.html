@@ -1,0 +1,44 @@
+{% extends "dashboard.html" %}
+{% from "components/atoms/EliteButton.html" import elite_button %}
+{% from "components/atoms/Card.html" import card %}
+{% from "components/molecules/DataCard.html" import data_card %}
+
+{% block content %}
+<header class="mb-10 flex items-center justify-between">
+    <div>
+        <h1 class="aos-h1 mb-2">{{ group.name }}</h1>
+        <p class="aos-text-muted aos-text-sm">{{ group.location }} • {{ member_count }} members</p>
+    </div>
+    <div>
+        <a href="/community" class="aos-btn aos-btn-ghost aos-size-md">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18">
+                </path>
+            </svg>
+            <span class="aos-btn-text ml-2">Back to Communities</span>
+        </a>
+    </div>
+</header>
+
+<!-- Metrics Row -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+    {{ data_card(label="Members", value=member_count|string, status="info") }}
+    {{ data_card(label="Pending", value=broadcast_stats.pending|string, unit="msgs", status="warning") }}
+    {{ data_card(label="Delivered", value=broadcast_stats.sent|string, unit="msgs", status="success") }}
+</div>
+
+<!-- Broadcast Form Section -->
+{% include "partials/broadcast_form.html" %}
+
+<!-- Broadcast History Section -->
+<section class="aos-stack-md mt-10">
+    <h2 class="aos-h2 mb-6">Broadcast History</h2>
+    <div id="broadcast-history-container">
+        {% include "partials/broadcast_history_table.html" %}
+    </div>
+</section>
+
+<!-- Confirmation Modal Container -->
+<div id="broadcast-modal-container"></div>
+
+{% endblock %}

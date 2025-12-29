@@ -1,0 +1,54 @@
+{% from "components/atoms/Card.html" import card %}
+{% from "components/atoms/EliteButton.html" import elite_button %}
+
+{% call card(padding="6", glass=True, class="aos-stack-md") %}
+<h2 class="aos-h2 mb-4">📤 Send Broadcast</h2>
+
+<form hx-post="/community/{{ group.id }}/broadcast" hx-target="#broadcast-modal-container" hx-swap="innerHTML"
+    class="aos-stack-md">
+    <!-- Message Textarea -->
+    <div>
+        <label for="message" class="aos-label">Message</label>
+        <textarea id="message" name="message" rows="4" maxlength="500" required class="aos-input aos-size-md w-full"
+            placeholder="Enter your broadcast message..."></textarea>
+        <p class="aos-text-muted aos-text-sm mt-1">
+            <span id="char-count">0</span>/500 characters
+        </p>
+    </div>
+
+    <!-- Channel (Hidden - Telegram only for v1) -->
+    <input type="hidden" name="channel" value="telegram">
+
+    <!-- Cost Preview -->
+    <div class="aos-card aos-card-info p-4">
+        <div class="flex items-center justify-between">
+            <span class="aos-text-sm">Recipients:</span>
+            <span class="aos-text-sm font-semibold">{{ member_count }}</span>
+        </div>
+        <div class="flex items-center justify-between mt-2">
+            <span class="aos-text-sm">Channel:</span>
+            <span class="aos-text-sm font-semibold">Telegram</span>
+        </div>
+        <div class="flex items-center justify-between mt-2">
+            <span class="aos-text-sm">Estimated Cost:</span>
+            <span class="aos-text-sm font-semibold text-green-500">KES 0.00</span>
+        </div>
+    </div>
+
+    <!-- Submit Button -->
+    {{ elite_button(
+    text="Send Broadcast",
+    type="submit",
+    variant="primary",
+    size="md",
+    class="w-full"
+    ) }}
+</form>
+{% endcall %}
+
+<script>
+    // Character counter
+    document.getElementById('message').addEventListener('input', function () {
+        document.getElementById('char-count').textContent = this.value.length;
+    });
+</script>

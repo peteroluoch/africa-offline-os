@@ -399,3 +399,4 @@
 {"timestamp": 1767031378.169033, "event_type": "RESOURCE_CRITICAL", "severity": "WARNING", "correlation_id": "3d3ef203-ce38-42aa-8e1a-a8d23604f2fd", "metadata": {"type": "MEM_LOW", "value_percent": 97.0, "threshold_percent": 95.0}}
 {"timestamp": 1767031739.7116654, "event_type": "RESOURCE_CRITICAL", "severity": "WARNING", "correlation_id": "c66bb889-2351-4e65-ac32-4311abee460d", "metadata": {"type": "MEM_LOW", "value_percent": 95.8, "threshold_percent": 95.0}}
 {"timestamp": 1767032610.6149027, "event_type": "RESOURCE_CRITICAL", "severity": "WARNING", "correlation_id": "86b4d91d-5af2-40c3-a840-efefc8879d6c", "metadata": {"type": "MEM_LOW", "value_percent": 96.2, "threshold_percent": 95.0}}
+{"timestamp": 1767036858.1927385, "event_type": "RESOURCE_CRITICAL", "severity": "WARNING", "correlation_id": "5bf8bb75-ba33-4cd9-8ab8-f0d55f6cc36a", "metadata": {"type": "MEM_LOW", "value_percent": 95.7, "threshold_percent": 95.0}}
