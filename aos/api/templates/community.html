@@ -23,10 +23,11 @@
 </header>
 
 <!-- Metrics Row -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
     {{ data_card(label="Active Groups", value=total|string, status="info") }}
-    {{ data_card(label="Broadcasts", value=broadcasts_count|default(0)|string, unit="30d", status="success") }}
-    {{ data_card(label="Inquiry Hits", value=inquiry_hits|default(0)|string, status="warning") }}
+    {{ data_card(label="Pending", value=broadcast_stats.pending|string, unit="msgs", status="warning") }}
+    {{ data_card(label="Delivered", value=broadcast_stats.sent|string, unit="msgs", status="success") }}
+    {{ data_card(label="Failed", value=broadcast_stats.failed|string, unit="msgs", status="error") }}
 </div>
 
 <section class="aos-stack-md">

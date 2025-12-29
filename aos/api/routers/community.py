@@ -42,10 +42,24 @@ async def community_dashboard(
     if community_state.module:
         group_types = community_state.module.get_group_types()
 
+    # Broadcast Status Metrics (FAANG Dashboard Requirement)
+    broadcast_stats = {"pending": 0, "sent": 0, "failed": 0, "total": 0}
     if community_state.module:
         # Count actual broadcasts from the queue table
         res = community_state.module._db.execute("SELECT COUNT(*) FROM broadcasts").fetchone()
         broadcasts_count = res[0] if res else 0
+        broadcast_stats["total"] = broadcasts_count
+        
+        # Get delivery status breakdown
+        status_res = community_state.module._db.execute("""
+            SELECT status, COUNT(*) 
+            FROM broadcast_deliveries 
+            GROUP BY status
+        """).fetchall()
+        
+        for status, count in status_res:
+            if status in broadcast_stats:
+                broadcast_stats[status] = count
 
     context = {
         "request": request,
@@ -56,6 +70,7 @@ async def community_dashboard(
         "group_types": group_types,
         **pagination_data,
         "broadcasts_count": broadcasts_count,
+        "broadcast_stats": broadcast_stats,
         "inquiry_hits": 0
     }
 

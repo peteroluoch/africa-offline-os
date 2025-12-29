@@ -371,7 +371,9 @@ class CommunityModule:
         urgency: str = "normal",
         expires_at: datetime | None = None,
         target_audience: str = "public",
-        actor_id: str = "system"
+        actor_id: str = "system",
+        cost_confirmed: bool = False,
+        cost_threshold_kes: float = 100.0
     ) -> CommunityAnnouncementDTO:
         """
         Publish an announcement for a group.
@@ -397,6 +399,25 @@ class CommunityModule:
         if actor_id != "system" and group.admin_id != actor_id:
             # We allow "system" for automated messages, but human actors must match
              raise ValueError(f"Admin {actor_id} not authorized for community {group.id}")
+
+        # 0.5 COST GUARDRAIL (FAANG MANDATORY)
+        # Calculate estimated cost BEFORE queuing
+        recipient_count = len(self.get_community_members(group_id))
+        
+        # Cost calculation (KES per SMS, conservative estimate)
+        # SMS: ~0.80 KES, USSD: ~0.50 KES per session
+        # We use SMS as worst-case
+        estimated_cost_kes = recipient_count * 0.80
+        
+        # Require explicit confirmation for large sends
+        if estimated_cost_kes > cost_threshold_kes and not cost_confirmed:
+            raise ValueError(
+                f"COST_CONFIRMATION_REQUIRED|" 
+                f"Estimated cost: KES {estimated_cost_kes:.2f}|" 
+                f"Recipients: {recipient_count}|" 
+                f"Channels: SMS, USSD|" 
+                f"Message length: {len(message)} chars"
+            )
 
         # 1. Create the domain announcement record (Audit Persistence)
         announcement = CommunityAnnouncementDTO(

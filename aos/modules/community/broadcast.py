@@ -240,6 +240,25 @@ class BroadcastWorker:
         self._running = False
         self._task: Optional[asyncio.Task] = None
         self._worker_id = f"WRK-{uuid.uuid4().hex[:4].upper()}"
+        
+        # Register event listeners for delivery confirmations
+        self._dispatcher.subscribe("MESSAGE_SENT", self._handle_message_sent)
+        self._dispatcher.subscribe("MESSAGE_FAILED", self._handle_message_failed)
+
+    async def _handle_message_sent(self, event):
+        """Handle successful message delivery confirmation."""
+        correlation_id = event.payload.get("correlation_id")
+        if correlation_id:
+            self._manager.update_delivery_status(correlation_id, 'sent')
+            logger.debug(f"Delivery {correlation_id} marked as sent")
+
+    async def _handle_message_failed(self, event):
+        """Handle failed message delivery."""
+        correlation_id = event.payload.get("correlation_id")
+        error = event.payload.get("error", "Unknown error")
+        if correlation_id:
+            self._manager.update_delivery_status(correlation_id, 'failed', error=error)
+            logger.warning(f"Delivery {correlation_id} marked as failed: {error}")
 
     def start(self):
         """Start the background worker task."""
@@ -309,9 +328,10 @@ class BroadcastWorker:
                             "correlation_id": delivery['id']
                         }
                     ))
-                    self._manager.update_delivery_status(delivery['id'], 'sent')
+                    # NOTE: Status update happens via MESSAGE_SENT/MESSAGE_FAILED events
+                    # This ensures accurate tracking based on adapter confirmation
                 except Exception as e:
-                    logger.error(f"Failed to deliver {delivery['id']}: {e}")
+                    logger.error(f"Failed to dispatch {delivery['id']}: {e}")
                     self._manager.update_delivery_status(delivery['id'], 'failed', error=str(e))
             
             # Short yield between batches to keep the event loop responsive
