@@ -10,17 +10,19 @@ from aos.core.security.identity import NodeIdentityManager
 
 
 class AosRole(str, Enum):
-    ROOT = "root"          # Full kernel access
-    ADMIN = "admin"        # Regional / Organization management
-    OPERATOR = "operator"  # Data entry and field operations
-    VIEWER = "viewer"      # Read-only access
+    ROOT = "root"              # Full kernel access (Super Admin)
+    ADMIN = "admin"            # Regional / Organization management
+    COMMUNITY_ADMIN = "community_admin"  # Single community management
+    OPERATOR = "operator"      # Data entry and field operations
+    VIEWER = "viewer"          # Read-only access
 
     @property
     def level(self) -> int:
         """Numeric level for hierarchical comparison."""
         return {
-            AosRole.ROOT: 4,
-            AosRole.ADMIN: 3,
+            AosRole.ROOT: 5,
+            AosRole.ADMIN: 4,
+            AosRole.COMMUNITY_ADMIN: 3,
             AosRole.OPERATOR: 2,
             AosRole.VIEWER: 1
         }[self]
@@ -150,3 +152,54 @@ def requires_role(minimum_role: AosRole):
         return current_user
     
     return role_checker
+
+def requires_community_access(group_id_param: str = "group_id"):
+    """
+    Dependency to enforce community-level isolation.
+    Root and Admin roles bypass this.
+    Community Admin must match the community_id.
+    """
+    async def access_checker(
+        request: Request,
+        current_user: dict = Depends(get_current_operator)
+    ):
+        # 1. Root/Admin bypass
+        user_role_str = current_user.get("role", "viewer")
+        try:
+            user_role = AosRole(user_role_str)
+        except ValueError:
+            user_role = AosRole.VIEWER
+
+        if user_role.level >= AosRole.ADMIN.level:
+            return current_user
+
+        # 2. Extract group_id from path or query
+        target_group_id = request.path_params.get(group_id_param)
+        if not target_group_id:
+            target_group_id = request.query_params.get(group_id_param)
+
+        # 3. Check community_id match
+        user_community_id = current_user.get("community_id")
+        
+        if user_role == AosRole.COMMUNITY_ADMIN:
+            if not target_group_id:
+                # If they didn't specify a group, we can't let them see "all"
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied: You must specify a community ID."
+                )
+            
+            if user_community_id == target_group_id:
+                return current_user
+            
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: You do not manage this community."
+            )
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Operation requires administrative privileges."
+        )
+
+    return access_checker

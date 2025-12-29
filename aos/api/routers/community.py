@@ -4,12 +4,12 @@ import csv
 import io
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
 from aos.api.state import community_state
-from aos.core.security.auth import get_current_operator
+from aos.core.security.auth import get_current_operator, AosRole, requires_community_access
 
 router = APIRouter(prefix="/community", tags=["community"])
 templates = Jinja2Templates(directory="aos/api/templates")
@@ -23,6 +23,11 @@ async def community_dashboard(
     trust: str = None,
     operator=Depends(get_current_operator)
 ):
+    # RBAC: Redirect community admin to their specific group
+    if operator.get("role") == AosRole.COMMUNITY_ADMIN.value:
+        comm_id = operator.get("community_id")
+        if comm_id:
+            return RedirectResponse(url=f"/community/{comm_id}", status_code=status.HTTP_303_SEE_OTHER)
     pagination_data = community_state.module.list_groups(
         page=page,
         per_page=10,
@@ -82,6 +87,8 @@ async def community_dashboard(
 
 @router.get("/register", response_class=HTMLResponse)
 async def community_register_form(request: Request, operator=Depends(get_current_operator)):
+    if AosRole(operator.get("role", "viewer")).level < AosRole.ADMIN.level:
+        raise HTTPException(403, "Access denied: Only system admins can register new communities.")
     return templates.TemplateResponse("partials/community_group_form.html", {"request": request, "user": operator})
 
 @router.post("/register")
@@ -93,6 +100,8 @@ async def register_community_group(
     location: str = Form(""),
     operator=Depends(get_current_operator)
 ):
+    if AosRole(operator.get("role", "viewer")).level < AosRole.ADMIN.level:
+        raise HTTPException(403, "Access denied: Only system admins can register new communities.")
     if community_state.module:
         await community_state.module.register_group(
             name=name,
@@ -108,7 +117,7 @@ async def register_community_group(
 async def edit_group_form(
     request: Request,
     group_id: str,
-    operator=Depends(get_current_operator)
+    operator=Depends(requires_community_access())
 ):
     """Show edit form for a group."""
     group = None
@@ -128,7 +137,7 @@ async def update_community_group(
     group_type: str = Form(...),
     description: str = Form(""),
     location: str = Form(""),
-    operator=Depends(get_current_operator)
+    operator=Depends(requires_community_access())
 ):
     """Update a community group."""
     if community_state.module:
@@ -151,7 +160,7 @@ async def update_community_group(
 @router.delete("/{group_id}")
 async def delete_community_group(
     group_id: str,
-    operator=Depends(get_current_operator)
+    operator=Depends(requires_community_access())
 ):
     """Deactivate a community group (Soft Delete)."""
     if community_state.module:
@@ -173,6 +182,17 @@ async def members_dashboard(
     search: str = None,
     operator=Depends(get_current_operator)
 ):
+    # RBAC: Enforce community isolation
+    if operator.get("role") == AosRole.COMMUNITY_ADMIN.value:
+        user_comm_id = operator.get("community_id")
+        if not group_id:
+            # Redirect to their own group if not specified
+            return RedirectResponse(
+                url=f"/community/members?group_id={user_comm_id}", 
+                status_code=status.HTTP_303_SEE_OTHER
+            )
+        if group_id != user_comm_id:
+            raise HTTPException(403, "Access denied: You do not manage this community.")
     """Dedicated member management dashboard."""
     data = community_state.module.list_all_members(
         page=page,
@@ -223,6 +243,11 @@ async def export_members(
     search: str = None,
     operator=Depends(get_current_operator)
 ):
+    # RBAC: Enforce community isolation
+    if operator.get("role") == AosRole.COMMUNITY_ADMIN.value:
+        user_comm_id = operator.get("community_id")
+        if not group_id or group_id != user_comm_id:
+            raise HTTPException(403, "Access denied: You must export from your own community.")
     """Export members as CSV."""
     data = community_state.module.list_all_members(
         page=1,
@@ -277,6 +302,11 @@ async def edit_member_form(
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
 
+    # RBAC: Enforce community isolation
+    if operator.get("role") == AosRole.COMMUNITY_ADMIN.value:
+        if member["community_id"] != operator.get("community_id"):
+            raise HTTPException(403, "Access denied: You do not manage this community.")
+
     return templates.TemplateResponse("partials/community_member_edit.html", {
         "request": request,
         "member": member
@@ -292,6 +322,21 @@ async def update_member_details(
 ):
     """Update member details (Admin only)."""
     if community_state.module:
+        # RBAC: Fetch member to check community ownership
+        res = community_state.module._db.execute(
+            "SELECT community_id FROM community_members WHERE id = ?",
+            (member_id,)
+        ).fetchone()
+        
+        if not res:
+            raise HTTPException(404, "Member not found")
+            
+        member_community_id = res[0]
+        
+        if operator.get("role") == AosRole.COMMUNITY_ADMIN.value:
+            if member_community_id != operator.get("community_id"):
+                raise HTTPException(403, "Access denied: You do not manage this community.")
+
         community_state.module.update_community_member(
             member_id=member_id,
             user_id=user_id,
@@ -307,7 +352,7 @@ async def update_member_details(
 async def list_group_members(
     request: Request,
     group_id: str,
-    operator=Depends(get_current_operator)
+    operator=Depends(requires_community_access())
 ):
     """List all members of a community group."""
     members = []
@@ -333,7 +378,7 @@ async def add_group_member(
     group_id: str,
     user_id: str = Form(...),
     channel: str = Form(...),
-    operator=Depends(get_current_operator)
+    operator=Depends(requires_community_access())
 ):
     """Add a member to a community group (Admin only)."""
     if community_state.module:
@@ -351,7 +396,7 @@ async def remove_group_member(
     group_id: str,
     user_id: str,
     channel: str,
-    operator=Depends(get_current_operator)
+    operator=Depends(requires_community_access())
 ):
     """Remove a member from a community group (Admin only)."""
     if community_state.module:
@@ -372,7 +417,7 @@ async def remove_group_member(
 async def community_detail(
     group_id: str,
     request: Request,
-    operator=Depends(get_current_operator)
+    operator=Depends(requires_community_access())
 ):
     """Community detail page with broadcast UI."""
     if not community_state.module:
@@ -439,7 +484,7 @@ async def send_broadcast(
     message: str = Form(...),
     channel: str = Form("telegram"),
     cost_confirmed: bool = Form(False),
-    operator=Depends(get_current_operator)
+    operator=Depends(requires_community_access())
 ):
     """Send broadcast with cost guardrail."""
     if not community_state.module:
@@ -492,7 +537,7 @@ async def confirm_broadcast(
     request: Request,
     message: str = Form(...),
     channel: str = Form("telegram"),
-    operator=Depends(get_current_operator)
+    operator=Depends(requires_community_access())
 ):
     """Confirm and send expensive broadcast."""
     if not community_state.module:
@@ -518,7 +563,7 @@ async def confirm_broadcast(
 async def get_broadcast_history(
     group_id: str,
     request: Request,
-    operator=Depends(get_current_operator)
+    operator=Depends(requires_community_access())
 ):
     """Fetch broadcast history for HTMX refresh."""
     if not community_state.module:

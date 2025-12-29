@@ -31,7 +31,7 @@ async def login(
         print(f"[Auth] Attempting login for: {username}")
         cursor = db.execute(
             """
-            SELECT o.id, o.username, o.password_hash, r.name 
+            SELECT o.id, o.username, o.password_hash, r.name, o.community_id 
             FROM operators o
             JOIN roles r ON o.role_id = r.id
             WHERE o.username=?
@@ -47,7 +47,7 @@ async def login(
                 status_code=401
             )
 
-        op_id, op_username, op_hash, op_role = row
+        op_id, op_username, op_hash, op_role, op_community_id = row
 
         if not verify_password(password, op_hash):
             print(f"[Auth] Invalid password for: {username}")
@@ -61,7 +61,8 @@ async def login(
         token = auth_manager.issue_token(payload={
             "sub": op_id,
             "username": op_username,
-            "role": op_role
+            "role": op_role,
+            "community_id": op_community_id
         })
 
         print("[Auth] Token issued. Setting cookie and redirecting...")
