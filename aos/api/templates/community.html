@@ -38,73 +38,36 @@
         </button>
     </div>
 
-    {% call card(padding="0", class="aos-overflow-hidden") %}
-    <table class="aos-table">
-        <thead>
-            <tr>
-                <th>Group Name</th>
-                <th>Type</th>
-                <th>Trust Level</th>
-                <th>Created</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for group in groups %}
-            <tr>
-                <td class="aos-font-bold">{{ group.name }}</td>
-                <td><span class="aos-badge aos-badge-info">{{ group.group_type }}</span></td>
-                <td>
-                    <span
-                        class="aos-badge {% if group.trust_level == 'verified' %}aos-badge-success{% else %}aos-badge-warning{% endif %}">
-                        {{ group.trust_level }}
-                    </span>
-                </td>
-                <td class="aos-text-sm aos-text-muted">{{ group.created_at.strftime('%Y-%m-%d') }}</td>
-                <td>
-                    <div class="flex items-center gap-2">
-                        <button class="aos-btn aos-btn-ghost aos-size-sm" hx-get="/community/{{ group.id }}/members"
-                            hx-target="#modal-content" onclick="openModal()">
-                            <span class="aos-btn-text">Members</span>
-                        </button>
-                        <button class="aos-btn aos-btn-ghost aos-size-sm aos-text-primary"
-                            hx-get="/community/{{ group.id }}/edit" hx-target="#modal-content" onclick="openModal()">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
-                                </path>
-                            </svg>
-                            <span class="aos-btn-text">Update</span>
-                        </button>
-                        <button class="aos-btn aos-btn-ghost aos-size-sm aos-text-danger hover:aos-bg-danger-fade"
-                            onclick="confirmDelete('{{ group.id }}', '{{ group.name }}')">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                                </path>
-                            </svg>
-                            <span class="aos-btn-text">Delete</span>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="5" class="aos-text-center aos-py-8 aos-text-muted">
-                    No community groups registered on this node.
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <!-- Filter Bar -->
+    <div class="flex flex-wrap items-center gap-4 mb-6">
+        <div class="flex-1 min-w-[240px]">
+            <input type="text" name="search" placeholder="Search groups..." class="aos-input aos-size-md w-full"
+                value="{{ search or '' }}" hx-get="/community" hx-trigger="keyup changed delay:500ms, search"
+                hx-target="#groups-table-container" hx-push-url="true" hx-include="[name='type'], [name='trust']"
+                hx-swap="outerHTML">
+        </div>
+        <div class="w-48">
+            <select name="type" class="aos-input aos-size-md w-full" hx-get="/community"
+                hx-target="#groups-table-container" hx-push-url="true" hx-include="[name='search'], [name='trust']"
+                hx-swap="outerHTML">
+                <option value="">All Types</option>
+                {% for t in group_types %}
+                <option value="{{ t }}" {% if t==selected_type %}selected{% endif %}>{{ t }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="w-48">
+            <select name="trust" class="aos-input aos-size-md w-full" hx-get="/community"
+                hx-target="#groups-table-container" hx-push-url="true" hx-include="[name='search'], [name='type']"
+                hx-swap="outerHTML">
+                <option value="">All Trust</option>
+                <option value="local" {% if selected_trust=='local' %}selected{% endif %}>Local</option>
+                <option value="verified" {% if selected_trust=='verified' %}selected{% endif %}>Verified</option>
+            </select>
+        </div>
+    </div>
 
-    {# Add pagination if there are multiple pages #}
-    {{ pagination(
-    current_page=page,
-    total_pages=total_pages,
-    on_page_change="loadPage"
-    ) }}
-    {% endcall %}
+    {% include "partials/community_groups_table.html" %}
 </section>
 
 <!-- Modal container for registration form -->
@@ -156,7 +119,24 @@
 
     // Pagination handler
     function loadPage(pageNum) {
-        window.location.href = `/community?page=${pageNum}`;
+        // Collect current filter values
+        const search = document.querySelector('input[name="search"]')?.value || '';
+        const type = document.querySelector('select[name="type"]')?.value || '';
+        const trust = document.querySelector('select[name="trust"]')?.value || '';
+
+        htmx.ajax('GET', '/community', {
+            values: { page: pageNum, search, type, trust },
+            target: '#groups-table-container',
+            swap: 'outerHTML'
+        });
+
+        // Update URL without reload
+        const url = new URL(window.location);
+        url.searchParams.set('page', pageNum);
+        if (search) url.searchParams.set('search', search); else url.searchParams.delete('search');
+        if (type) url.searchParams.set('type', type); else url.searchParams.delete('type');
+        if (trust) url.searchParams.set('trust', trust); else url.searchParams.delete('trust');
+        window.history.pushState({}, '', url);
     }
 
     function openModal() {

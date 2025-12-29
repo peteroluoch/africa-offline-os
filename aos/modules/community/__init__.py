@@ -17,24 +17,24 @@ import json
 import sqlite3
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING, List, Optional, Tuple, Dict
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 from aos.bus.events import Event
-
 from aos.db.models import (
-    CommunityGroupDTO,
-    CommunityEventDTO,
     CommunityAnnouncementDTO,
+    CommunityEventDTO,
+    CommunityGroupDTO,
     CommunityInquiryDTO,
-    CommunityMemberDTO
+    CommunityMemberDTO,
 )
-from .broadcast import BroadcastManager
 from aos.db.repository import (
-    CommunityGroupRepository,
-    CommunityEventRepository,
     CommunityAnnouncementRepository,
-    CommunityInquiryRepository
+    CommunityEventRepository,
+    CommunityGroupRepository,
+    CommunityInquiryRepository,
 )
+
+from .broadcast import BroadcastManager
 
 if TYPE_CHECKING:
     from aos.bus.dispatcher import EventDispatcher
@@ -62,8 +62,8 @@ class CommunityModule:
         actor_id: str,
         action: str,
         target_id: str,
-        community_id: Optional[str] = None,
-        metadata: Optional[Dict] = None
+        community_id: str | None = None,
+        metadata: dict | None = None
     ):
         """Internal helper to record audit logs."""
         log_id = f"LOG-{uuid.uuid4().hex[:8].upper()}"
@@ -78,7 +78,7 @@ class CommunityModule:
     async def register_group(
         self,
         name: str,
-        tags: List[str],
+        tags: list[str],
         location: str,
         admin_id: str,
         preferred_channels: str = "ussd,sms",
@@ -119,7 +119,7 @@ class CommunityModule:
             active=True
         )
         self._groups.save(group)
-        
+
         await self._dispatcher.dispatch(Event(
             name="COMMUNITY_GROUP_REGISTERED",
             payload={
@@ -129,7 +129,7 @@ class CommunityModule:
                 "tags": tags
             }
         ))
-        
+
         return group
 
     async def deactivate_group(self, group_id: str, admin_id: str) -> bool:
@@ -141,10 +141,10 @@ class CommunityModule:
         group = self.get_group(group_id)
         if not group:
             return False
-            
+
         group.active = False
         self._groups.save(group)
-        
+
         await self._dispatcher.dispatch(Event(
             name="COMMUNITY_GROUP_DEACTIVATED",
             payload={
@@ -154,45 +154,82 @@ class CommunityModule:
         ))
         return True
 
-    def get_group(self, group_id: str) -> Optional[CommunityGroupDTO]:
+    def get_group(self, group_id: str) -> CommunityGroupDTO | None:
         """Retrieve a group by ID."""
         return self._groups.get_by_id(group_id)
 
-    def list_groups(self, page: int = 1, per_page: int = 10) -> dict:
-        """List registered groups with pagination.
+    def list_groups(
+        self,
+        page: int = 1,
+        per_page: int = 10,
+        search_query: str | None = None,
+        group_type: str | None = None,
+        trust_level: str | None = None
+    ) -> dict:
+        """List registered groups with filtering and pagination.
         
         Args:
             page: Page number (1-indexed)
             per_page: Items per page
+            search_query: Search in name, description, or location
+            group_type: Filter by group type (tag)
+            trust_level: Filter by trust status
             
         Returns:
             Dict with 'groups', 'total', 'page', 'per_page', 'total_pages'
         """
-        # Only get active groups
-        all_groups = [g for g in self._groups.list_all() if g.active]
-        total = len(all_groups)
-        total_pages = (total + per_page - 1) // per_page  # Ceiling division
-        
+        # Get all groups
+        groups = [g for g in self._groups.list_all() if g.active]
+
+        # Apply filters
+        if search_query:
+            q = search_query.lower()
+            groups = [
+                g for g in groups
+                if q in g.name.lower() or
+                   (g.description and q in g.description.lower()) or
+                   q in g.location.lower()
+            ]
+
+        if group_type:
+            # We treat the first tag or the explicit group_type field as the type
+            groups = [g for g in groups if g.group_type == group_type]
+
+        if trust_level:
+            groups = [g for g in groups if g.trust_level == trust_level]
+
+        total = len(groups)
+        total_pages = (total + per_page - 1) // per_page if total > 0 else 0
+
         # Validate page number
         page = max(1, min(page, total_pages if total_pages > 0 else 1))
-        
+
         # Calculate slice
         start_idx = (page - 1) * per_page
         end_idx = start_idx + per_page
-        
+
         return {
-            "groups": all_groups[start_idx:end_idx],
+            "groups": groups[start_idx:end_idx],
             "total": total,
             "page": page,
             "per_page": per_page,
             "total_pages": total_pages
         }
 
+    def get_group_types(self) -> list[str]:
+        """Get unique active group types for filter dropdowns."""
+        groups = self._groups.list_all()
+        types = set()
+        for g in groups:
+            if g.active and g.group_type:
+                types.add(g.group_type)
+        return sorted(list(types))
+
     def discover_groups(
         self,
-        location: Optional[str] = None,
-        tag_filter: Optional[List[str]] = None
-    ) -> List[CommunityGroupDTO]:
+        location: str | None = None,
+        tag_filter: list[str] | None = None
+    ) -> list[CommunityGroupDTO]:
         """
         Discover groups by location and/or tags.
         
@@ -205,24 +242,24 @@ class CommunityModule:
         """
         all_groups = self._groups.list_all()
         results = []
-        
+
         for group in all_groups:
             if not group.active:
                 continue
-                
+
             # Location filter
             if location and group.location:
                 if location.lower() not in group.location.lower():
                     continue
-            
+
             # Tag filter
             if tag_filter:
                 group_tags = json.loads(group.tags)
                 if not any(tag.lower() in [t.lower() for t in group_tags] for tag in tag_filter):
                     continue
-            
+
             results.append(group)
-        
+
         return results
 
     # --- Event Management ---
@@ -234,8 +271,8 @@ class CommunityModule:
         event_type: str,
         start_time: datetime,
         language: str = "en",
-        end_time: Optional[datetime] = None,
-        recurrence: Optional[str] = None,
+        end_time: datetime | None = None,
+        recurrence: str | None = None,
         visibility: str = "public"
     ) -> CommunityEventDTO:
         """
@@ -266,7 +303,7 @@ class CommunityModule:
             language=language
         )
         self._events.save(event)
-        
+
         await self._dispatcher.dispatch(Event(
             name="COMMUNITY_EVENT_PUBLISHED",
             payload={
@@ -276,14 +313,14 @@ class CommunityModule:
                 "start_time": start_time.isoformat()
             }
         ))
-        
+
         return event
 
     def list_events(
         self,
-        location: Optional[str] = None,
-        date: Optional[datetime] = None
-    ) -> List[CommunityEventDTO]:
+        location: str | None = None,
+        date: datetime | None = None
+    ) -> list[CommunityEventDTO]:
         """
         List events, optionally filtered by location and/or date.
         
@@ -295,10 +332,10 @@ class CommunityModule:
             List of matching events
         """
         all_events = self._events.list_all()
-        
+
         if not location and not date:
             return all_events
-        
+
         results = []
         for event in all_events:
             # Location filter (requires group lookup)
@@ -306,14 +343,14 @@ class CommunityModule:
                 group = self._groups.get_by_id(event.group_id)
                 if not group or not group.location or location.lower() not in group.location.lower():
                     continue
-            
+
             # Date filter
             if date:
                 if event.start_time.date() != date.date():
                     continue
-            
+
             results.append(event)
-        
+
         return results
 
     # --- Announcements & Broadcasts ---
@@ -323,7 +360,7 @@ class CommunityModule:
         group_id: str,
         message: str,
         urgency: str = "normal",
-        expires_at: Optional[datetime] = None,
+        expires_at: datetime | None = None,
         target_audience: str = "public"
     ) -> CommunityAnnouncementDTO:
         """
@@ -348,7 +385,7 @@ class CommunityModule:
             target_audience=target_audience
         )
         self._announcements.save(announcement)
-        
+
         await self._dispatcher.dispatch(Event(
             name="COMMUNITY_ANNOUNCEMENT_CREATED",
             payload={
@@ -358,7 +395,7 @@ class CommunityModule:
                 "urgency": urgency
             }
         ))
-        
+
         return announcement
 
     # --- Member Management (SECURITY-CRITICAL) ---
@@ -388,11 +425,11 @@ class CommunityModule:
         """
         if not community_id or not user_id or not channel:
             raise ValueError("community_id, user_id, and channel are required")
-        
+
         # Verify community exists
         if not self._groups.get_by_id(community_id):
             raise ValueError(f"Invalid community_id: {community_id}")
-        
+
         member_id = f"MEM-{uuid.uuid4().hex[:8].upper()}"
         self._db.execute("""
             INSERT OR IGNORE INTO community_members 
@@ -400,7 +437,7 @@ class CommunityModule:
             VALUES (?, ?, ?, ?, 1)
         """, (member_id, community_id, user_id, channel))
         self._db.commit()
-        
+
         self._log_activity(
             actor_id=actor_id,
             action="member_add",
@@ -434,7 +471,7 @@ class CommunityModule:
             WHERE community_id = ? AND user_id = ? AND channel = ?
         """, (community_id, user_id, channel))
         self._db.commit()
-        
+
         self._log_activity(
             actor_id=actor_id,
             action="member_remove",
@@ -468,7 +505,7 @@ class CommunityModule:
             WHERE id = ?
         """, (user_id, channel, member_id))
         self._db.commit()
-        
+
         self._log_activity(
             actor_id=actor_id,
             action="member_update",
@@ -480,8 +517,8 @@ class CommunityModule:
     def get_community_members(
         self,
         community_id: str,
-        channel: Optional[str] = None
-    ) -> List[str]:
+        channel: str | None = None
+    ) -> list[str]:
         """
         Resolve members of a community.
         
@@ -500,20 +537,20 @@ class CommunityModule:
         """
         if not community_id:
             raise ValueError("community_id is required for recipient resolution")
-        
+
         # Verify community exists
         community = self._groups.get_by_id(community_id)
         if not community:
             raise ValueError(f"Invalid community_id: {community_id}")
-        
+
         # KERNEL-LEVEL QUERY: Mandatory WHERE community_id = ?
         query = "SELECT user_id FROM community_members WHERE community_id = ? AND active = 1"
         params = [community_id]
-        
+
         if channel:
             query += " AND channel = ?"
             params.append(channel)
-        
+
         cursor = self._db.execute(query, params)
         return [row[0] for row in cursor.fetchall()]
 
@@ -521,10 +558,10 @@ class CommunityModule:
         self,
         page: int = 1,
         per_page: int = 50,
-        group_id: Optional[str] = None,
-        channel: Optional[str] = None,
-        search_query: Optional[str] = None
-    ) -> Dict:
+        group_id: str | None = None,
+        channel: str | None = None,
+        search_query: str | None = None
+    ) -> dict:
         """
         List all community members with filtering and pagination.
         
@@ -540,7 +577,7 @@ class CommunityModule:
         """
         query = "SELECT m.user_id, m.channel, m.joined_at, m.active, g.name as group_name, m.community_id, m.id FROM community_members m JOIN community_groups g ON m.community_id = g.id WHERE m.active = 1"
         params = []
-        
+
         if group_id:
             query += " AND m.community_id = ?"
             params.append(group_id)
@@ -552,26 +589,26 @@ class CommunityModule:
             # Deep search across User ID, Group Name
             query += " AND (m.user_id LIKE ? OR g.name LIKE ?)"
             params.extend([search_pattern, search_pattern])
-            
+
             # Smart phone normalization for Kenyan numbers
             if search_query.startswith('0') and len(search_query) > 1:
                 query = query[:-1] + " OR m.user_id LIKE ?)"
                 params.append(f"%+254{search_query[1:]}%")
-            
+
         # Get total count
         count_params = list(params)
         count_query = query.replace("m.user_id, m.channel, m.joined_at, m.active, g.name as group_name, m.community_id, m.id", "COUNT(*)")
         total = self._db.execute(count_query, count_params).fetchone()[0]
-        
+
         total_pages = (total + per_page - 1) // per_page if total > 0 else 0
         page = max(1, min(page, total_pages if total_pages > 0 else 1))
-        
+
         # Add pagination
         query += " ORDER BY m.joined_at DESC LIMIT ? OFFSET ?"
         params.extend([per_page, (page - 1) * per_page])
-        
+
         rows = self._db.execute(query, params).fetchall()
-        
+
         members = []
         for row in rows:
             members.append({
@@ -583,7 +620,7 @@ class CommunityModule:
                 "community_id": row[5],
                 "id": row[6]
             })
-            
+
         return {
             "members": members,
             "total": total,
@@ -621,22 +658,22 @@ class CommunityModule:
         announcement = self._announcements.get_by_id(announcement_id)
         if not announcement:
             raise ValueError(f"Invalid announcement_id: {announcement_id}")
-        
+
         community_id = announcement.group_id
-        
+
         # 2. Verify admin→community binding
         community = self._groups.get_by_id(community_id)
         if not community:
             raise ValueError(f"Invalid community: {community_id}")
-        
+
         if community.admin_id != admin_id:
             raise ValueError(
                 f"Admin {admin_id} not authorized for community {community_id}"
             )
-        
+
         # 3. Resolve recipients (KERNEL-LEVEL SCOPING)
         recipients = self.get_community_members(community_id)
-        
+
         if not recipients:
             return {
                 "delivered": 0,
@@ -644,7 +681,7 @@ class CommunityModule:
                 "community_id": community_id,
                 "recipients": []
             }
-        
+
         # 4. Emit delivery event (adapters listen and send)
         await self._dispatcher.dispatch(Event(
             name="COMMUNITY_MESSAGE_DELIVER",
@@ -656,7 +693,7 @@ class CommunityModule:
                 "urgency": announcement.urgency
             }
         ))
-        
+
         return {
             "delivered": len(recipients),
             "failed": 0,
@@ -670,7 +707,7 @@ class CommunityModule:
         self,
         group_id: str,
         question: str
-    ) -> Tuple[Optional[str], Optional[str]]:
+    ) -> tuple[str | None, str | None]:
         """
         Handle an inquiry using the cache.
         
@@ -682,19 +719,19 @@ class CommunityModule:
             Tuple of (answer, inquiry_id) if found, else (None, None)
         """
         normalized = question.strip().lower()
-        
+
         all_inquiries = self._inquiries.list_all()
         for inquiry in all_inquiries:
             if inquiry.group_id != group_id:
                 continue
-            
+
             if inquiry.normalized_question in normalized or normalized in inquiry.normalized_question:
                 # Increment hit count
                 inquiry.hit_count += 1
                 self._inquiries.save(inquiry)
-                
+
                 return (inquiry.answer, inquiry.id)
-        
+
         return (None, None)
 
     async def reply_to_inquiry(

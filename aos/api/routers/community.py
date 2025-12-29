@@ -3,39 +3,67 @@ from __future__ import annotations
 import csv
 import io
 from datetime import datetime
-from fastapi import APIRouter, Depends, Request, Form, HTTPException
+
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
 from aos.api.state import community_state
 from aos.core.security.auth import get_current_operator
-from aos.db.models import CommunityGroupDTO
 
 router = APIRouter(prefix="/community", tags=["community"])
 templates = Jinja2Templates(directory="aos/api/templates")
 
 @router.get("/", response_class=HTMLResponse)
-async def community_dashboard(request: Request, page: int = 1, operator=Depends(get_current_operator)):
-    pagination_data = community_state.module.list_groups(page=page, per_page=10) if community_state.module else {
+async def community_dashboard(
+    request: Request,
+    page: int = 1,
+    search: str = None,
+    type: str = None,
+    trust: str = None,
+    operator=Depends(get_current_operator)
+):
+    pagination_data = community_state.module.list_groups(
+        page=page,
+        per_page=10,
+        search_query=search,
+        group_type=type,
+        trust_level=trust
+    ) if community_state.module else {
         "groups": [],
         "total": 0,
         "page": 1,
         "per_page": 10,
         "total_pages": 0
     }
-    
+
+    # Get all unique group types for filter dropdown
+    group_types = []
+    if community_state.module:
+        group_types = community_state.module.get_group_types()
+
     # Mock some counts for the dashboard
     broadcasts_count = 0
     if community_state.module:
         broadcasts_count = len(community_state.module._announcements.list_all())
 
-    return templates.TemplateResponse("community.html", {
+    context = {
         "request": request,
         "user": operator,
-        **pagination_data,  # Unpack pagination data
+        "search": search,
+        "selected_type": type,
+        "selected_trust": trust,
+        "group_types": group_types,
+        **pagination_data,
         "broadcasts_count": broadcasts_count,
         "inquiry_hits": 0
-    })
+    }
+
+    # If HTMX request, return only the table partial
+    if request.headers.get("hx-request") == "true":
+        return templates.TemplateResponse("partials/community_groups_table.html", context)
+
+    return templates.TemplateResponse("community.html", context)
 
 @router.get("/register", response_class=HTMLResponse)
 async def community_register_form(request: Request, operator=Depends(get_current_operator)):
@@ -71,7 +99,7 @@ async def edit_group_form(
     group = None
     if community_state.module:
         group = community_state.module.get_group(group_id)
-    
+
     return templates.TemplateResponse("partials/community_group_edit.html", {
         "request": request,
         "user": operator,
@@ -99,10 +127,10 @@ async def update_community_group(
             group.location = location
             # Tags must be JSON string for SQLite
             group.tags = json.dumps([group_type] if group_type else [])
-            
+
             # Save updated group
             community_state.module._groups.save(group)
-    
+
     return RedirectResponse(url="/community", status_code=303)
 
 @router.delete("/{group_id}")
@@ -118,7 +146,7 @@ async def delete_community_group(
         )
         if success:
             return {"status": "success"}
-    
+
     raise HTTPException(status_code=404, detail="Group not found")
 
 @router.get("/members", response_class=HTMLResponse)
@@ -144,12 +172,12 @@ async def members_dashboard(
         "per_page": 50,
         "total_pages": 0
     }
-    
+
     # Get all groups for filter dropdown
     all_groups = []
     if community_state.module:
         all_groups = [g for g in community_state.module._groups.list_all() if g.active]
-        
+
     # If HTMX request, return only the table partial
     if request.headers.get("hx-request") == "true":
         return templates.TemplateResponse("partials/community_members_table.html", {
@@ -188,11 +216,11 @@ async def export_members(
         channel=channel,
         search_query=search
     ) if community_state.module else {"members": []}
-    
+
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(["User ID", "Group", "Channel", "Joined At", "Status"])
-    
+
     for m in data["members"]:
         writer.writerow([
             m["user_id"],
@@ -201,7 +229,7 @@ async def export_members(
             m["joined_at"].strftime('%Y-%m-%d %H:%M:%S') if m["joined_at"] else "N/A",
             "Active" if m["active"] else "Inactive"
         ])
-        
+
     output.seek(0)
     return StreamingResponse(
         iter([output.getvalue()]),
@@ -230,10 +258,10 @@ async def edit_member_form(
                 "channel": res[3],
                 "group_name": res[4]
             }
-            
+
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
-        
+
     return templates.TemplateResponse("partials/community_member_edit.html", {
         "request": request,
         "member": member
@@ -265,12 +293,12 @@ async def list_group_members(
     """List all members of a community group."""
     members = []
     group = None
-    
+
     if community_state.module:
         group = community_state.module.get_group(group_id)
         if group:
             members = community_state.module.get_community_members(group_id)
-    
+
     return templates.TemplateResponse("partials/community_members.html", {
         "request": request,
         "user": operator,
@@ -311,5 +339,5 @@ async def remove_group_member(
             actor_id=operator.id
         )
         return {"status": "success"}
-    
+
     raise HTTPException(status_code=404, detail="Member not found")
