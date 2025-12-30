@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import io
+import sqlite3
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
@@ -163,7 +164,14 @@ async def update_community_group(
             group.tags = json.dumps([group_type] if group_type else [])
 
             # Save updated group
-            community_state.module._groups.save(group)
+            try:
+                community_state.module._groups.save(group)
+            except sqlite3.IntegrityError as e:
+                if "UNIQUE constraint failed: community_groups.community_code" in str(e):
+                    raise HTTPException(status_code=400, detail="Community code already in use by another active community.")
+                raise HTTPException(status_code=500, detail=f"Database integrity error: {str(e)}")
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
 
     return RedirectResponse(url="/community", status_code=303)
 

@@ -85,13 +85,48 @@
 </div>
 
 <script>
-    // FAANG-grade toast notification
+    // FAANG-grade toast notification (Premium Glassmorphism)
     function showToast(message, type = 'error') {
         const toast = document.createElement('div');
-        toast.style.cssText = `position: fixed; top: 20px; right: 20px; padding: 16px 24px; background: ${type === 'success' ? '#10b981' : '#ef4444'}; color: white; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 10000; font-weight: 500;`;
-        toast.textContent = message;
+        const borderColor = type === 'success' ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)';
+        const bgColor = type === 'success' ? 'rgba(6, 78, 59, 0.9)' : 'rgba(127, 29, 29, 0.9)';
+
+        toast.style.cssText = `
+            position: fixed; 
+            top: 24px; 
+            right: 24px; 
+            padding: 16px 28px; 
+            background: ${bgColor}; 
+            color: white; 
+            border-radius: 12px; 
+            box-shadow: 0 12px 40px rgba(0,0,0,0.5); 
+            z-index: 10000; 
+            font-weight: 500;
+            backdrop-filter: blur(8px);
+            border: 1px solid ${borderColor};
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translateX(120%);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            letter-spacing: -0.01em;
+        `;
+
+        const icon = type === 'success' ? '✅' : '⚠️';
+        toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+
         document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 4000);
+
+        // Trigger animation
+        requestAnimationFrame(() => {
+            toast.style.transform = 'translateX(0)';
+        });
+
+        setTimeout(() => {
+            toast.style.transform = 'translateX(120%)';
+            setTimeout(() => toast.remove(), 400);
+        }, 4500);
     }
 
     // Handle form submission
@@ -108,14 +143,14 @@
             });
 
             if (response.ok) {
-                showToast('Community updated successfully!', 'success');
+                showToast('Community updated successfully! 🎉', 'success');
                 closeModal();
-                window.scrollTo({ top: 0, behavior: 'instant' });
-                setTimeout(() => window.location.reload(), 1000);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setTimeout(() => window.location.reload(), 1200);
             } else {
-                const errorText = await response.text();
-                console.error('Server error:', response.status, errorText);
-                showToast(`Update failed: ${response.statusText}`);
+                const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+                console.error('Server error:', response.status, errorData);
+                showToast(`Update failed: ${errorData.detail || response.statusText}`);
             }
         } catch (error) {
             console.error('Update failed:', error);
