@@ -282,6 +282,41 @@ def create_app() -> FastAPI:
             }
         }
 
+    @app.get("/health/ready")
+    def readiness_check() -> dict:
+        """
+        Kubernetes-style readiness probe.
+        Returns 200 only if app is ready to serve traffic.
+        """
+        try:
+            # Check database is accessible
+            if not core_state.db_conn:
+                return {"ready": False, "reason": "Database not initialized"}
+            
+            # Verify database is responsive
+            core_state.db_conn.execute("SELECT 1").fetchone()
+            
+            # Check event dispatcher is running
+            if not core_state.event_dispatcher:
+                return {"ready": False, "reason": "Event dispatcher not initialized"}
+            
+            # Check disk space (need at least 100MB)
+            disk_free = get_disk_space()
+            if disk_free < 100:
+                return {"ready": False, "reason": f"Low disk space: {disk_free}MB"}
+            
+            return {
+                "ready": True,
+                "timestamp": time.time(),
+                "checks": {
+                    "database": "ok",
+                    "event_dispatcher": "ok",
+                    "disk_space": f"{disk_free}MB"
+                }
+            }
+        except Exception as e:
+            return {"ready": False, "reason": str(e)}
+
     @app.get("/stream")
     async def stream(current_user: dict = Depends(get_current_operator)) -> StreamingResponse:
         """Stream real-time kernel events (Protected)."""

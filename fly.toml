@@ -1,20 +1,36 @@
-# fly.toml app configuration file generated for africa-offline-os on 2025-12-29T20:00:16+03:00
-#
-# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
+# A-OS Kernel Production Deployment Configuration
+# Region: Johannesburg (closest to Kenya for low latency)
 
 app = 'africa-offline-os'
-primary_region = 'sin'
+primary_region = 'jnb'  # Changed from 'sin' to Johannesburg
 
 [build]
+  dockerfile = "Dockerfile"
+
+[env]
+  AOS_ENV = "production"
+  AOS_SQLITE_PATH = "/data/aos.db"
+
+# Persistent volume for SQLite database
+[mounts]
+  source = "aos_data"
+  destination = "/data"
 
 [http_service]
   internal_port = 8000
   force_https = true
-  auto_stop_machines = 'stop'
+  auto_stop_machines = 'off'  # Keep running for production
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1    # Always have 1 instance
   processes = ['app']
+
+# Health check configuration
+[[http_service.checks]]
+  interval = "30s"
+  grace_period = "10s"
+  method = "GET"
+  path = "/health"
+  timeout = "5s"
 
 [[vm]]
   memory = '1gb'
