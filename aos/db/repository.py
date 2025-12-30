@@ -180,15 +180,25 @@ class CommunityGroupRepository(BaseRepository[CommunityGroupDTO]):
 
     def save(self, group: CommunityGroupDTO) -> None:
         self.conn.execute("""
-            INSERT OR REPLACE INTO community_groups (id, name, description, group_type, tags, location, admin_id, trust_level, preferred_channels, invite_slug, active, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (group.id, group.name, group.description, group.group_type, group.tags, group.location, group.admin_id, group.trust_level, group.preferred_channels, group.invite_slug, group.active, group.created_at))
+            INSERT OR REPLACE INTO community_groups (id, name, description, group_type, tags, location, admin_id, trust_level, preferred_channels, invite_slug, community_code, code_active, active, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (group.id, group.name, group.description, group.group_type, group.tags, group.location, group.admin_id, group.trust_level, group.preferred_channels, group.invite_slug, group.community_code, group.code_active, group.active, group.created_at))
         self.conn.commit()
 
     def get_by_slug(self, slug: str) -> CommunityGroupDTO | None:
         """Fetch a single record by its invite slug."""
         self.conn.row_factory = sqlite3.Row
         cursor = self.conn.execute(f"SELECT * FROM {self.table_name} WHERE invite_slug = ?", (slug,))
+        row = cursor.fetchone()
+        return self._row_to_model(row) if row else None
+
+    def get_by_code(self, code: str) -> CommunityGroupDTO | None:
+        """Fetch a single active community by its code."""
+        self.conn.row_factory = sqlite3.Row
+        cursor = self.conn.execute(
+            f"SELECT * FROM {self.table_name} WHERE community_code = ? AND code_active = 1",
+            (code,)
+        )
         row = cursor.fetchone()
         return self._row_to_model(row) if row else None
 

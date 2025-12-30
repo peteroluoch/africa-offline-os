@@ -53,6 +53,24 @@
                 <textarea id="description" name="description" class="aos-input" rows="3"
                     placeholder="Brief description of the group">{{ group.description }}</textarea>
             </div>
+
+            <div class="aos-divider aos-my-2"></div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="aos-label" for="community_code">Community Code</label>
+                    <input type="text" id="community_code" name="community_code" class="aos-input aos-uppercase"
+                        value="{{ group.community_code or '' }}" placeholder="e.g. RCCG-NAIROBI">
+                    <p class="aos-text-xs aos-text-muted aos-mt-1">Manual entry code for participants.</p>
+                </div>
+                <div class="flex items-center aos-pt-6">
+                    <label class="flex items-center cursor-pointer gap-2">
+                        <input type="checkbox" name="code_active" value="true" class="aos-checkbox" {% if
+                            group.code_active %}checked{% endif %}>
+                        <span class="aos-label aos-mb-0">Code Active</span>
+                    </label>
+                </div>
+            </div>
         </div>
 
         <div class="flex gap-3 justify-end">

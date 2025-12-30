@@ -75,6 +75,8 @@ class CommunityGroupDTO(BaseModel):
     trust_level: str = "local"
     preferred_channels: str = "ussd,sms"
     invite_slug: str | None = None
+    community_code: str | None = None
+    code_active: bool = False
     active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
 

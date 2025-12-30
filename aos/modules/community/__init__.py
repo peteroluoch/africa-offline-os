@@ -93,7 +93,9 @@ class CommunityModule:
         admin_id: str,
         preferred_channels: str = "ussd,sms",
         group_type: str = "",
-        description: str = ""
+        description: str = "",
+        community_code: str = None,
+        code_active: bool = False
     ) -> CommunityGroupDTO:
         """
         Register a new community group.
@@ -106,6 +108,8 @@ class CommunityModule:
             preferred_channels: Comma-separated list of channels
             group_type: Optional type descriptor
             description: Optional description
+            community_code: Optional manual registration code
+            code_active: Whether the code is active for self-registration
             
         Returns:
             Newly created or existing CommunityGroupDTO
@@ -141,6 +145,8 @@ class CommunityModule:
             trust_level="local",
             preferred_channels=preferred_channels,
             invite_slug=invite_slug,
+            community_code=community_code.strip().upper() if community_code else None,
+            code_active=code_active,
             active=True
         )
         self._groups.save(group)
@@ -186,6 +192,10 @@ class CommunityModule:
     def get_group_by_slug(self, slug: str) -> CommunityGroupDTO | None:
         """Retrieve a group by invite slug."""
         return self._groups.get_by_slug(slug)
+
+    def get_group_by_code(self, code: str) -> CommunityGroupDTO | None:
+        """Retrieve an active group by community code."""
+        return self._groups.get_by_code(code)
 
     def list_groups(
         self,

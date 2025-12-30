@@ -142,6 +142,8 @@ async def update_community_group(
     group_type: str = Form(...),
     description: str = Form(""),
     location: str = Form(""),
+    community_code: str = Form(None),
+    code_active: bool = Form(False),
     operator=Depends(requires_community_access())
 ):
     """Update a community group."""
@@ -154,6 +156,8 @@ async def update_community_group(
             group.group_type = group_type
             group.description = description
             group.location = location
+            group.community_code = community_code.strip().upper() if community_code else None
+            group.code_active = code_active
             # Tags must be JSON string for SQLite
             group.tags = json.dumps([group_type] if group_type else [])
 

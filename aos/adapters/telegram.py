@@ -207,6 +207,16 @@ class TelegramAdapter(ChannelAdapter):
             await self.send_message(str(chat_id), "🎗️ <b>One last step!</b>\n\nSelect your roles (you can pick multiple):", metadata={"reply_markup": keyboard})
             
         else:
+            # Phase 3: Check if text matches a community code
+            # This happens BEFORE domain-specific routing
+            potential_code = text.strip().upper()
+            group = self.community_module.get_group_by_code(potential_code)
+            
+            if group:
+                # Valid community code detected
+                await self._handle_community_join_request_by_code(chat_id, group)
+                return
+            
             # If not in a core registration state, it might be a domain-specific conversational state
             # Here we could delegate to the router, but for now we'll keep it simple
             # As modules grow, we can add a router.handle_text method.
@@ -280,12 +290,8 @@ class TelegramAdapter(ChannelAdapter):
     async def send_welcome(self, chat_id: int):
         welcome_text = (
             "🌍 <b>Welcome to Africa Offline OS (A-OS)</b>\n\n"
-            "One platform for farming, transport, health, and community services. "
-            "Works offline and syncs when connected!\n\n"
-            "🚀 <b>Quick Start:</b>\n"
-            "👋 New here? Use /register to join.\n"
-            "📂 Already member? Use /domain to select a service.\n"
-            "👤 Use /profile to see your settings."
+            "If you have a <b>Community Code</b>, type it now to join.\n\n"
+            "Or type /help to learn more about our services."
         )
         await self.send_message(str(chat_id), welcome_text)
 
@@ -383,3 +389,22 @@ class TelegramAdapter(ChannelAdapter):
                 )
             else:
                 await self.send_message(str(chat_id), "❌ Failed to join. You might already be a member.")
+
+    async def _handle_community_join_request_by_code(self, chat_id: int, group: Any):
+        """Handle community join via typed code (Phase 3)."""
+        keyboard = {
+            "inline_keyboard": [
+                [
+                    {"text": "✅ Confirm", "callback_data": f"join_confirm_{group.id}"},
+                    {"text": "❌ Cancel", "callback_data": "join_cancel"}
+                ]
+            ]
+        }
+        
+        message = (
+            f"🤝 <b>Community Invitation</b>\n\n"
+            f"You are about to join <b>{group.name}</b>.\n"
+            f"This will allow the community to send you updates.\n\n"
+            f"Do you want to continue?"
+        )
+        await self.send_message(str(chat_id), message, metadata={"reply_markup": keyboard})
