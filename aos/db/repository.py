@@ -179,12 +179,18 @@ class CommunityGroupRepository(BaseRepository[CommunityGroupDTO]):
         super().__init__(connection, CommunityGroupDTO, "community_groups")
 
     def save(self, group: CommunityGroupDTO) -> None:
+        import logging
+        logger = logging.getLogger("aos.db.repository")
+        
         # Check if group exists
         cursor = self.conn.execute("SELECT id FROM community_groups WHERE id = ?", (group.id,))
         exists = cursor.fetchone() is not None
         
+        logger.info(f"Saving group {group.id}: exists={exists}, code={group.community_code}, active={group.code_active}")
+        
         if exists:
             # Update existing group
+            logger.info(f"Updating existing group {group.id}")
             self.conn.execute("""
                 UPDATE community_groups 
                 SET name = ?, description = ?, group_type = ?, tags = ?, location = ?, 
@@ -196,12 +202,14 @@ class CommunityGroupRepository(BaseRepository[CommunityGroupDTO]):
                   group.community_code, group.code_active, group.active, group.id))
         else:
             # Insert new group
+            logger.info(f"Inserting new group {group.id}")
             self.conn.execute("""
                 INSERT INTO community_groups (id, name, description, group_type, tags, location, admin_id, trust_level, preferred_channels, invite_slug, community_code, code_active, active, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (group.id, group.name, group.description, group.group_type, group.tags, group.location, group.admin_id, group.trust_level, group.preferred_channels, group.invite_slug, group.community_code, group.code_active, group.active, group.created_at))
         
         self.conn.commit()
+        logger.info(f"Successfully saved group {group.id}")
 
     def get_by_slug(self, slug: str) -> CommunityGroupDTO | None:
         """Fetch a single record by its invite slug."""
