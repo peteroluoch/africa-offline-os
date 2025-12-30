@@ -143,7 +143,7 @@ async def update_community_group(
     description: str = Form(""),
     location: str = Form(""),
     community_code: str = Form(None),
-    code_active: bool = Form(False),
+    code_active: str = Form(None),  # Checkbox sends string "true" or None
     operator=Depends(requires_community_access())
 ):
     """Update a community group."""
@@ -157,7 +157,8 @@ async def update_community_group(
             group.description = description
             group.location = location
             group.community_code = community_code.strip().upper() if community_code else None
-            group.code_active = code_active
+            # Convert checkbox string to boolean
+            group.code_active = code_active == "true" if code_active else False
             # Tags must be JSON string for SQLite
             group.tags = json.dumps([group_type] if group_type else [])
 
