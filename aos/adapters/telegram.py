@@ -39,6 +39,7 @@ class TelegramAdapter(ChannelAdapter):
         self.agri_module = agri_module
         self.transport_module = transport_module
         self.community_module = community_module
+        self.logger = logging.getLogger(__name__)
         
         # Inject or create gateway for API interactions
         self.gateway = gateway or TelegramGateway()
