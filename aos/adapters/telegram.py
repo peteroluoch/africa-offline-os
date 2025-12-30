@@ -128,6 +128,20 @@ class TelegramAdapter(ChannelAdapter):
             # 1. Handle Global Core Commands
             if command == '/start':
                 await self.send_welcome(chat_id)
+            elif command == '/myid':
+                # Surgical Phase 1: Only echo ID, no storage or registration
+                chat_type = message.get('chat', {}).get('type')
+                if chat_type == 'private':
+                    await self.send_message(
+                        str(chat_id),
+                        f"Your Telegram ID is: <code>{chat_id}</code>\n\n"
+                        "Share this ID with your community admin if they need to add you manually."
+                    )
+                else:
+                    await self.send_message(
+                        str(chat_id),
+                        "Please send /myid in a private chat with the bot."
+                    )
             elif command == '/register':
                 await self._start_registration(chat_id)
             elif command == '/profile':
