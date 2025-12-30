@@ -175,14 +175,17 @@ class TelegramAdapter(ChannelAdapter):
         user_state = state_manager.get_state(chat_id)
         
         # Phase 3: Check if text matches a community code FIRST
-        # This must happen before state checks so it works for all users
         potential_code = text.strip().upper()
+        self.logger.info(f"[Phase 3] Checking potential community code: '{potential_code}' from chat {chat_id}")
+        
         group = self.community_module.get_group_by_code(potential_code)
         
         if group:
-            # Valid community code detected
+            self.logger.info(f"[Phase 3] MATCH FOUND! Group: {group.name} (ID: {group.id})")
             await self._handle_community_join_request_by_code(chat_id, group)
             return
+        else:
+            self.logger.info(f"[Phase 3] No active community found for code: '{potential_code}'")
         
         if not user_state:
             # Fallback - echo or suggest commands

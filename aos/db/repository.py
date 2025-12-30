@@ -221,9 +221,10 @@ class CommunityGroupRepository(BaseRepository[CommunityGroupDTO]):
     def get_by_code(self, code: str) -> CommunityGroupDTO | None:
         """Fetch a single active community by its code."""
         self.conn.row_factory = sqlite3.Row
+        # Case-insensitive lookup using UPPER
         cursor = self.conn.execute(
-            f"SELECT * FROM {self.table_name} WHERE community_code = ? AND code_active = 1",
-            (code,)
+            f"SELECT * FROM {self.table_name} WHERE UPPER(community_code) = UPPER(?) AND code_active = 1",
+            (code.strip(),)
         )
         row = cursor.fetchone()
         return self._row_to_model(row) if row else None
