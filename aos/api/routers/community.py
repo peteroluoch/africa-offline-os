@@ -411,6 +411,78 @@ async def remove_group_member(
     raise HTTPException(status_code=404, detail="Member not found")
 
 
+# ========== MEMBER ADDITION ENDPOINTS ==========
+
+@router.get("/members/add", response_class=HTMLResponse)
+async def add_member_form(
+    request: Request,
+    group_id: str,
+    operator=Depends(get_current_operator)
+):
+    """Show add member form - REUSES existing member management UI"""
+    # RBAC: Enforce community isolation for COMMUNITY_ADMIN and OPERATOR
+    if operator.get("role") in [AosRole.COMMUNITY_ADMIN.value, AosRole.OPERATOR.value]:
+        user_comm_id = operator.get("community_id")
+        if not group_id or group_id != user_comm_id:
+            raise HTTPException(403, "Access denied: You can only add members to your own community.")
+    
+    if not community_state.module:
+        raise HTTPException(500, "Community module not initialized")
+    
+    # Get group details
+    group = community_state.module.get_group(group_id)
+    if not group:
+        raise HTTPException(404, "Group not found")
+    
+    # Get existing members
+    members = community_state.module.get_community_members(group_id)
+    
+    # REUSE existing template that already has add member form
+    return templates.TemplateResponse("partials/community_members.html", {
+        "request": request,
+        "user": operator,
+        "group": group,
+        "members": members
+    })
+
+@router.post("/{group_id}/members")
+async def add_member_to_group(
+    group_id: str,
+    user_id: str = Form(...),
+    channel: str = Form(...),
+    operator=Depends(get_current_operator)
+):
+    """Add a new member to the community - REUSES existing endpoint pattern"""
+    # RBAC: Enforce community isolation for COMMUNITY_ADMIN and OPERATOR
+    if operator.get("role") in [AosRole.COMMUNITY_ADMIN.value, AosRole.OPERATOR.value]:
+        user_comm_id = operator.get("community_id")
+        if group_id != user_comm_id:
+            raise HTTPException(403, "Access denied: You can only add members to your own community.")
+    
+    if not community_state.module:
+        raise HTTPException(500, "Community module not initialized")
+    
+    try:
+        # Add member to community
+        community_state.module.add_member_to_community(
+            community_id=group_id,
+            user_id=user_id,
+            channel=channel,
+            actor_id=operator.get("sub")
+        )
+        
+        # Return success message (HTMX will handle UI update)
+        return HTMLResponse(
+            content='<div class="aos-alert aos-alert-success">Member added successfully!</div>',
+            status_code=200
+        )
+    except Exception as e:
+        return HTMLResponse(
+            content=f'<div class="aos-alert aos-alert-error">Failed to add member: {str(e)}</div>',
+            status_code=400
+        )
+
+
 # ========== BROADCAST UI ENDPOINTS ==========
 
 @router.get("/{group_id}", response_class=HTMLResponse)
