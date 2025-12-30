@@ -127,10 +127,14 @@ class TelegramAdapter(ChannelAdapter):
             
             # 1. Handle Global Core Commands
             if command == '/start':
-                if args and args[0].startswith('join_'):
-                    # Deep link join: /start join_GRP-ID
-                    community_id = args[0].replace('join_', '')
-                    await self._handle_community_join_request(chat_id, community_id)
+                if args:
+                    # Deep link join: /start <slug>
+                    # Auditor Alignment: Support human-readable slugs
+                    slug = args[0]
+                    # Strip 'join_' prefix if present (backwards compatibility)
+                    if slug.startswith('join_'):
+                        slug = slug.replace('join_', '')
+                    await self._handle_community_join_request(chat_id, slug)
                 else:
                     await self.send_welcome(chat_id)
             elif command == '/myid':
@@ -323,17 +327,21 @@ class TelegramAdapter(ChannelAdapter):
         )
         await self.send_message(str(chat_id), profile_text)
 
-    async def _handle_community_join_request(self, chat_id: int, community_id: str):
-        """Handle deep link request to join a community."""
-        group = self.community_module.get_group(community_id)
+    async def _handle_community_join_request(self, chat_id: int, slug: str):
+        """Handle deep link request to join a community via slug."""
+        # Auditor Alignment: First try by slug, then by ID (for legacy links)
+        group = self.community_module.get_group_by_slug(slug)
         if not group:
-            await self.send_message(str(chat_id), "❌ Sorry, that community link is invalid or has expired.")
+            group = self.community_module.get_group(slug)
+            
+        if not group:
+            await self.send_message(str(chat_id), "❌ Sorry, this invite link is invalid or expired.")
             return
 
         keyboard = {
             "inline_keyboard": [
                 [
-                    {"text": "✅ Join", "callback_data": f"join_confirm_{community_id}"},
+                    {"text": "✅ Confirm", "callback_data": f"join_confirm_{group.id}"},
                     {"text": "❌ Cancel", "callback_data": "join_cancel"}
                 ]
             ]
@@ -341,8 +349,9 @@ class TelegramAdapter(ChannelAdapter):
         
         message = (
             f"🤝 <b>Community Invitation</b>\n\n"
-            f"Do you want to join <b>{group.name}</b>?\n\n"
-            f"<i>You will receive broadcasts and updates from this community.</i>"
+            f"You are about to join <b>{group.name}</b>.\n"
+            f"This will allow the community to send you updates.\n\n"
+            f"Do you want to continue?"
         )
         await self.send_message(str(chat_id), message, metadata={"reply_markup": keyboard})
 

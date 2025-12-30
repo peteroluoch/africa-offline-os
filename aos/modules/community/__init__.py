@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import re
 import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
@@ -115,6 +116,20 @@ class CommunityModule:
             if g.name == name and g.location == location:
                 return g
 
+        def slugify(text: str) -> str:
+            text = text.lower()
+            text = re.sub(r'[^a-z0-9_]', '_', text)
+            text = re.sub(r'_+', '_', text)
+            return text.strip('_')
+
+        # Generate unique slug
+        base_slug = slugify(name)
+        invite_slug = base_slug
+        suffix_count = 1
+        while self._groups.get_by_slug(invite_slug):
+            invite_slug = f"{base_slug}_{suffix_count}"
+            suffix_count += 1
+
         group = CommunityGroupDTO(
             id=f"GRP-{uuid.uuid4().hex[:8].upper()}",
             name=name,
@@ -125,6 +140,7 @@ class CommunityModule:
             admin_id=admin_id,
             trust_level="local",
             preferred_channels=preferred_channels,
+            invite_slug=invite_slug,
             active=True
         )
         self._groups.save(group)
@@ -166,6 +182,10 @@ class CommunityModule:
     def get_group(self, group_id: str) -> CommunityGroupDTO | None:
         """Retrieve a group by ID."""
         return self._groups.get_by_id(group_id)
+
+    def get_group_by_slug(self, slug: str) -> CommunityGroupDTO | None:
+        """Retrieve a group by invite slug."""
+        return self._groups.get_by_slug(slug)
 
     def list_groups(
         self,

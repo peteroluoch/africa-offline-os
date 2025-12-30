@@ -8,6 +8,7 @@
             <tr>
                 <th>Group Name</th>
                 <th>Type</th>
+                <th>Invite Link</th>
                 <th>Trust Level</th>
                 <th>Created</th>
                 <th>Actions</th>
@@ -18,6 +19,23 @@
             <tr>
                 <td class="aos-font-bold">{{ group.name }}</td>
                 <td><span class="aos-badge aos-badge-info">{{ group.group_type }}</span></td>
+                <td>
+                    {% if group.invite_slug %}
+                    <div class="flex items-center gap-1">
+                        <code class="aos-text-xs">t.me/{{ telegram_bot_username }}?start={{ group.invite_slug }}</code>
+                        <button class="aos-btn aos-btn-ghost aos-size-xs"
+                            onclick="navigator.clipboard.writeText('https://t.me/{{ telegram_bot_username }}?start={{ group.invite_slug }}'); alert('Link copied!')">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    {% else %}
+                    <span class="aos-text-muted aos-text-xs">No slug set</span>
+                    {% endif %}
+                </td>
                 <td>
                     <span
                         class="aos-badge {% if group.trust_level == 'verified' %}aos-badge-success{% else %}aos-badge-warning{% endif %}">

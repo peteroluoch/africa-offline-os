@@ -9,6 +9,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
 from aos.api.state import community_state
+from aos.core.config import settings
 from aos.core.security.auth import get_current_operator, AosRole, requires_community_access
 
 router = APIRouter(prefix="/community", tags=["community"])
@@ -73,7 +74,11 @@ async def community_dashboard(
         "selected_type": type,
         "selected_trust": trust,
         "group_types": group_types,
-        **pagination_data,
+        "groups": pagination_data.get("groups", []),
+        "total": pagination_data.get("total", 0),
+        "page": pagination_data.get("page", 1),
+        "total_pages": pagination_data.get("total_pages", 0),
+        "telegram_bot_username": settings.telegram_bot_username,
         "broadcasts_count": broadcasts_count,
         "broadcast_stats": broadcast_stats,
         "inquiry_hits": 0

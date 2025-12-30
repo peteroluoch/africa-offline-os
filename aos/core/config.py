@@ -57,5 +57,8 @@ class Settings(BaseSettings):
     at_api_key: str = ""
     at_environment: str = "sandbox"  # sandbox or production
 
+    # Telegram configuration
+    telegram_bot_username: str = "mkulima_aos_bot"
+
 
 settings = Settings()
