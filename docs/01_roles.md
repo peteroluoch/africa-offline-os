@@ -289,6 +289,104 @@ If a tool provides an unreliable or contradictory result (e.g., `list_dir` says 
 
 ---
 
+## 🔒 RBAC FREEZE CLAUSE (FOUNDATIONAL - CHANGE-AVERSE)
+
+**Effective Date**: 2025-12-30  
+**Status**: **FROZEN** - Security-Critical Infrastructure
+
+### Role Model Declaration
+
+The current role-based access control (RBAC) model is considered **complete and frozen**:
+
+**Defined Roles** (5-tier hierarchy):
+1. **ROOT** (`super_admin` in DB) - Level 5 - Global system access
+2. **SYSTEM_ADMIN** (`admin` in DB) - Level 4 - Regional/organizational management
+3. **COMMUNITY_ADMIN** (`community_admin` in DB) - Level 3 - Single community management
+4. **OPERATOR** (`operator` in DB) - Level 2 - Field agent with CRUD access
+5. **VIEWER** (`viewer` in DB) - Level 1 - Read-only access
+
+**Access Control Model**:
+- **role** = who you are (identity)
+- **community_id** = where you operate (scope)
+- **No permission matrices** - Role + Scope is sufficient
+
+### Freeze Rationale
+
+RBAC exists to **constrain behavior**, not to enable feature velocity.
+
+The current implementation provides:
+- ✅ Defense-in-depth (3 enforcement layers)
+- ✅ Community isolation
+- ✅ Hierarchical privilege model
+- ✅ Self-service onboarding
+- ✅ Unassigned user handling
+
+This is **sufficient for production** and **must not expand**.
+
+### Change Policy
+
+**No new roles, permissions, or access paths may be introduced without**:
+1. **Formal Design Review** - Documented RFC with architectural justification
+2. **PM Approval** - Explicit sign-off from Product Management
+3. **Security Audit** - Review by security officer
+4. **Staff Engineer Review** - Approval from senior technical leadership
+
+**Allowed Changes** (without RFC):
+- ✅ Bug fixes (security vulnerabilities, access control bypasses)
+- ✅ Performance optimizations (query optimization, caching)
+- ✅ Documentation updates (clarifications, examples)
+
+**Forbidden Changes** (require RFC):
+- ❌ New roles (e.g., `REGIONAL_COORDINATOR`, `SUPER_OPERATOR`)
+- ❌ Permission granularity (e.g., `can_send_broadcast`, `can_edit_member`)
+- ❌ Role hierarchy changes (e.g., reordering levels)
+- ❌ Access model changes (e.g., adding group-based permissions)
+- ❌ Feature coupling (e.g., "WhatsApp needs a new role")
+
+### Enforcement
+
+**Code Reviews**:
+- Any PR touching `aos/core/security/auth.py` requires senior engineer approval
+- Any PR adding to `AosRole` enum is automatically rejected
+- Any PR modifying RBAC middleware requires security review
+
+**Quality Gates**:
+- Build fails if new roles detected without RFC reference
+- Automated tests verify role count remains at 5
+- Documentation must be updated atomically with any RBAC changes
+
+### Rationale for Freeze
+
+**Organizational Risk**:
+- Role proliferation creates support burden
+- Mental model complexity increases exponentially
+- "Can we add just one more role?" pressure compounds over time
+
+**Technical Risk**:
+- RBAC is security foundation - changes risk breaking access control
+- Multi-layer enforcement requires synchronized updates
+- Testing matrix grows with each new role
+
+**Operational Risk**:
+- Training materials become outdated
+- User confusion increases
+- Support tickets multiply
+
+### Future Considerations
+
+If business requirements genuinely demand RBAC expansion:
+
+1. **Document the gap** - What can't be solved with existing roles?
+2. **Explore alternatives** - Can role + scope + feature flags solve it?
+3. **Propose minimal change** - Smallest possible modification
+4. **Full impact analysis** - All affected systems, tests, docs
+5. **Migration plan** - How to handle existing users?
+6. **Rollback strategy** - How to undo if it fails?
+
+**Default answer to "Can we add a role?"**: **NO**
+
+---
+
 ## 🚀 PROJECT CONTEXT
 
 ### **Africa Offline OS (A-OS)**
