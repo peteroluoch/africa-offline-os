@@ -220,13 +220,33 @@ class CommunityGroupRepository(BaseRepository[CommunityGroupDTO]):
 
     def get_by_code(self, code: str) -> CommunityGroupDTO | None:
         """Fetch a single active community by its code."""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         self.conn.row_factory = sqlite3.Row
         # Case-insensitive lookup using UPPER
+        logger.info(f"[DB Query] Looking for code: '{code}' (stripped: '{code.strip()}')")
+        
         cursor = self.conn.execute(
             f"SELECT * FROM {self.table_name} WHERE UPPER(community_code) = UPPER(?) AND code_active = 1",
             (code.strip(),)
         )
         row = cursor.fetchone()
+        
+        if row:
+            logger.info(f"[DB Query] FOUND: {dict(row)}")
+        else:
+            # Debug: Check if code exists but is inactive
+            cursor2 = self.conn.execute(
+                f"SELECT id, name, community_code, code_active FROM {self.table_name} WHERE UPPER(community_code) = UPPER(?)",
+                (code.strip(),)
+            )
+            inactive_row = cursor2.fetchone()
+            if inactive_row:
+                logger.warning(f"[DB Query] Code exists but code_active={inactive_row['code_active']}: {dict(inactive_row)}")
+            else:
+                logger.warning(f"[DB Query] Code '{code}' not found in database at all")
+        
         return self._row_to_model(row) if row else None
 
 class CommunityEventRepository(BaseRepository[CommunityEventDTO]):
