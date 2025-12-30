@@ -174,6 +174,16 @@ class TelegramAdapter(ChannelAdapter):
         state_manager = TelegramStateManager()
         user_state = state_manager.get_state(chat_id)
         
+        # Phase 3: Check if text matches a community code FIRST
+        # This must happen before state checks so it works for all users
+        potential_code = text.strip().upper()
+        group = self.community_module.get_group_by_code(potential_code)
+        
+        if group:
+            # Valid community code detected
+            await self._handle_community_join_request_by_code(chat_id, group)
+            return
+        
         if not user_state:
             # Fallback - echo or suggest commands
             await self.send_message(str(chat_id), "Use /domain to start a service or /help for a list of commands.")
@@ -207,16 +217,6 @@ class TelegramAdapter(ChannelAdapter):
             await self.send_message(str(chat_id), "🎗️ <b>One last step!</b>\n\nSelect your roles (you can pick multiple):", metadata={"reply_markup": keyboard})
             
         else:
-            # Phase 3: Check if text matches a community code
-            # This happens BEFORE domain-specific routing
-            potential_code = text.strip().upper()
-            group = self.community_module.get_group_by_code(potential_code)
-            
-            if group:
-                # Valid community code detected
-                await self._handle_community_join_request_by_code(chat_id, group)
-                return
-            
             # If not in a core registration state, it might be a domain-specific conversational state
             # Here we could delegate to the router, but for now we'll keep it simple
             # As modules grow, we can add a router.handle_text method.
