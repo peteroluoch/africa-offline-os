@@ -23,6 +23,9 @@ data/
 
 # Environment
 .env
+.env.production
+.env.local
+*.env.local
 
 # System
 .DS_Store
