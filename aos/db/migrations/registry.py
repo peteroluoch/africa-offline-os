@@ -12,6 +12,7 @@ from aos.db.migrations import (
     _011_community_activity_log,
     _012_community_admin_rbac,
     _013_ensure_base_roles,
+    _014_community_invite_slugs,
 )
 
 # Strict migration registry
@@ -29,4 +30,5 @@ MIGRATIONS = [
     _011_community_activity_log,
     _012_community_admin_rbac,
     _013_ensure_base_roles,
+    _014_community_invite_slugs,
 ]
