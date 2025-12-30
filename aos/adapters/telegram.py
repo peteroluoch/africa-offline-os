@@ -127,7 +127,12 @@ class TelegramAdapter(ChannelAdapter):
             
             # 1. Handle Global Core Commands
             if command == '/start':
-                await self.send_welcome(chat_id)
+                if args and args[0].startswith('join_'):
+                    # Deep link join: /start join_GRP-ID
+                    community_id = args[0].replace('join_', '')
+                    await self._handle_community_join_request(chat_id, community_id)
+                else:
+                    await self.send_welcome(chat_id)
             elif command == '/myid':
                 # Surgical Phase 1: Only echo ID, no storage or registration
                 chat_type = message.get('chat', {}).get('type')
@@ -209,7 +214,12 @@ class TelegramAdapter(ChannelAdapter):
         if await self.router.route_callback(chat_id, callback_data):
             return
 
-        # 2. Registration roles
+        # 2. Community Join Confirmation
+        if callback_data.startswith('join_'):
+            await self._handle_join_callback(chat_id, callback_data)
+            return
+
+        # 3. Registration roles
         if callback_data.startswith('role_'):
              await self._handle_role_callback(chat_id, callback_data)
 
@@ -312,3 +322,55 @@ class TelegramAdapter(ChannelAdapter):
             "Switch services using /domain."
         )
         await self.send_message(str(chat_id), profile_text)
+
+    async def _handle_community_join_request(self, chat_id: int, community_id: str):
+        """Handle deep link request to join a community."""
+        group = self.community_module.get_group(community_id)
+        if not group:
+            await self.send_message(str(chat_id), "❌ Sorry, that community link is invalid or has expired.")
+            return
+
+        keyboard = {
+            "inline_keyboard": [
+                [
+                    {"text": "✅ Join", "callback_data": f"join_confirm_{community_id}"},
+                    {"text": "❌ Cancel", "callback_data": "join_cancel"}
+                ]
+            ]
+        }
+        
+        message = (
+            f"🤝 <b>Community Invitation</b>\n\n"
+            f"Do you want to join <b>{group.name}</b>?\n\n"
+            f"<i>You will receive broadcasts and updates from this community.</i>"
+        )
+        await self.send_message(str(chat_id), message, metadata={"reply_markup": keyboard})
+
+    async def _handle_join_callback(self, chat_id: int, callback_data: str):
+        """Process community join confirmation buttons."""
+        if callback_data == "join_cancel":
+            await self.send_message(str(chat_id), "Join cancelled. Use /domain to browse other services.")
+            return
+            
+        if callback_data.startswith("join_confirm_"):
+            community_id = callback_data.replace("join_confirm_", "")
+            group = self.community_module.get_group(community_id)
+            
+            if not group:
+                await self.send_message(str(chat_id), "❌ Error: Community no longer exists.")
+                return
+
+            # Add member to community
+            success = self.community_module.add_member_to_community(
+                community_id=community_id,
+                user_id=str(chat_id),
+                channel="telegram"
+            )
+            
+            if success:
+                await self.send_message(
+                    str(chat_id), 
+                    f"🎉 <b>Success!</b>\n\nYou have joined <b>{group.name}</b>. You will now receive all broadcasts here!"
+                )
+            else:
+                await self.send_message(str(chat_id), "❌ Failed to join. You might already be a member.")
