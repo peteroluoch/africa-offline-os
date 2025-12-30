@@ -549,6 +549,102 @@ async def community_detail(
     })
 
 
+# ========== BROADCAST CONFIRMATION FLOW ==========
+
+@router.post("/{group_id}/broadcast")
+async def preview_broadcast(
+    group_id: str,
+    request: Request,
+    message: str = Form(...),
+    channel: str = Form(...),
+    operator=Depends(requires_community_access())
+):
+    """
+    STEP 1: Preview broadcast (NO SENDING YET)
+    Shows confirmation modal with cost estimate
+    """
+    if not community_state.module:
+        raise HTTPException(500, "Community module not initialized")
+    
+    # Get group and member count
+    group = community_state.module.get_group(group_id)
+    if not group:
+        raise HTTPException(404, "Group not found")
+    
+    members = community_state.module.get_community_members(group_id)
+    recipient_count = len(members)
+    
+    # Calculate cost based on channel
+    cost_per_message = {
+        "telegram": 0.00,
+        "whatsapp": 0.00,
+        "ussd": 0.50,
+        "sms": 0.80
+    }
+    
+    estimated_cost = recipient_count * cost_per_message.get(channel, 0.00)
+    
+    # Return confirmation modal (HTMX will inject this)
+    return templates.TemplateResponse("partials/broadcast_confirmation.html", {
+        "request": request,
+        "group_id": group_id,
+        "message": message,
+        "channel": channel,
+        "recipient_count": recipient_count,
+        "estimated_cost": estimated_cost,
+        "group_name": group["name"]
+    })
+
+@router.post("/{group_id}/broadcast/confirm")
+async def confirm_broadcast(
+    group_id: str,
+    message: str = Form(...),
+    channel: str = Form(...),
+    operator=Depends(requires_community_access())
+):
+    """
+    STEP 2: Confirm and enqueue broadcast
+    This is the ONLY way to actually send a broadcast
+    """
+    if not community_state.module:
+        raise HTTPException(500, "Community module not initialized")
+    
+    try:
+        # Enqueue broadcast (worker will process it)
+        broadcast_id = community_state.module.create_broadcast(
+            community_id=group_id,
+            message=message,
+            channel=channel,
+            created_by=operator.get("sub")
+        )
+        
+        # Return success message + close modal
+        return HTMLResponse(
+            content=f'''
+            <div class="aos-alert aos-alert-success mb-4">
+                ✅ Broadcast queued successfully! It will be processed shortly.
+            </div>
+            <script>
+                // Close modal and refresh broadcast history
+                setTimeout(() => {{
+                    document.getElementById('broadcast-modal-container').innerHTML = '';
+                    window.location.reload();
+                }}, 2000);
+            </script>
+            ''',
+            status_code=200
+        )
+    except Exception as e:
+        return HTMLResponse(
+            content=f'''
+            <div class="aos-alert aos-alert-error">
+                ❌ Failed to queue broadcast: {str(e)}
+            </div>
+            ''',
+            status_code=400
+        )
+
+
 @router.post("/{group_id}/broadcast", response_class=HTMLResponse)
 async def send_broadcast(
     group_id: str,

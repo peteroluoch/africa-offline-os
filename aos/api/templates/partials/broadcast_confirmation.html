@@ -1,47 +1,127 @@
 {% from "components/atoms/Card.html" import card %}
+{% from "components/atoms/EliteButton.html" import elite_button %}
 
-<div class="aos-modal-overlay" onclick="if(event.target === this) this.remove()">
-    <div class="aos-modal-content-wrapper w-full max-w-md px-4">
-        {% call card(padding="6", glass=True, class="aos-stack-md") %}
-        <h3 class="aos-h3 mb-4">⚠️ Broadcast Confirmation Required</h3>
+<!-- Confirmation Modal Overlay -->
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    onclick="if(event.target === this) this.remove()">
 
-        <div class="aos-stack-sm aos-text-sm">
-            <div class="flex justify-between">
-                <span class="aos-text-muted">Estimated Cost:</span>
-                <span class="font-semibold">KES {{ cost }}</span>
-            </div>
-            <div class="flex justify-between">
-                <span class="aos-text-muted">Recipients:</span>
-                <span class="font-semibold">{{ recipient_count }}</span>
-            </div>
-            <div class="flex justify-between">
-                <span class="aos-text-muted">Channels:</span>
-                <span class="font-semibold">{{ channels }}</span>
-            </div>
-            <div class="flex justify-between">
-                <span class="aos-text-muted">Message Length:</span>
-                <span class="font-semibold">{{ message_length }} chars</span>
-            </div>
-        </div>
+    {% call card(padding="8", glass=True, class="max-w-2xl w-full") %}
 
-        <div class="flex gap-4 mt-6">
-            <button onclick="this.closest('.aos-modal-overlay').remove()"
-                class="aos-btn aos-btn-ghost aos-size-md flex-1">
-                <span class="aos-btn-text">Cancel</span>
-            </button>
-
-            <form hx-post="/community/{{ group_id }}/broadcast/confirm" hx-target="#broadcast-history-container"
-                hx-swap="afterbegin" class="flex-1">
-                <input type="hidden" name="message" value="{{ message }}">
-                <input type="hidden" name="channel" value="{{ channel }}">
-                <input type="hidden" name="cost_confirmed" value="true">
-
-                <button type="submit" class="aos-btn aos-btn-primary aos-size-md w-full"
-                    onclick="this.closest('.aos-modal-overlay').remove()">
-                    <span class="aos-btn-text">Confirm & Send</span>
-                </button>
-            </form>
-        </div>
-        {% endcall %}
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="aos-h2">⚠️ Confirm Broadcast</h2>
+        <button onclick="document.getElementById('broadcast-modal-container').innerHTML = ''"
+            class="aos-btn aos-btn-ghost aos-size-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
     </div>
+
+    <!-- Warning Banner -->
+    <div class="aos-card aos-card-warning p-4 mb-6">
+        <div class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                </path>
+            </svg>
+            <div>
+                <p class="font-semibold">This action cannot be undone</p>
+                <p class="aos-text-sm aos-text-muted mt-1">
+                    Once confirmed, this message will be queued for delivery to all recipients.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Broadcast Details -->
+    <div class="aos-stack-md mb-6">
+        <!-- Community -->
+        <div class="flex items-center justify-between py-3 border-b border-gray-700">
+            <span class="aos-text-muted">Community</span>
+            <span class="font-semibold">{{ group_name }}</span>
+        </div>
+
+        <!-- Message Preview -->
+        <div class="flex items-start justify-between py-3 border-b border-gray-700">
+            <span class="aos-text-muted">Message</span>
+            <div class="text-right max-w-md">
+                <p class="font-mono text-sm bg-slate-800/50 p-3 rounded-lg">{{ message }}</p>
+            </div>
+        </div>
+
+        <!-- Channel -->
+        <div class="flex items-center justify-between py-3 border-b border-gray-700">
+            <span class="aos-text-muted">Channel</span>
+            <span class="font-semibold uppercase">
+                {% if channel == 'telegram' %}
+                📱 Telegram
+                {% elif channel == 'sms' %}
+                💬 SMS
+                {% elif channel == 'ussd' %}
+                📞 USSD
+                {% elif channel == 'whatsapp' %}
+                💚 WhatsApp
+                {% else %}
+                {{ channel }}
+                {% endif %}
+            </span>
+        </div>
+
+        <!-- Recipients -->
+        <div class="flex items-center justify-between py-3 border-b border-gray-700">
+            <span class="aos-text-muted">Recipients</span>
+            <span class="font-semibold aos-text-primary">{{ recipient_count }} members</span>
+        </div>
+
+        <!-- Cost -->
+        <div class="flex items-center justify-between py-3">
+            <span class="aos-text-muted">Estimated Cost</span>
+            <span class="font-bold text-lg 
+                {% if estimated_cost == 0 %}
+                    aos-text-success
+                {% elif estimated_cost < 50 %}
+                    aos-text-warning
+                {% else %}
+                    aos-text-danger
+                {% endif %}
+            ">
+                KES {{ "%.2f"|format(estimated_cost) }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <form hx-post="/community/{{ group_id }}/broadcast/confirm" hx-target="#broadcast-modal-container"
+        hx-swap="innerHTML" class="flex gap-4">
+
+        <!-- Hidden fields to pass data -->
+        <input type="hidden" name="message" value="{{ message }}">
+        <input type="hidden" name="channel" value="{{ channel }}">
+
+        <!-- Cancel Button -->
+        <button type="button" onclick="document.getElementById('broadcast-modal-container').innerHTML = ''"
+            class="aos-btn aos-btn-ghost aos-size-lg flex-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            <span class="aos-btn-text ml-2">Cancel</span>
+        </button>
+
+        <!-- Confirm Button -->
+        {{ elite_button(
+        text="Confirm & Send",
+        type="submit",
+        variant="primary",
+        size="lg",
+        class="flex-1",
+        icon='<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>'
+        ) }}
+    </form>
+
+    {% endcall %}
 </div>
