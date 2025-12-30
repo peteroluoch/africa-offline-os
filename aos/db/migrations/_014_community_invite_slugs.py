@@ -1,6 +1,6 @@
 """
-Migration 013: Add invite_slug to Community Groups
-Adds a human-readable slug for Telegram invite links.
+Migration 014 (REVISED): Add invite_slug to Community Groups with backfill.
+This version ensures backfilling happens even if the column already exists.
 """
 import sqlite3
 import logging
@@ -19,7 +19,7 @@ def migrate(conn: sqlite3.Connection):
     cursor = conn.cursor()
 
     try:
-        # 1. Add column
+        # 1. Add column (will fail silently if exists)
         cursor.execute("ALTER TABLE community_groups ADD COLUMN invite_slug TEXT")
         logger.info("Column invite_slug added to community_groups.")
     except sqlite3.OperationalError as e:
@@ -28,9 +28,11 @@ def migrate(conn: sqlite3.Connection):
         else:
             raise e
 
-    # 2. Backfill existing groups with unique slugs
-    cursor.execute("SELECT id, name FROM community_groups")
+    # 2. Backfill ALL groups (including those with NULL slugs)
+    cursor.execute("SELECT id, name FROM community_groups WHERE invite_slug IS NULL OR invite_slug = ''")
     groups = cursor.fetchall()
+    
+    logger.info(f"Backfilling {len(groups)} communities...")
     
     for group_id, name in groups:
         slug = slugify(name)
@@ -43,13 +45,10 @@ def migrate(conn: sqlite3.Connection):
         logger.info(f"Backfilled slug for {name}: {slug}")
 
     # 3. Create unique index
-    cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_cg_slug ON community_groups(invite_slug)")
+    try:
+        cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_cg_slug ON community_groups(invite_slug)")
+    except sqlite3.OperationalError:
+        pass  # Index might already exist
     
     conn.commit()
-    logger.info("Migration 013 complete.")
-
-if __name__ == "__main__":
-    # Test script run
-    conn = sqlite3.connect("aos.db")
-    migrate(conn)
-    conn.close()
+    logger.info("Migration 014 complete.")
