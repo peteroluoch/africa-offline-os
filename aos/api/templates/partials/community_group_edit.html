@@ -85,6 +85,15 @@
 </div>
 
 <script>
+    // FAANG-grade toast notification
+    function showToast(message, type = 'error') {
+        const toast = document.createElement('div');
+        toast.style.cssText = `position: fixed; top: 20px; right: 20px; padding: 16px 24px; background: ${type === 'success' ? '#10b981' : '#ef4444'}; color: white; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 10000; font-weight: 500;`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
+    }
+
     // Handle form submission
     document.getElementById('edit-group-form').addEventListener('submit', async function (e) {
         e.preventDefault();
@@ -99,16 +108,18 @@
             });
 
             if (response.ok) {
+                showToast('Community updated successfully!', 'success');
                 closeModal();
-                // Scroll to top before reload
                 window.scrollTo({ top: 0, behavior: 'instant' });
-                setTimeout(() => window.location.reload(), 100);
+                setTimeout(() => window.location.reload(), 1000);
             } else {
-                alert('Failed to update group. Please try again.');
+                const errorText = await response.text();
+                console.error('Server error:', response.status, errorText);
+                showToast(`Update failed: ${response.statusText}`);
             }
         } catch (error) {
             console.error('Update failed:', error);
-            alert('Failed to update group. Please try again.');
+            showToast(`Network error: ${error.message}`);
         }
     });
 </script>

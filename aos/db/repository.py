@@ -179,10 +179,28 @@ class CommunityGroupRepository(BaseRepository[CommunityGroupDTO]):
         super().__init__(connection, CommunityGroupDTO, "community_groups")
 
     def save(self, group: CommunityGroupDTO) -> None:
-        self.conn.execute("""
-            INSERT OR REPLACE INTO community_groups (id, name, description, group_type, tags, location, admin_id, trust_level, preferred_channels, invite_slug, community_code, code_active, active, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (group.id, group.name, group.description, group.group_type, group.tags, group.location, group.admin_id, group.trust_level, group.preferred_channels, group.invite_slug, group.community_code, group.code_active, group.active, group.created_at))
+        # Check if group exists
+        cursor = self.conn.execute("SELECT id FROM community_groups WHERE id = ?", (group.id,))
+        exists = cursor.fetchone() is not None
+        
+        if exists:
+            # Update existing group
+            self.conn.execute("""
+                UPDATE community_groups 
+                SET name = ?, description = ?, group_type = ?, tags = ?, location = ?, 
+                    admin_id = ?, trust_level = ?, preferred_channels = ?, invite_slug = ?, 
+                    community_code = ?, code_active = ?, active = ?
+                WHERE id = ?
+            """, (group.name, group.description, group.group_type, group.tags, group.location, 
+                  group.admin_id, group.trust_level, group.preferred_channels, group.invite_slug, 
+                  group.community_code, group.code_active, group.active, group.id))
+        else:
+            # Insert new group
+            self.conn.execute("""
+                INSERT INTO community_groups (id, name, description, group_type, tags, location, admin_id, trust_level, preferred_channels, invite_slug, community_code, code_active, active, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (group.id, group.name, group.description, group.group_type, group.tags, group.location, group.admin_id, group.trust_level, group.preferred_channels, group.invite_slug, group.community_code, group.code_active, group.active, group.created_at))
+        
         self.conn.commit()
 
     def get_by_slug(self, slug: str) -> CommunityGroupDTO | None:
