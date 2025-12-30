@@ -172,22 +172,8 @@ async def telegram_webhook(request: Request):
     """
     Telegram webhook endpoint for receiving bot messages.
     
-    Telegram sends updates when users interact with the bot.
-    We verify the secret token for security.
-    
-    Expected headers:
-        X-Telegram-Bot-Api-Secret-Token: <webhook_secret>
-    
-    Expected payload:
-        {
-            "update_id": 123456789,
-            "message": {
-                "message_id": 1,
-                "from": {"id": 123456, "first_name": "John"},
-                "chat": {"id": 123456, "type": "private"},
-                "text": "/start"
-            }
-        }
+    Uses the full TelegramAdapter for interactive bot functionality.
+    Supports registration, domain selection, and domain-specific commands.
     """
     import os
     import hmac
@@ -215,19 +201,26 @@ async def telegram_webhook(request: Request):
         update = await request.json()
         print(f"[Telegram Webhook] Received update: {update}")
         
-        # Extract message info
-        message = update.get("message", {})
-        chat_id = message.get("chat", {}).get("id")
-        text = message.get("text", "")
+        # Initialize Telegram Adapter
+        from aos.adapters.telegram import TelegramAdapter
+        from aos.api.state import core_state, agri_state, transport_state, community_state
         
-        # Handle different message types
-        if text.startswith("/start"):
-            # Send welcome message
-            await send_telegram_message(
-                chat_id,
-                "👋 Welcome to Africa Offline OS!\n\n"
-                "This bot is connected to your community management system.\n"
-                "You'll receive broadcast messages here."
+        telegram_adapter = TelegramAdapter(
+            event_bus=core_state.event_dispatcher,
+            agri_module=agri_state.module,
+            transport_module=transport_state.module,
+            community_module=community_state.module
+        )
+        
+        # Handle message or callback query
+        if "message" in update:
+            await telegram_adapter.handle_message(update["message"])
+        elif "callback_query" in update:
+            callback = update["callback_query"]
+            await telegram_adapter.handle_callback(
+                user_id=callback["from"]["id"],
+                chat_id=callback["message"]["chat"]["id"],
+                callback_data=callback["data"]
             )
         
         # Return success (Telegram requires 200 OK)
@@ -235,35 +228,12 @@ async def telegram_webhook(request: Request):
     
     except Exception as e:
         print(f"[Telegram Webhook] Error: {e}")
+        import traceback
+        traceback.print_exc()
         return JSONResponse(
             status_code=500,
             content={"status": "error", "message": str(e)}
         )
-
-
-async def send_telegram_message(chat_id: int, text: str):
-    """Send a message via Telegram Bot API"""
-    import os
-    import httpx
-    
-    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-    if not bot_token:
-        print("[Telegram] Bot token not configured")
-        return
-    
-    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-    payload = {
-        "chat_id": chat_id,
-        "text": text,
-        "parse_mode": "Markdown"
-    }
-    
-    async with httpx.AsyncClient() as client:
-        response = await client.post(url, json=payload)
-        if response.status_code != 200:
-            print(f"[Telegram] Send failed: {response.text}")
-        else:
-            print(f"[Telegram] Message sent to {chat_id}")
 
 
 # Debug endpoints (protected)
