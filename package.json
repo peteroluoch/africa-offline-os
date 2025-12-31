@@ -1,0 +1,11 @@
+{
+    "name": "africa-offline-os",
+    "version": "1.0.0",
+    "description": "Africa Offline OS - FAANG-grade infrastructure",
+    "scripts": {
+        "build:css": "tailwindcss -i ./aos/api/static/ui/tailwind-input.css -o ./aos/api/static/ui/tailwind.css --minify"
+    },
+    "devDependencies": {
+        "tailwindcss": "^3.4.0"
+    }
+}
