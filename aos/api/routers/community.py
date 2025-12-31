@@ -173,7 +173,11 @@ async def update_community_group(
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e))
 
-    return RedirectResponse(url="/community", status_code=303)
+    # Return HTMX-compatible redirect
+    from fastapi.responses import Response
+    response = Response(status_code=200)
+    response.headers["HX-Redirect"] = "/community"
+    return response
 
 @router.delete("/{group_id}")
 async def delete_community_group(
