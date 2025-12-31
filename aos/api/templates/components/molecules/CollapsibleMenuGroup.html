@@ -9,17 +9,17 @@ is_expanded=False
 <div class="collapsible-group" data-group-id="{{ group_id }}">
     <!-- Group Header -->
     <button
-        class="group-header w-full flex items-center justify-between px-3 py-2 aos-text-sm font-semibold text-[var(--aos-neutral-300)] hover:bg-[var(--aos-surface-elevated)] rounded-[var(--aos-radius-lg)] transition-all duration-200 {% if is_expanded %}expanded{% endif %}"
-        onclick="toggleGroup('{{ group_id }}')
-" aria-expanded="{{ 'true' if is_expanded else 'false' }}" aria-controls="group-content-{{ group_id }}">
+        class="group-header w-full flex items-center justify-between px-3 py-2 aos-text-sm font-semibold rounded-lg transition-all duration-200 {% if is_expanded %}expanded{% endif %}"
+        style="color: var(--aos-neutral-300);" onclick="toggleGroup('{{ group_id }}')"
+        aria-expanded="{{ 'true' if is_expanded else 'false' }}" aria-controls="group-content-{{ group_id }}">
         <div class="flex items-center space-x-3">
-            <div class="w-5 h-5 aos-text-muted group-hover:text-[var(--aos-primary-base)] transition-colors">
+            <div class="w-5 h-5 aos-text-muted transition-colors">
                 {{ icon | safe }}
             </div>
             <span>{{ title }}</span>
         </div>
-        <svg class="chevron w-4 h-4 text-[var(--aos-neutral-500)] transition-transform duration-200 {% if is_expanded %}rotate-90{% endif %}"
-            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="chevron w-4 h-4 transition-transform duration-200 {% if is_expanded %}rotate-90{% endif %}"
+            style="color: var(--aos-neutral-500);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
         </svg>
     </button>
@@ -30,21 +30,21 @@ is_expanded=False
         <div class="pl-4 pr-3 py-1 space-y-1">
             {% for item in items %}
             {% if item.section %}
-            <div class="pt-3 pb-1 text-xs font-black uppercase tracking-widest text-[var(--aos-neutral-500)] pl-4">
+            <div class="pt-3 pb-1 text-xs font-black uppercase tracking-widest pl-4"
+                style="color: var(--aos-neutral-500);">
                 {{ item.section }}
             </div>
             {% endif %}
             <a href="{{ item.href }}" data-nav-item data-search-text="{{ item.text | lower }}"
-                class="flex items-center space-x-3 px-3 py-2 aos-text-sm text-[var(--aos-neutral-400)] hover:text-[var(--aos-neutral-200)] hover:bg-[var(--aos-surface-glass)] rounded-[var(--aos-radius-lg)] transition-all duration-150 group {% if item.active %}active-nav-item{% endif %}">
-                <div
-                    class="w-4 h-4 text-[var(--aos-neutral-500)] group-hover:text-[var(--aos-primary-base)] transition-colors">
+                class="flex items-center space-x-3 px-3 py-2 aos-text-sm rounded-lg transition-all duration-150 group {% if item.active %}active-nav-item{% endif %}"
+                style="color: var(--aos-neutral-400);">
+                <div class="w-4 h-4 transition-colors" style="color: var(--aos-neutral-500);">
                     {{ item.icon | safe }}
                 </div>
                 <span class="truncate">{{ item.text }}</span>
                 {% if item.badge %}
-                <span
-                    class="ml-2 px-2 py-1 text-xs font-bold rounded-full bg-[var(--aos-primary-base)] text-[var(--aos-primary-text)] border border-[var(--aos-primary-base)]"
-                    style="opacity: 0.2;">
+                <span class="ml-2 px-2 py-1 text-xs font-bold rounded-full border"
+                    style="background-color: var(--aos-primary-base); color: var(--aos-primary-text); border-color: var(--aos-primary-base); opacity: 0.2;">
                     {{ item.badge }}
                 </span>
                 {% endif %}
@@ -69,8 +69,26 @@ is_expanded=False
         background: var(--aos-surface-elevated);
     }
 
+    .group-header:hover {
+        background: var(--aos-surface-elevated);
+    }
+
     .collapsible-group {
         margin-bottom: var(--aos-spacing-2);
+    }
+
+    /* Hover states */
+    a[data-nav-item]:hover {
+        color: var(--aos-neutral-200) !important;
+        background: var(--aos-surface-glass);
+    }
+
+    a[data-nav-item]:hover>div {
+        color: var(--aos-primary-base) !important;
+    }
+
+    .group-header:hover .aos-text-muted {
+        color: var(--aos-primary-base) !important;
     }
 </style>
 
