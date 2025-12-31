@@ -9,9 +9,9 @@ is_expanded=False
 <div class="collapsible-group" data-group-id="{{ group_id }}">
     <!-- Group Header -->
     <button
-        class="group-header w-full flex items-center justify-between px-3 py-2 aos-text-sm font-semibold text-[var(--aos-neutral-300)] hover:bg-[var(--aos-surface-accent)] rounded-[var(--aos-radius-lg)] transition-all duration-200 {% if is_expanded %}expanded{% endif %}"
-        onclick="toggleGroup('{{ group_id }}')" aria-expanded="{{ 'true' if is_expanded else 'false' }}"
-        aria-controls="group-content-{{ group_id }}">
+        class="group-header w-full flex items-center justify-between px-3 py-2 aos-text-sm font-semibold text-[var(--aos-neutral-300)] hover:bg-[var(--aos-surface-elevated)] rounded-[var(--aos-radius-lg)] transition-all duration-200 {% if is_expanded %}expanded{% endif %}"
+        onclick="toggleGroup('{{ group_id }}')
+" aria-expanded="{{ 'true' if is_expanded else 'false' }}" aria-controls="group-content-{{ group_id }}">
         <div class="flex items-center space-x-3">
             <div class="w-5 h-5 aos-text-muted group-hover:text-[var(--aos-primary-base)] transition-colors">
                 {{ icon | safe }}
@@ -30,8 +30,7 @@ is_expanded=False
         <div class="pl-4 pr-3 py-1 space-y-1">
             {% for item in items %}
             {% if item.section %}
-            <div
-                class="pt-3 pb-1 aos-text-[9px] font-black uppercase tracking-[0.2em] text-[var(--aos-neutral-500)] pl-4">
+            <div class="pt-3 pb-1 text-xs font-black uppercase tracking-widest text-[var(--aos-neutral-500)] pl-4">
                 {{ item.section }}
             </div>
             {% endif %}
@@ -44,7 +43,8 @@ is_expanded=False
                 <span class="truncate">{{ item.text }}</span>
                 {% if item.badge %}
                 <span
-                    class="ml-auto px-1.5 py-0.5 aos-text-[9px] font-bold rounded-full bg-[var(--aos-primary-base)]/20 text-[var(--aos-primary-base)] border border-[var(--aos-primary-base)]/30">
+                    class="ml-2 px-2 py-1 text-xs font-bold rounded-full bg-[var(--aos-primary-base)] text-[var(--aos-primary-text)] border border-[var(--aos-primary-base)]"
+                    style="opacity: 0.2;">
                     {{ item.badge }}
                 </span>
                 {% endif %}
@@ -56,8 +56,7 @@ is_expanded=False
 
 <style>
     .active-nav-item {
-        background: var(--aos-primary-base) !important;
-        background-color: rgba(var(--aos-primary-base-rgb), 0.1) !important;
+        background: var(--aos-surface-elevated) !important;
         color: var(--aos-primary-base) !important;
         font-weight: 600;
     }
@@ -71,7 +70,7 @@ is_expanded=False
     }
 
     .collapsible-group {
-        margin-bottom: 0.5rem;
+        margin-bottom: var(--aos-spacing-2);
     }
 </style>
 
