@@ -13,6 +13,11 @@ from aos.modules.agri_sms import AgriSMSHandler
 from aos.modules.agri_ussd import AgriUSSDHandler
 from aos.modules.community.ussd_adapter import CommunityUSSDHandler
 from aos.modules.transport.sms_adapter import TransportSMSHandler
+
+# FAANG-Grade: Module-level cache for Telegram update deduplication
+# Prevents duplicate processing when Telegram retries webhooks
+_processed_telegram_updates: set[int] = set()
+
 from aos.modules.transport.ussd_adapter import TransportUSSDHandler
 
 router = APIRouter(prefix="/channels", tags=["channels"])
@@ -200,6 +205,24 @@ async def telegram_webhook(request: Request):
         # Parse webhook payload
         update = await request.json()
         print(f"[Telegram Webhook] Received update: {update}")
+        
+        # FAANG-Grade: Deduplicate updates to prevent duplicate processing
+        # Telegram may retry webhooks if response is slow or network issues occur
+        update_id = update.get("update_id")
+        if update_id and update_id in _processed_telegram_updates:
+            print(f"[Telegram] Skipping duplicate update {update_id}")
+            return {"ok": True}  # Return success to prevent Telegram retry
+        
+        # Mark as processed
+        if update_id:
+            _processed_telegram_updates.add(update_id)
+            
+            # Bounded cache: Keep only last 1000 updates to prevent unbounded memory growth
+            if len(_processed_telegram_updates) > 1000:
+                # Remove oldest half of cache (FIFO-like behavior)
+                oldest_updates = sorted(_processed_telegram_updates)[:500]
+                _processed_telegram_updates.difference_update(oldest_updates)
+                print(f"[Telegram] Trimmed update cache to {len(_processed_telegram_updates)} entries")
         
         # Initialize Telegram Adapter
         from aos.adapters.telegram import TelegramAdapter
