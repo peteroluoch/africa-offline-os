@@ -1,4 +1,5 @@
 {% extends "dashboard.html" %}
+{% from "components/molecules/DataCard.html" import data_card %}
 
 {% block title %}Operators Management | A-OS Kernel{% endblock %}
 
@@ -11,26 +12,35 @@
 
     <!-- Stats -->
     <div class="aos-grid aos-grid-cols-3 aos-gap-6 aos-mb-8">
-        <div class="aos-glass aos-p-6">
-            <span class="aos-text-muted aos-text-xs uppercase tracking-widest font-bold">Total Identities</span>
-            <div class="aos-text-3xl font-bold aos-text-primary">{{ operators|length }}</div>
-        </div>
-        <div class="aos-glass aos-p-6">
-            <span class="aos-text-muted aos-text-xs uppercase tracking-widest font-bold">Pending Approval</span>
-            <div class="aos-text-3xl font-bold aos-text-warning">
-                {% set pending = 0 %}
-                {% for op in operators %}
-                {% if op.role == 'operator' and not op.community_id %}
-                {% set pending = pending + 1 %}
-                {% endif %}
-                {% endfor %}
-                {{ pending }}
-            </div>
-        </div>
-        <div class="aos-glass aos-p-6">
-            <span class="aos-text-muted aos-text-xs uppercase tracking-widest font-bold">Active Organizations</span>
-            <div class="aos-text-3xl font-bold aos-text-success">{{ available_communities|length }}</div>
-        </div>
+        {{ data_card(
+        label="Total Identities",
+        value=operators|length,
+        trend="0.8ms Latency",
+        status="success"
+        ) }}
+
+        {% set pending = 0 %}
+        {% for op in operators %}
+        {% if op.role == 'operator' and not op.community_id %}
+        {% set pending = pending + 1 %}
+        {% endif %}
+        {% endfor %}
+
+        {{ data_card(
+        label="Pending Approval",
+        value=pending,
+        trend="Optimized",
+        status="info",
+        trend_variant="info"
+        ) }}
+
+        {{ data_card(
+        label="Active Organizations",
+        value=available_communities|length,
+        trend="Synchronized",
+        status="warning",
+        trend_variant="warning"
+        ) }}
     </div>
 
     <!-- Operators Table -->
