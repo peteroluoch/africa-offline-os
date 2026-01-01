@@ -325,10 +325,32 @@
             {% block content %}
             <!-- Metrics Row -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                {{ data_card(label="Heartbeat", value="NOMINAL", trend="0.8ms Latency", status="success") }}
-                {{ data_card(label="Throughput", value="643", unit="ev/s", trend="Optimized", status="info") }}
-                {{ data_card(label="Mesh Peers", value="0", unit="Nodes", trend="Sovereign-Link", status="warning") }}
-                {{ data_card(label="Queue Depth", value="ZERO", trend="Synchronized", status="success") }}
+                {{ data_card(
+                label="Heartbeat",
+                value=metrics.heartbeat.value,
+                trend=metrics.heartbeat.latency_ms|string + "ms Latency",
+                status=metrics.heartbeat.status
+                ) }}
+                {{ data_card(
+                label="Throughput",
+                value=metrics.throughput.value,
+                unit=metrics.throughput.unit,
+                trend="Optimized",
+                status=metrics.throughput.status
+                ) }}
+                {{ data_card(
+                label="Mesh Peers",
+                value=metrics.mesh_peers.value,
+                unit=metrics.mesh_peers.unit,
+                trend="Sovereign-Link",
+                status=metrics.mesh_peers.status
+                ) }}
+                {{ data_card(
+                label="Queue Depth",
+                value=metrics.queue_depth.value,
+                trend="Synchronized",
+                status=metrics.queue_depth.status
+                ) }}
             </div>
 
             <!-- Event Stream Card -->

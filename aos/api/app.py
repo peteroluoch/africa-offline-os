@@ -329,6 +329,7 @@ def create_app() -> FastAPI:
     async def dashboard(request: Request, current_user: dict = Depends(get_current_operator)):
         """Render the kernel dashboard (Protected) with role-based redirection."""
         from aos.core.security.auth import AosRole
+        from aos.core.monitoring.metrics import calculate_dashboard_metrics
         
         user_role = current_user.get("role")
         community_id = current_user.get("community_id")
@@ -344,10 +345,13 @@ def create_app() -> FastAPI:
                     {"request": request, "user": current_user}
                 )
         
+        # Calculate real-time metrics
+        metrics = calculate_dashboard_metrics(core_state.db_conn)
+        
         # ROOT and ADMIN see the kernel overview
         return templates.TemplateResponse(
             "dashboard.html",
-            {"request": request, "user": current_user}
+            {"request": request, "user": current_user, "metrics": metrics}
         )
 
     @app.get("/sys/gallery")
