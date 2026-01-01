@@ -110,9 +110,14 @@ is_expanded=False
     document.addEventListener('DOMContentLoaded', () => {
         const states = JSON.parse(localStorage.getItem('nav_states') || '{}');
         Object.keys(states).forEach(groupId => {
-            if (states[groupId]) {
-                const group = document.querySelector(`[data-group-id="${groupId}"]`);
-                if (group && !group.querySelector('.group-header').classList.contains('expanded')) {
+            const group = document.querySelector(`[data-group-id="${groupId}"]`);
+            if (group) {
+                const header = group.querySelector('.group-header');
+                const isCurrentlyExpanded = header.classList.contains('expanded');
+                const shouldBeExpanded = states[groupId];
+
+                // Only toggle if state differs from current
+                if (shouldBeExpanded !== isCurrentlyExpanded) {
                     toggleGroup(groupId);
                 }
             }
