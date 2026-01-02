@@ -322,7 +322,7 @@
             </div>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-10 space-y-10">
+        <div class="flex-1 min-h-0 overflow-y-auto p-10 space-y-10">
             {% block content %}
             <!-- Metrics Row -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -360,26 +360,26 @@
             <!-- Live Kernel Log (Collapsible) -->
             {{ live_kernel_log() }}
             {% endblock %}
-
-            <!-- Footer -->
-            <footer class="mt-auto pt-8 pb-6 border-t border-slate-800/30">
-                <div class="flex items-center justify-between text-xs text-slate-500">
-                    <div class="flex items-center space-x-4">
-                        <span class="aos-text-mono">© 2025 A-OS Kernel</span>
-                        <span class="text-slate-700">|</span>
-                        <a href="/privacy" class="hover:text-blue-400 transition-colors duration-200">Privacy Policy</a>
-                        <span class="text-slate-700">|</span>
-                        <a href="/terms" class="hover:text-blue-400 transition-colors duration-200">Terms &
-                            Conditions</a>
-                        <span class="text-slate-700">|</span>
-                        <a href="/cookies" class="hover:text-blue-400 transition-colors duration-200">Cookie Policy</a>
-                    </div>
-                    <div class="text-slate-600 aos-text-mono">
-                        Kernel v0.1.0 | Build 2025.01
-                    </div>
-                </div>
-            </footer>
         </div>
+
+        <!-- Footer - Outside scrollable content -->
+        <footer class="border-t border-slate-800/30 aos-p-6 aos-bg-surface-base">
+            <div class="flex items-center justify-between text-xs text-slate-500">
+                <div class="flex items-center space-x-4">
+                    <span class="aos-text-mono">© 2025 A-OS Kernel</span>
+                    <span class="text-slate-700">|</span>
+                    <a href="/privacy" class="hover:text-blue-400 transition-colors duration-200">Privacy Policy</a>
+                    <span class="text-slate-700">|</span>
+                    <a href="/terms" class="hover:text-blue-400 transition-colors duration-200">Terms &
+                        Conditions</a>
+                    <span class="text-slate-700">|</span>
+                    <a href="/cookies" class="hover:text-blue-400 transition-colors duration-200">Cookie Policy</a>
+                </div>
+                <div class="text-slate-600 aos-text-mono">
+                    Kernel v0.1.0 | Build 2025.01
+                </div>
+            </div>
+        </footer>
     </main>
 
     <!-- Global Premium Confirmation Modal -->
