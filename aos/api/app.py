@@ -95,6 +95,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     await core_state.event_store.initialize()
 
     core_state.event_dispatcher = EventDispatcher(core_state.event_store)
+    
+    # Connect SSE stream to all events
+    async def broadcast_to_sse(event: Event) -> None:
+        """Broadcast events to SSE stream for Live Kernel Log."""
+        await event_stream.broadcast(event)
+    
+    core_state.event_dispatcher.subscribe_all(broadcast_to_sse)
 
     # Initialize Security Engine (Phase 6.1)
     from aos.core.security.encryption import SymmetricEncryption

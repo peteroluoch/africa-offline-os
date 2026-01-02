@@ -1,0 +1,84 @@
+{# Live Kernel Log - Collapsible Component #}
+{% macro live_kernel_log() %}
+<div class="aos-glass aos-p-6 aos-mb-6 aos-rounded-lg">
+    <!-- Header - Clickable to toggle -->
+    <button onclick="toggleKernelLog()"
+        class="w-full flex items-center justify-between aos-p-4 hover:aos-bg-surface-elevated transition-colors aos-rounded-lg">
+        <div class="flex items-center gap-3">
+            <span
+                class="w-2 h-2 rounded-full aos-bg-primary animate-pulse shadow-[0_0_8px_var(--aos-primary-base)]"></span>
+            <h3 class="aos-text-lg font-bold">Live Kernel Log</h3>
+            <span class="aos-badge aos-badge-info aos-text-xs">Real-time</span>
+        </div>
+        <svg id="kernel-log-icon" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+    </button>
+
+    <!-- Collapsible Content -->
+    <div id="kernel-log-content" class="hidden mt-4">
+        <!-- SSE Connection -->
+        <div hx-ext="sse" sse-connect="/stream" sse-swap="message" hx-target="#event-stream-body" hx-swap="afterbegin">
+        </div>
+
+        <div class="aos-bg-surface-base aos-rounded-lg overflow-hidden">
+            <div class="overflow-x-auto max-h-96 scroll-smooth">
+                <table class="w-full text-left border-collapse">
+                    <thead class="sticky top-0 aos-bg-surface-elevated backdrop-blur-md z-10 aos-border-b">
+                        <tr class="aos-text-xs aos-text-secondary uppercase tracking-wider font-bold">
+                            <th class="aos-p-4 w-32">Timestamp</th>
+                            <th class="aos-p-4 w-48">Event</th>
+                            <th class="aos-p-4">Payload</th>
+                        </tr>
+                    </thead>
+                    <tbody id="event-stream-body" class="divide-y aos-divide-subtle">
+                        <!-- Events prepended here via SSE -->
+                        <tr class="aos-text-sm aos-text-secondary">
+                            <td colspan="3" class="aos-p-8 text-center">
+                                <div class="flex flex-col items-center gap-2">
+                                    <svg class="w-8 h-8 aos-text-muted animate-pulse" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                    <span>Waiting for events...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <p class="aos-text-xs aos-text-muted mt-4">
+            💡 Shows real-time system events. Events are streamed as they occur.
+        </p>
+    </div>
+</div>
+
+<script>
+    function toggleKernelLog() {
+        const content = document.getElementById('kernel-log-content');
+        const icon = document.getElementById('kernel-log-icon');
+
+        if (content.classList.contains('hidden')) {
+            content.classList.remove('hidden');
+            icon.style.transform = 'rotate(180deg)';
+            localStorage.setItem('kernel_log_expanded', 'true');
+        } else {
+            content.classList.add('hidden');
+            icon.style.transform = 'rotate(0deg)';
+            localStorage.setItem('kernel_log_expanded', 'false');
+        }
+    }
+
+    // Restore state on load
+    document.addEventListener('DOMContentLoaded', function () {
+        const expanded = localStorage.getItem('kernel_log_expanded') === 'true';
+        if (expanded) {
+            toggleKernelLog();
+        }
+    });
+</script>
+{% endmacro %}
