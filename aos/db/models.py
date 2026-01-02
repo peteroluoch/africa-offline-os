@@ -149,3 +149,59 @@ class CommunityMemberDTO(BaseModel):
     channel: str
     active: bool = True
     joined_at: datetime = Field(default_factory=datetime.utcnow)
+
+# --- Institutional Core (Section 1) ---
+
+class InstitutionMemberDTO(BaseModel):
+    """Institutional member entity (UUID based)."""
+    id: str  # Member UUID
+    community_id: str
+    full_name: str
+    role_id: str = "MEMBER"  # Institutional role (ADMIN, SECRETARY, TREASURER, MEMBER)
+    joined_at: datetime = Field(default_factory=datetime.utcnow)
+    active: bool = True
+
+class InstitutionGroupDTO(BaseModel):
+    """Institutional groups (e.g. Youth, Women, Choir)."""
+    id: str
+    community_id: str
+    name: str
+    description: str | None = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class InstitutionGroupMemberDTO(BaseModel):
+    """Many-to-many mapping for institutional groups."""
+    id: str
+    group_id: str
+    member_id: str
+    joined_at: datetime = Field(default_factory=datetime.utcnow)
+
+class MemberVehicleMapDTO(BaseModel):
+    """Mapping table for vehicle-specific identities (e.g. Telegram IDs)."""
+    id: str  # Map UUID
+    member_id: str  # Reference to InstitutionMemberDTO.id
+    vehicle_type: str  # 'telegram', 'sms', 'whatsapp'
+    vehicle_identity: str  # e.g. Telegram User ID
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class InstitutionMessageLogDTO(BaseModel):
+    """Outgoing message tracking for institutional communication."""
+    id: str
+    community_id: str
+    sender_id: str  # Member UUID
+    recipient_type: str  # 'individual', 'group', 'broadcast'
+    recipient_id: str  # Member UUID or Group ID
+    vehicle_type: str
+    message_type: str  # 'announcement', 'reply', 'alert'
+    content_hash: str
+    sent_at: datetime = Field(default_factory=datetime.utcnow)
+
+class PrayerRequestDTO(BaseModel):
+    """Prayer request entity for the church module."""
+    id: str
+    community_id: str
+    member_id: str
+    request_text: str
+    is_anonymous: bool = False
+    status: str = "pending"  # pending, shared, answered
+    created_at: datetime = Field(default_factory=datetime.utcnow)

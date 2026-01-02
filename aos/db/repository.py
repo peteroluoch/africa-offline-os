@@ -81,7 +81,9 @@ class BaseRepository(Generic[T]):
 from aos.db.models import (
     OperatorDTO, NodeDTO, FarmerDTO, HarvestDTO, CropDTO,
     CommunityGroupDTO, CommunityEventDTO, CommunityAnnouncementDTO, CommunityInquiryDTO,
-    TransportZoneDTO, TrafficSignalDTO, TransportAvailabilityDTO
+    TransportZoneDTO, TrafficSignalDTO, TransportAvailabilityDTO,
+    InstitutionMemberDTO, InstitutionGroupDTO, MemberVehicleMapDTO,
+    InstitutionMessageLogDTO, PrayerRequestDTO, InstitutionGroupMemberDTO
 )
 
 
@@ -220,33 +222,13 @@ class CommunityGroupRepository(BaseRepository[CommunityGroupDTO]):
 
     def get_by_code(self, code: str) -> CommunityGroupDTO | None:
         """Fetch a single active community by its code."""
-        import logging
-        logger = logging.getLogger(__name__)
-        
         self.conn.row_factory = sqlite3.Row
         # Case-insensitive lookup using UPPER
-        logger.info(f"[DB Query] Looking for code: '{code}' (stripped: '{code.strip()}')")
-        
         cursor = self.conn.execute(
             f"SELECT * FROM {self.table_name} WHERE UPPER(community_code) = UPPER(?) AND code_active = 1",
             (code.strip(),)
         )
         row = cursor.fetchone()
-        
-        if row:
-            logger.info(f"[DB Query] FOUND: {dict(row)}")
-        else:
-            # Debug: Check if code exists but is inactive
-            cursor2 = self.conn.execute(
-                f"SELECT id, name, community_code, code_active FROM {self.table_name} WHERE UPPER(community_code) = UPPER(?)",
-                (code.strip(),)
-            )
-            inactive_row = cursor2.fetchone()
-            if inactive_row:
-                logger.warning(f"[DB Query] Code exists but code_active={inactive_row['code_active']}: {dict(inactive_row)}")
-            else:
-                logger.warning(f"[DB Query] Code '{code}' not found in database at all")
-        
         return self._row_to_model(row) if row else None
 
 class CommunityEventRepository(BaseRepository[CommunityEventDTO]):
@@ -314,3 +296,104 @@ class TransportAvailabilityRepository(BaseRepository[TransportAvailabilityDTO]):
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (availability.id, availability.zone_id, availability.destination, availability.availability_state, availability.reported_by, availability.reported_at, availability.expires_at))
         self.conn.commit()
+
+# --- Institutional Core Repositories (Section 1) ---
+
+class InstitutionMemberRepository(BaseRepository[InstitutionMemberDTO]):
+    def __init__(self, connection: sqlite3.Connection):
+        super().__init__(connection, InstitutionMemberDTO, "institution_members")
+
+    def save(self, member: InstitutionMemberDTO) -> None:
+        self.conn.execute("""
+            INSERT OR REPLACE INTO institution_members (id, community_id, full_name, role_id, joined_at, active)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (member.id, member.community_id, member.full_name, member.role_id, member.joined_at, member.active))
+        self.conn.commit()
+
+class InstitutionGroupRepository(BaseRepository[InstitutionGroupDTO]):
+    def __init__(self, connection: sqlite3.Connection):
+        super().__init__(connection, InstitutionGroupDTO, "institution_groups")
+
+    def save(self, group: InstitutionGroupDTO) -> None:
+        self.conn.execute("""
+            INSERT OR REPLACE INTO institution_groups (id, community_id, name, description, created_at)
+            VALUES (?, ?, ?, ?, ?)
+        """, (group.id, group.community_id, group.name, group.description, group.created_at))
+        self.conn.commit()
+
+class MemberVehicleMapRepository(BaseRepository[MemberVehicleMapDTO]):
+    def __init__(self, connection: sqlite3.Connection):
+        super().__init__(connection, MemberVehicleMapDTO, "member_vehicle_maps")
+
+    def save(self, vmap: MemberVehicleMapDTO) -> None:
+        self.conn.execute("""
+            INSERT OR REPLACE INTO member_vehicle_maps (id, member_id, vehicle_type, vehicle_identity, created_at)
+            VALUES (?, ?, ?, ?, ?)
+        """, (vmap.id, vmap.member_id, vmap.vehicle_type, vmap.vehicle_identity, vmap.created_at))
+        self.conn.commit()
+
+    def get_by_vehicle(self, vehicle_type: str, vehicle_identity: str) -> MemberVehicleMapDTO | None:
+        self.conn.row_factory = sqlite3.Row
+        cursor = self.conn.execute(
+            f"SELECT * FROM {self.table_name} WHERE vehicle_type = ? AND vehicle_identity = ?",
+            (vehicle_type, vehicle_identity)
+        )
+        row = cursor.fetchone()
+        return self._row_to_model(row) if row else None
+
+class InstitutionMessageLogRepository(BaseRepository[InstitutionMessageLogDTO]):
+    def __init__(self, connection: sqlite3.Connection):
+        super().__init__(connection, InstitutionMessageLogDTO, "institution_message_logs")
+
+    def save(self, log: InstitutionMessageLogDTO) -> None:
+        self.conn.execute("""
+            INSERT OR REPLACE INTO institution_message_logs (id, community_id, sender_id, recipient_type, recipient_id, vehicle_type, message_type, content_hash, sent_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (log.id, log.community_id, log.sender_id, log.recipient_type, log.recipient_id, log.vehicle_type, log.message_type, log.content_hash, log.sent_at))
+        self.conn.commit()
+
+class PrayerRequestRepository(BaseRepository[PrayerRequestDTO]):
+    def __init__(self, connection: sqlite3.Connection):
+        super().__init__(connection, PrayerRequestDTO, "prayer_requests")
+
+    def save(self, request: PrayerRequestDTO) -> None:
+        self.conn.execute("""
+            INSERT OR REPLACE INTO prayer_requests (id, community_id, member_id, request_text, is_anonymous, status, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (request.id, request.community_id, request.member_id, request.request_text, request.is_anonymous, request.status, request.created_at))
+        self.conn.commit()
+
+class InstitutionGroupMemberRepository(BaseRepository[InstitutionGroupMemberDTO]):
+    def __init__(self, connection: sqlite3.Connection):
+        super().__init__(connection, InstitutionGroupMemberDTO, "institution_group_members")
+
+    def save(self, igm: InstitutionGroupMemberDTO) -> None:
+        self.conn.execute("""
+            INSERT OR REPLACE INTO institution_group_members (id, group_id, member_id, joined_at)
+            VALUES (?, ?, ?, ?)
+        """, (igm.id, igm.group_id, igm.member_id, igm.joined_at))
+        self.conn.commit()
+
+    def list_by_member(self, member_id: str) -> list[InstitutionGroupMemberDTO]:
+        self.conn.row_factory = sqlite3.Row
+        cursor = self.conn.execute(
+            f"SELECT * FROM {self.table_name} WHERE member_id = ?",
+            (member_id,)
+        )
+        return [self._row_to_model(row) for row in cursor.fetchall()]
+
+    def list_by_group(self, group_id: str) -> list[InstitutionGroupMemberDTO]:
+        self.conn.row_factory = sqlite3.Row
+        cursor = self.conn.execute(
+            f"SELECT * FROM {self.table_name} WHERE group_id = ?",
+            (group_id,)
+        )
+        return [self._row_to_model(row) for row in cursor.fetchall()]
+
+    def delete_membership(self, group_id: str, member_id: str) -> bool:
+        cursor = self.conn.execute(
+            f"DELETE FROM {self.table_name} WHERE group_id = ? AND member_id = ?",
+            (group_id, member_id)
+        )
+        self.conn.commit()
+        return cursor.rowcount > 0

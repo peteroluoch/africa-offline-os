@@ -14,6 +14,8 @@ from aos.db.migrations import (
     _013_ensure_base_roles,
     _014_community_invite_slugs,
     _015_community_codes,
+    _016_institution_core,
+    _017_group_memberships,
 )
 
 # Strict migration registry
@@ -33,4 +35,6 @@ MIGRATIONS = [
     _013_ensure_base_roles,
     _014_community_invite_slugs,
     _015_community_codes,
+    _016_institution_core,
+    _017_group_memberships,
 ]

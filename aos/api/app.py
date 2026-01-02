@@ -195,6 +195,7 @@ from aos.api.routers.transport import router as transport_router
 from aos.api.routers.admin_users import router as admin_users_router
 from aos.api.routers.operators import router as operators_router
 from aos.api.routers.policies import router as policies_router
+from aos.api.routers.institution import router as institution_router
 from aos.core.security.auth import get_current_operator
 
 
@@ -228,6 +229,7 @@ def create_app() -> FastAPI:
     app.include_router(admin_users_router)
     app.include_router(operators_router)
     app.include_router(policies_router)
+    app.include_router(institution_router)
 
     @app.get("/")
     async def root():
