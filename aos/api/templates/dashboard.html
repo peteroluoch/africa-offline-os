@@ -287,28 +287,28 @@
 
     <!-- Main Content -->
     <main class="flex-1 flex flex-col relative z-10">
-        <header class="h-20 border-b border-slate-800/50 aos-glass px-10 flex items-center justify-between">
+        <header class="h-20 aos-border-b aos-glass px-10 flex items-center justify-between">
             <div class="flex items-center space-x-6">
-                <h2 class="aos-text-display text-xl font-bold text-slate-200 tracking-tight">Event Monitor</h2>
-                <div class="h-5 w-px bg-slate-800"></div>
+                <h2 class="aos-text-display text-xl font-bold aos-text-primary tracking-tight">Event Monitor</h2>
+                <div class="h-5 w-px aos-bg-subtle"></div>
                 {{ badge(text="Sovereign-Bus-Connected", variant="success") }}
             </div>
 
             <div class="flex items-center space-x-6">
                 <div class="text-right">
-                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] leading-none mb-1">Status
+                    <p class="text-[9px] font-black aos-text-muted uppercase tracking-[0.2em] leading-none mb-1">Status
                     </p>
                     <p class="text-xs font-bold text-green-400 aos-text-mono">AUTHENTICATED</p>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <span class="text-sm font-semibold text-slate-300 aos-text-mono">{{ user.username }}</span>
+                    <span class="text-sm font-semibold aos-text-primary aos-text-mono">{{ user.username }}</span>
                     <div
                         class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 border border-blue-400/30 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-900/40">
                         {{ user.username[:2].upper() }}
                     </div>
                 </div>
 
-                <div class="h-5 w-px bg-slate-800 mx-2"></div>
+                <div class="h-5 w-px aos-bg-subtle mx-2"></div>
 
                 <a href="/auth/logout"
                     class="group flex items-center justify-center w-10 h-10 rounded-xl aos-bg-surface-elevated aos-border-subtle aos-text-secondary hover:aos-text-danger hover:aos-bg-danger-fade transition-all duration-200"
@@ -363,20 +363,31 @@
         </div>
 
         <!-- Footer - Outside scrollable content -->
-        <footer class="aos-bg-surface-base">
-            <div class="border-t border-slate-800/30 px-10 aos-p-6">
-                <div class="flex items-center justify-between text-xs text-slate-500">
+        <footer class="aos-bg-surface-elevated">
+            <!-- HR Line with proper padding -->
+            <div class="px-10">
+                <div class="aos-border-t"></div>
+            </div>
+
+            <div class="px-10 aos-p-6">
+                <div class="flex items-center justify-between text-xs aos-text-secondary">
                     <div class="flex items-center space-x-4">
                         <span class="aos-text-mono">© 2025 A-OS Kernel</span>
-                        <span class="text-slate-700">|</span>
-                        <a href="/privacy" class="hover:text-blue-400 transition-colors duration-200">Privacy Policy</a>
-                        <span class="text-slate-700">|</span>
-                        <a href="/terms" class="hover:text-blue-400 transition-colors duration-200">Terms &
+                        <span class="aos-text-muted">|</span>
+                        <a href="/privacy" class="hover:aos-text-primary transition-colors duration-200">Privacy
+                            Policy</a>
+                        <span class="aos-text-muted">|</span>
+                        <a href="/terms" class="hover:aos-text-primary transition-colors duration-200">Terms &
                             Conditions</a>
-                        <span class="text-slate-700">|</span>
-                        <a href="/cookies" class="hover:text-blue-400 transition-colors duration-200">Cookie Policy</a>
+                        <span class="aos-text-muted">|</span>
+                        <a href="/cookies" class="hover:aos-text-primary transition-colors duration-200">Cookie
+                            Policy</a>
+                        <span class="aos-text-muted">|</span>
+                        <a href="https://codegxtechnologies.org/" target="_blank" rel="noopener noreferrer"
+                            class="hover:aos-text-primary transition-colors duration-200">Developed by Codegx
+                            Technologies</a>
                     </div>
-                    <div class="text-slate-600 aos-text-mono">
+                    <div class="aos-text-muted aos-text-mono">
                         Kernel v0.1.0 | Build 2025.01
                     </div>
                 </div>
