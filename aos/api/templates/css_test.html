@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS Class Test</title>
+
+    <!-- A-OS Design System -->
+    <link rel="stylesheet" href="/static/ui/base.css">
+    <link rel="stylesheet" href="/static/ui/components.css">
+    <link rel="stylesheet" href="/static/ui/tailwind-compat.css">
+
+    <style>
+        body {
+            background: var(--aos-surface-base);
+            color: var(--aos-neutral-50);
+            font-family: var(--aos-font-sans);
+            padding: 2rem;
+        }
+
+        .test-box {
+            background: var(--aos-surface-elevated);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--aos-surface-border);
+            border-radius: var(--aos-radius-lg);
+        }
+    </style>
+</head>
+
+<body>
+    <h1 class="aos-h1 mb-8">A-OS Design System Test</h1>
+
+    <div class="test-box">
+        <h2 class="aos-h2 mb-4">Grid Test</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="aos-p-4" style="background: var(--aos-primary-base);">Col 1</div>
+            <div class="aos-p-4" style="background: var(--aos-secondary-base);">Col 2</div>
+            <div class="aos-p-4" style="background: var(--aos-accent-base);">Col 3</div>
+            <div class="aos-p-4" style="background: var(--aos-success-base);">Col 4</div>
+        </div>
+    </div>
+
+    <div class="test-box">
+        <h2 class="aos-h2 mb-4">Flex Test</h2>
+        <div class="flex flex-wrap items-center gap-4 mb-6">
+            <div class="flex-1 min-w-[240px]">
+                <input type="text" class="aos-input w-full" placeholder="Search...">
+            </div>
+            <div class="w-48">
+                <select class="aos-input w-full">
+                    <option>Option 1</option>
+                    <option>Option 2</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-box">
+        <h2 class="aos-h2 mb-4">Typography Test</h2>
+        <p class="text-5xl font-extrabold mb-2">Large Heading</p>
+        <p class="text-lg font-bold mb-2">Medium Text</p>
+        <p class="text-sm font-medium">Small Text</p>
+    </div>
+
+    <div class="test-box">
+        <h2 class="aos-h2 mb-4">Spacing Test</h2>
+        <div class="mb-2 p-6" style="background: var(--aos-info-base);">mb-2 p-6</div>
+        <div class="mb-6 px-4" style="background: var(--aos-warning-base);">mb-6 px-4</div>
+        <div class="mb-10 ml-2" style="background: var(--aos-error-base);">mb-10 ml-2</div>
+    </div>
+
+    <div class="test-box">
+        <h2 class="aos-h2 mb-4">Status</h2>
+        <p class="text-center">✅ If you can see this page with proper layout, all CSS is working!</p>
+    </div>
+</body>
+
+</html>

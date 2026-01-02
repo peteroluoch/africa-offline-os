@@ -49,14 +49,10 @@
   --aos-spacing-8: 2rem;
   --aos-spacing-10: 2.5rem;
   --aos-spacing-12: 3rem;
-  --aos-spacing-14: 3.5rem;
   --aos-spacing-16: 4rem;
-  --aos-spacing-48: 12rem;
-  --aos-spacing-64: 16rem;
-  --aos-spacing-72: 18rem;
-  --aos-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  --aos-font-display: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  --aos-font-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Fira Mono', 'Roboto Mono', 'Consolas', 'Courier New', monospace;
+  --aos-font-sans: Inter, system-ui, -apple-system, sans-serif;
+  --aos-font-display: Outfit, sans-serif;
+  --aos-font-mono: JetBrains Mono, monospace;
   --aos-size-xs: 0.75rem;
   --aos-size-sm: 0.875rem;
   --aos-size-base: 1rem;

@@ -1,0 +1,14 @@
+/* 
+ * A-OS Vendor CSS Bundle
+ * Self-hosted dependencies for offline-first operation
+ * 
+ * Contents:
+ * - HTMX 1.9.10 (inline styles - none required)
+ * - Alpine.js (inline styles - none required)
+ * 
+ * Note: TailwindCSS is NOT included here as A-OS uses a custom design system.
+ * The AOS Design System is defined in base.css and components.css.
+ */
+
+/* Placeholder for future vendor CSS if needed */
+/* Currently all vendor libraries (HTMX, Alpine) are JS-only */
