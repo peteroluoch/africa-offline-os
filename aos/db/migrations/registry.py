@@ -16,6 +16,7 @@ from aos.db.migrations import (
     _015_community_codes,
     _016_institution_core,
     _017_group_memberships,
+    _018_attendance_finance,
 )
 
 # Strict migration registry
@@ -37,4 +38,5 @@ MIGRATIONS = [
     _015_community_codes,
     _016_institution_core,
     _017_group_memberships,
+    _018_attendance_finance,
 ]

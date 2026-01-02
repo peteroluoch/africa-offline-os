@@ -83,7 +83,8 @@ from aos.db.models import (
     CommunityGroupDTO, CommunityEventDTO, CommunityAnnouncementDTO, CommunityInquiryDTO,
     TransportZoneDTO, TrafficSignalDTO, TransportAvailabilityDTO,
     InstitutionMemberDTO, InstitutionGroupDTO, MemberVehicleMapDTO,
-    InstitutionMessageLogDTO, PrayerRequestDTO, InstitutionGroupMemberDTO
+    InstitutionMessageLogDTO, PrayerRequestDTO, InstitutionGroupMemberDTO,
+    AttendanceRecordDTO, FinancialLedgerDTO
 )
 
 
@@ -397,3 +398,58 @@ class InstitutionGroupMemberRepository(BaseRepository[InstitutionGroupMemberDTO]
         )
         self.conn.commit()
         return cursor.rowcount > 0
+
+class InstitutionalAttendanceRepository(BaseRepository[AttendanceRecordDTO]):
+    def __init__(self, connection: sqlite3.Connection):
+        super().__init__(connection, AttendanceRecordDTO, "institutional_attendance")
+
+    def save(self, record: AttendanceRecordDTO) -> None:
+        self.conn.execute("""
+            INSERT OR REPLACE INTO institutional_attendance (id, community_id, member_id, service_date, service_type, status, recorded_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (record.id, record.community_id, record.member_id, record.service_date, record.service_type, record.status, record.recorded_at))
+        self.conn.commit()
+
+    def get_weekly_trends(self, community_id: str) -> list[dict]:
+        """Aggregate attendance by week."""
+        self.conn.row_factory = sqlite3.Row
+        cursor = self.conn.execute("""
+            SELECT strftime('%Y-%W', service_date) as week, COUNT(*) as count
+            FROM institutional_attendance
+            WHERE community_id = ?
+            GROUP BY week ORDER BY week DESC
+        """, (community_id,))
+        return [dict(row) for row in cursor.fetchall()]
+
+class InstitutionalFinanceRepository(BaseRepository[FinancialLedgerDTO]):
+    def __init__(self, connection: sqlite3.Connection):
+        super().__init__(connection, FinancialLedgerDTO, "institutional_finances")
+
+    def save(self, entry: FinancialLedgerDTO) -> None:
+        self.conn.execute("""
+            INSERT OR REPLACE INTO institutional_finances (id, community_id, member_id, amount, category, is_pledge, entry_date, notes, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (entry.id, entry.community_id, entry.member_id, entry.amount, entry.category, entry.is_pledge, entry.entry_date, entry.notes, entry.created_at))
+        self.conn.commit()
+
+    def get_category_report(self, community_id: str) -> list[dict]:
+        """Sum totals by category."""
+        self.conn.row_factory = sqlite3.Row
+        cursor = self.conn.execute("""
+            SELECT category, SUM(amount) as total
+            FROM institutional_finances
+            WHERE community_id = ? AND is_pledge = 0
+            GROUP BY category
+        """, (community_id,))
+        return [dict(row) for row in cursor.fetchall()]
+
+    def get_pledge_status(self, community_id: str) -> list[dict]:
+        """Calculate total pledges vs actuals for the community."""
+        self.conn.row_factory = sqlite3.Row
+        cursor = self.conn.execute("""
+            SELECT is_pledge, SUM(amount) as total
+            FROM institutional_finances
+            WHERE community_id = ?
+            GROUP BY is_pledge
+        """, (community_id,))
+        return [dict(row) for row in cursor.fetchall()]

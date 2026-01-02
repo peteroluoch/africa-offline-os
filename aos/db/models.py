@@ -205,3 +205,25 @@ class PrayerRequestDTO(BaseModel):
     is_anonymous: bool = False
     status: str = "pending"  # pending, shared, answered
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class AttendanceRecordDTO(BaseModel):
+    """Institutional attendance tracking."""
+    id: str
+    community_id: str
+    member_id: str
+    service_date: datetime
+    service_type: str  # e.g. Sunday Morning, Mid-week
+    status: str = "present"
+    recorded_at: datetime = Field(default_factory=datetime.utcnow)
+
+class FinancialLedgerDTO(BaseModel):
+    """Institutional giving ledger (local truth, no payments)."""
+    id: str
+    community_id: str
+    member_id: str | None = None # Can be anonymous giving
+    amount: float
+    category: str  # tithe, offering, pledge
+    is_pledge: bool = False
+    entry_date: datetime
+    notes: str | None = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)

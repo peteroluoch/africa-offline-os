@@ -11,13 +11,15 @@ from typing import Any
 
 from aos.db.models import (
     InstitutionMemberDTO, InstitutionGroupDTO, InstitutionMessageLogDTO,
-    PrayerRequestDTO, MemberVehicleMapDTO, InstitutionGroupMemberDTO
+    PrayerRequestDTO, MemberVehicleMapDTO, InstitutionGroupMemberDTO,
+    AttendanceRecordDTO, FinancialLedgerDTO
 )
 from aos.db.repository import (
     InstitutionMemberRepository, InstitutionGroupRepository,
     InstitutionMessageLogRepository, PrayerRequestRepository,
     MemberVehicleMapRepository, CommunityGroupRepository,
-    InstitutionGroupMemberRepository
+    InstitutionGroupMemberRepository, InstitutionalAttendanceRepository,
+    InstitutionalFinanceRepository
 )
 
 logger = logging.getLogger("aos.institution")
@@ -36,7 +38,9 @@ class InstitutionService:
         prayer_repo: PrayerRequestRepository,
         vmap_repo: MemberVehicleMapRepository,
         community_repo: CommunityGroupRepository,
-        group_member_repo: InstitutionGroupMemberRepository
+        group_member_repo: InstitutionGroupMemberRepository,
+        attendance_repo: InstitutionalAttendanceRepository,
+        finance_repo: InstitutionalFinanceRepository
     ):
         self.members = member_repo
         self.groups = group_repo
@@ -45,6 +49,8 @@ class InstitutionService:
         self.vmaps = vmap_repo
         self.communities = community_repo
         self.group_members = group_member_repo
+        self.attendance = attendance_repo
+        self.finance = finance_repo
 
     # --- Group Management (PROMPT 6) ---
 
@@ -242,3 +248,93 @@ class InstitutionService:
         )
         self.prayers.save(request)
         return request
+
+    # --- Attendance Module (PROMPT 7) ---
+
+    def mark_attendance(
+        self,
+        community_id: str,
+        member_id: str,
+        service_date: datetime,
+        service_type: str,
+        requester_id: str
+    ) -> bool:
+        """Admin marks member as present."""
+        if not self.can_manage_members(requester_id):
+            return False
+            
+        record = AttendanceRecordDTO(
+            id=str(uuid.uuid4()),
+            community_id=community_id,
+            member_id=member_id,
+            service_date=service_date,
+            service_type=service_type
+        )
+        self.attendance.save(record)
+        return True
+
+    def get_attendance_trends(self, community_id: str) -> list[dict]:
+        """Weekly attendance aggregates."""
+        return self.attendance.get_weekly_trends(community_id)
+
+    # --- Financial Ledger (PROMPT 8) ---
+
+    def log_financial_entry(
+        self,
+        community_id: str,
+        amount: float,
+        category: str,
+        entry_date: datetime,
+        requester_id: str,
+        member_id: str | None = None,
+        is_pledge: bool = False,
+        notes: str | None = None
+    ) -> bool:
+        """Log a tithe, offering, or pledge."""
+        if not self.can_access_finances(requester_id):
+            return False
+            
+        entry = FinancialLedgerDTO(
+            id=str(uuid.uuid4()),
+            community_id=community_id,
+            member_id=member_id,
+            amount=amount,
+            category=category,
+            is_pledge=is_pledge,
+            entry_date=entry_date,
+            notes=notes
+        )
+        self.finance.save(entry)
+        return True
+
+    def get_financial_summary(self, community_id: str) -> dict:
+        """Consolidated report of categories and pledges."""
+        return {
+            "categories": self.finance.get_category_report(community_id),
+            "pledges": self.finance.get_pledge_status(community_id)
+        }
+
+    # --- Institutional Analytics (PROMPT 6/10) ---
+
+    def get_inactive_members(self, community_id: str, days: int = 30) -> list[InstitutionMemberDTO]:
+        """
+        Identify members who haven't attended any services in the last X days.
+        Excludes ADMIN (Pastor) from the report.
+        """
+        from datetime import timedelta
+        cutoff = datetime.utcnow() - timedelta(days=days)
+        
+        all_members = [m for m in self.members.list_all() if m.community_id == community_id and m.role_id != "ADMIN"]
+        
+        inactive = []
+        for member in all_members:
+            # Check if any attendance after cutoff
+            self.attendance.conn.row_factory = sqlite3.Row
+            cursor = self.attendance.conn.execute(
+                "SELECT id FROM institutional_attendance WHERE member_id = ? AND service_date > ? LIMIT 1",
+                (member.id, cutoff)
+            )
+            if not cursor.fetchone():
+                inactive.append(member)
+        
+        return inactive

@@ -6,7 +6,8 @@ from aos.db.repository import (
     InstitutionMemberRepository, InstitutionGroupRepository,
     InstitutionMessageLogRepository, PrayerRequestRepository,
     MemberVehicleMapRepository, CommunityGroupRepository,
-    InstitutionGroupMemberRepository
+    InstitutionGroupMemberRepository, InstitutionalAttendanceRepository,
+    InstitutionalFinanceRepository
 )
 from aos.core.institution.service import InstitutionService
 from aos.core.vehicles.router import CommandRouter
@@ -33,7 +34,9 @@ def service(db_conn):
         prayer_repo=PrayerRequestRepository(db_conn),
         vmap_repo=MemberVehicleMapRepository(db_conn),
         community_repo=CommunityGroupRepository(db_conn),
-        group_member_repo=InstitutionGroupMemberRepository(db_conn)
+        group_member_repo=InstitutionGroupMemberRepository(db_conn),
+        attendance_repo=InstitutionalAttendanceRepository(db_conn),
+        finance_repo=InstitutionalFinanceRepository(db_conn)
     )
 
 @pytest.fixture
