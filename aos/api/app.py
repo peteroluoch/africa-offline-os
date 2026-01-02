@@ -352,7 +352,7 @@ def create_app() -> FastAPI:
         
         # Check for dependency updates (once per day)
         updates = []
-        if user_role in [AosRole.SUPER_ADMIN.value, AosRole.ADMIN.value]:
+        if user_role in [AosRole.ROOT.value, AosRole.SYSTEM_ADMIN.value]:
             last_check = getattr(core_state, 'last_dependency_check', None)
             if should_check_updates(last_check):
                 try:
