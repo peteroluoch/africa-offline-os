@@ -384,7 +384,8 @@
                             Policy</a>
                         <span class="aos-text-muted">|</span>
                         <a href="https://codegxtechnologies.org/" target="_blank" rel="noopener noreferrer"
-                            class="hover:aos-text-primary transition-colors duration-200">Developed by Codegx
+                            class="developer-credit hover:aos-text-primary transition-all duration-300">Developed by
+                            Codegx
                             Technologies</a>
                     </div>
                     <div class="aos-text-muted aos-text-mono">
@@ -393,6 +394,42 @@
                 </div>
             </div>
         </footer>
+
+        <style>
+            /* FAANG-grade developer credit animation */
+            .developer-credit {
+                position: relative;
+                display: inline-block;
+                animation: fadeInUp 0.8s ease-out;
+            }
+
+            .developer-credit::after {
+                content: '';
+                position: absolute;
+                bottom: -2px;
+                left: 0;
+                width: 0;
+                height: 1px;
+                background: var(--aos-primary-base);
+                transition: width 0.3s ease-out;
+            }
+
+            .developer-credit:hover::after {
+                width: 100%;
+            }
+
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        </style>
     </main>
 
     <!-- Global Premium Confirmation Modal -->
