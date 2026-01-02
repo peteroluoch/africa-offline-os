@@ -7,6 +7,7 @@
 {% from "components/molecules/SidebarItem.html" import sidebar_item %}
 {% from "components/molecules/ResourceWidget.html" import resource_widget %}
 {% from "components/molecules/CollapsibleMenuGroup.html" import collapsible_menu_group %}
+{% from "components/molecules/DependencyAlert.html" import dependency_alert %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -351,6 +352,9 @@
                 status=metrics.queue_depth.status
                 ) }}
             </div>
+
+            <!-- Dependency Update Alerts (Admin Only) -->
+            {{ dependency_alert(dependency_updates) }}
 
             <!-- Event Stream Card -->
             {% call card(padding="0", class="flex flex-col flex-1 min-h-[600px] overflow-hidden") %}

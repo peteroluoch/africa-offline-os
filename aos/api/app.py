@@ -330,6 +330,8 @@ def create_app() -> FastAPI:
         """Render the kernel dashboard (Protected) with role-based redirection."""
         from aos.core.security.auth import AosRole
         from aos.core.monitoring.metrics import calculate_dashboard_metrics
+        from aos.core.monitoring.dependency_checker import check_updates, should_check_updates
+        from datetime import datetime
         
         user_role = current_user.get("role")
         community_id = current_user.get("community_id")
@@ -348,10 +350,21 @@ def create_app() -> FastAPI:
         # Calculate real-time metrics
         metrics = calculate_dashboard_metrics(core_state.db_conn)
         
+        # Check for dependency updates (once per day)
+        updates = []
+        if user_role in [AosRole.SUPER_ADMIN.value, AosRole.ADMIN.value]:
+            last_check = getattr(core_state, 'last_dependency_check', None)
+            if should_check_updates(last_check):
+                try:
+                    updates = check_updates()
+                    core_state.last_dependency_check = datetime.now()
+                except Exception:
+                    pass  # Fail silently
+        
         # ROOT and ADMIN see the kernel overview
         return templates.TemplateResponse(
             "dashboard.html",
-            {"request": request, "user": current_user, "metrics": metrics}
+            {"request": request, "user": current_user, "metrics": metrics, "dependency_updates": updates}
         )
 
     @app.get("/sys/gallery")

@@ -1,0 +1,97 @@
+{# DependencyAlert Widget - Dashboard Update Notifications #}
+{% macro dependency_alert(updates) %}
+{% if updates %}
+<div class="aos-glass aos-p-6 aos-mb-6 border-l-4 border-blue-500 fade-in">
+    <div class="flex items-start justify-between mb-4">
+        <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
+                </path>
+            </svg>
+            <h3 class="aos-text-lg font-bold">Dependency Updates Available</h3>
+        </div>
+        <button onclick="dismissAllUpdates()" class="aos-text-sm text-slate-400 hover:text-slate-200">
+            Dismiss All
+        </button>
+    </div>
+
+    {% for update in updates %}
+    <div class="aos-glass aos-p-4 aos-mb-3 rounded-lg" id="update-{{ update.name|replace(' ', '-')|lower }}">
+        <div class="flex items-start justify-between">
+            <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="font-semibold aos-text-primary">{{ update.name }}</span>
+                    <span class="aos-text-sm text-slate-400">{{ update.current }} → {{ update.latest }}</span>
+                    {% if update.breaking %}
+                    <span class="aos-badge aos-badge-warning aos-text-xs">⚠️ Breaking Changes</span>
+                    {% endif %}
+                </div>
+
+                <div class="flex gap-2 mt-3">
+                    <a href="{{ update.changelog }}" target="_blank" class="aos-btn aos-btn-sm aos-btn-primary">
+                        View Changelog
+                    </a>
+                    <button onclick="dismissUpdate('{{ update.name|replace(' ', '-')|lower }}')"
+                        class="aos-btn aos-btn-sm aos-btn-ghost">
+                        Dismiss
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <p class="aos-text-xs text-slate-500 mt-4">
+        💡 Updates are not automatic. Review changelogs before updating.
+    </p>
+</div>
+
+<script>
+    function dismissUpdate(name) {
+        const element = document.getElementById(`update-${name}`);
+        if (element) {
+            element.style.opacity = '0';
+            setTimeout(() => element.remove(), 300);
+        }
+
+        // Store dismissed state
+        const dismissed = JSON.parse(localStorage.getItem('dismissed_updates') || '[]');
+        dismissed.push(name);
+        localStorage.setItem('dismissed_updates', JSON.stringify(dismissed));
+    }
+
+    function dismissAllUpdates() {
+        const updates = document.querySelectorAll('[id^="update-"]');
+        updates.forEach(el => {
+            el.style.opacity = '0';
+            setTimeout(() => el.remove(), 300);
+        });
+
+        // Clear parent container after animation
+        setTimeout(() => {
+            const container = document.querySelector('.dependency-alert-container');
+            if (container) container.remove();
+        }, 400);
+    }
+</script>
+
+<style>
+    .fade-in {
+        animation: fadeIn 0.4s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endif %}
+{% endmacro %}
