@@ -7,8 +7,7 @@ from typing import List
 
 from aos.db.models import InstitutionMemberDTO, InstitutionGroupDTO, PrayerRequestDTO
 from aos.core.institution.service import InstitutionService
-from aos.api.dependencies import get_current_operator # Logic for admin access
-# Note: In a real app, we'd inject the service. Here we assume global access or factory.
+from aos.core.security.auth import get_current_operator
 
 router = APIRouter(prefix="/institution", tags=["Institution"])
 
