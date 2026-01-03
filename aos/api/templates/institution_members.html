@@ -265,6 +265,47 @@
     function openBroadcastModal() {
         const modal = document.getElementById('broadcastModal');
         modal.style.display = 'flex';
+        updateBroadcastStats(); // Initial update
+    }
+
+    // Update broadcast summary stats
+    function updateBroadcastStats() {
+        const message = document.getElementById('broadcastMessage').value;
+        const target = document.getElementById('broadcastTarget').value;
+        const channel = document.getElementById('broadcastChannel').value;
+
+        // Update character count
+        document.getElementById('charCount').textContent = `${message.length}/500 characters`;
+
+        // Update summary channel
+        const channelNames = {
+            'telegram': 'Telegram (Free)',
+            'sms': 'SMS (Premium)',
+            'whatsapp': 'WhatsApp'
+        };
+        document.getElementById('summaryChannel').textContent = channelNames[channel] || channel;
+
+        // Update recipients (mock logic for now since we don't have group sizes easily in JS)
+        let recipientCount = {{ members| length
+    }};
+    if (target.startsWith('GROUP:')) {
+        // In a real app, we'd fetch the group size or have it in a data attribute
+        recipientCount = 'Calculating...';
+    }
+    document.getElementById('summaryRecipients').textContent = recipientCount;
+
+    // Update cost
+    let cost = 0.00;
+    if (channel === 'sms') {
+        cost = (recipientCount === 'Calculating...' ? 0 : recipientCount) * 2.00; // Mock 2 KES per SMS
+    }
+    document.getElementById('summaryCost').textContent = `KES ${cost.toFixed(2)}`;
+
+    // Update button text
+    const sendBtnText = document.querySelector('#broadcastModal .aos-btn-primary .aos-btn-text');
+    if (sendBtnText) {
+        sendBtnText.textContent = `Send to ${recipientCount} Members`;
+    }
     }
 
     // Close broadcast modal
@@ -554,15 +595,32 @@
 
         <div class="form-group mb-4">
             <label class="aos-text-sm aos-text-muted mb-2 block">Message</label>
-            <textarea id="broadcastMessage" rows="4"
-                class="w-full px-4 py-2 bg-[var(--aos-surface-glass)] border border-white/10 rounded-[var(--aos-radius-md)] text-white"
+            <textarea id="broadcastMessage" rows="4" maxlength="500" oninput="updateBroadcastStats()"
+                class="w-full px-4 py-2 bg-[var(--aos-surface-glass)] border border-white/10 rounded-[var(--aos-radius-md)] text-white focus:outline-none focus:border-[var(--aos-primary-base)]"
                 placeholder="Type your message..."></textarea>
+            <div class="flex justify-end mt-1">
+                <span id="charCount" class="aos-text-xs aos-text-muted">0/500 characters</span>
+            </div>
+        </div>
+
+        <!-- Dynamic Summary Table -->
+        <div class="bg-[var(--aos-surface-elevated)]/30 rounded-lg p-4 mb-6 border border-white/5">
+            <div class="grid grid-cols-2 gap-y-2 aos-text-xs">
+                <div class="aos-text-muted">Recipients:</div>
+                <div id="summaryRecipients" class="text-right text-white font-bold">{{ members|length }}</div>
+
+                <div class="aos-text-muted">Channel:</div>
+                <div id="summaryChannel" class="text-right text-white font-bold">Telegram</div>
+
+                <div class="aos-text-muted">Estimated Cost:</div>
+                <div id="summaryCost" class="text-right text-[var(--aos-success-base)] font-bold">KES 0.00</div>
+            </div>
         </div>
 
         <div class="form-group mb-4">
             <label class="aos-text-sm aos-text-muted mb-2 block">Send To</label>
-            <select id="broadcastTarget"
-                class="w-full px-4 py-2 bg-[var(--aos-surface-glass)] border border-white/10 rounded-[var(--aos-radius-md)] text-white">
+            <select id="broadcastTarget" onchange="updateBroadcastStats()"
+                class="w-full px-4 py-2 bg-[var(--aos-surface-glass)] border border-white/10 rounded-[var(--aos-radius-md)] text-white focus:outline-none focus:border-[var(--aos-primary-base)]">
                 <option value="ALL">All Members ({{ members|length }})</option>
                 {% for group in groups %}
                 <option value="GROUP:{{ group.name }}">{{ group.name }}</option>
@@ -570,13 +628,13 @@
             </select>
         </div>
 
-        <div class="form-group mb-4">
-            <label class="aos-text-sm aos-text-muted mb-2 block">Channel</label>
-            <select id="broadcastChannel"
-                class="w-full px-4 py-2 bg-[var(--aos-surface-glass)] border border-white/10 rounded-[var(--aos-radius-md)] text-white">
-                <option value="telegram">Telegram</option>
-                <option value="sms">SMS</option>
-                <option value="whatsapp">WhatsApp</option>
+        <div class="form-group mb-6">
+            <label class="aos-text-sm aos-text-muted mb-2 block">Broadcast Channel</label>
+            <select id="broadcastChannel" onchange="updateBroadcastStats()"
+                class="w-full px-4 py-2 bg-[var(--aos-surface-glass)] border border-white/10 rounded-[var(--aos-radius-md)] text-white focus:outline-none focus:border-[var(--aos-primary-base)]">
+                <option value="telegram">Telegram (Free)</option>
+                <option value="sms">SMS (Premium)</option>
+                <option value="whatsapp">WhatsApp (Business)</option>
             </select>
         </div>
 
