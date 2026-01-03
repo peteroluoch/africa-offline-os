@@ -74,7 +74,17 @@ class InstitutionPlugin(ABC):
             - data: Widget-specific data
         """
         pass
-    
+
+    @abstractmethod
+    def get_attendance_types(self) -> List[str]:
+        """Return list of attendance categories for this type."""
+        pass
+
+    @abstractmethod
+    def get_financial_categories(self) -> List[str]:
+        """Return list of financial entry categories."""
+        pass
+
     def get_context_labels(self) -> Dict[str, str]:
         """
         Return type-specific labels for shared features.
@@ -97,5 +107,6 @@ class InstitutionPlugin(ABC):
         return {
             "attendance_label": "Attendance",
             "financial_label": "Finances",
-            "group_label": "Groups"
+            "group_label": "Groups",
+            "prayer_label": "Requests"
         }

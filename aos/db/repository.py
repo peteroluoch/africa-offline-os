@@ -306,9 +306,9 @@ class InstitutionMemberRepository(BaseRepository[InstitutionMemberDTO]):
 
     def save(self, member: InstitutionMemberDTO) -> None:
         self.conn.execute("""
-            INSERT OR REPLACE INTO institution_members (id, community_id, full_name, role_id, joined_at, active)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (member.id, member.community_id, member.full_name, member.role_id, member.joined_at, member.active))
+            INSERT OR REPLACE INTO institution_members (id, community_id, institution_type, full_name, role_id, joined_at, active)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (member.id, member.community_id, member.institution_type, member.full_name, member.role_id, member.joined_at, member.active))
         self.conn.commit()
 
 class InstitutionGroupRepository(BaseRepository[InstitutionGroupDTO]):
@@ -317,9 +317,9 @@ class InstitutionGroupRepository(BaseRepository[InstitutionGroupDTO]):
 
     def save(self, group: InstitutionGroupDTO) -> None:
         self.conn.execute("""
-            INSERT OR REPLACE INTO institution_groups (id, community_id, name, description, created_at)
-            VALUES (?, ?, ?, ?, ?)
-        """, (group.id, group.community_id, group.name, group.description, group.created_at))
+            INSERT OR REPLACE INTO institution_groups (id, community_id, institution_type, name, description, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (group.id, group.community_id, group.institution_type, group.name, group.description, group.created_at))
         self.conn.commit()
 
 class MemberVehicleMapRepository(BaseRepository[MemberVehicleMapDTO]):

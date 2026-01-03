@@ -7,11 +7,21 @@
 
 <header class="mb-10 flex items-center justify-between">
     <div>
-        <h1 class="aos-h1 mb-2">Attendance Tracking</h1>
-        <p class="aos-text-muted aos-text-sm">Digital Parish Office | Weekly Trends & Logs</p>
+        <h1 class="aos-h1 mb-2">{% if labels.attendance_label %}{{ labels.attendance_label }}{% else %}Attendance
+            Tracking{% endif %}</h1>
+        <p class="aos-text-muted aos-text-sm">{{ institution_type | capitalize }} | Weekly Trends & Logs</p>
     </div>
-    <div class="flex items-center gap-3">
-        <a href="/institution/export/attendance?community_id={{ community_id }}"
+    <div class="flex flex-col items-end gap-3">
+        <div
+            class="flex items-center bg-[var(--aos-surface-glass)] p-1 rounded-[var(--aos-radius-md)] border border-white/5">
+            {% for t in available_types %}
+            <a href="?institution_type={{ t }}&community_id={{ community_id }}"
+                class="px-3 py-1.5 aos-text-xs font-bold rounded-[var(--aos-radius-sm)] transition-all {% if institution_type == t %}bg-[var(--aos-primary-base)] text-white shadow-lg{% else %}text-[var(--aos-neutral-400)] hover:text-white{% endif %}">
+                {{ t | capitalize }}
+            </a>
+            {% endfor %}
+        </div>
+        <a href="/institution/export/attendance?community_id={{ community_id }}&institution_type={{ institution_type }}"
             class="aos-btn aos-btn-ghost aos-size-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -50,9 +60,9 @@
         <div class="flex items-center gap-4">
             <input type="date" id="attendance-date" class="aos-input aos-size-sm" value="{{ now_date }}">
             <select id="service-type" class="aos-input aos-size-sm">
-                <option value="Main Service">Main Service</option>
-                <option value="Youth Service">Youth Service</option>
-                <option value="Mid-week">Mid-week</option>
+                {% for category in attendance_types %}
+                <option value="{{ category }}">{{ category }}</option>
+                {% endfor %}
             </select>
         </div>
     </div>
@@ -77,7 +87,7 @@
                 </td>
                 <td>
                     <button class="aos-btn aos-btn-primary aos-size-sm" hx-post="/institution/attendance"
-                        hx-vals='js:{"member_id": "{{ member.id }}", "community_id": "{{ community_id }}", "service_type": document.getElementById("service-type").value, "operator_id": "{{ user.id }}"}'
+                        hx-vals='js:{"member_id": "{{ member.id }}", "community_id": "{{ community_id }}", "institution_type": "{{ institution_type }}", "service_type": document.getElementById("service-type").value, "operator_id": "{{ user.id }}"}'
                         hx-target="#status-{{ member.id }}" hx-swap="innerHTML">
                         <span class="aos-btn-text">Present</span>
                     </button>

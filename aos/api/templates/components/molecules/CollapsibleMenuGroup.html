@@ -35,6 +35,19 @@ is_expanded=False
                 {{ item.section }}
             </div>
             {% endif %}
+
+            {% if item.submenu %}
+            {# Recursive call for nested groups #}
+            <div class="mt-2 pl-2">
+                {{ collapsible_menu_group(
+                title=item.text,
+                icon=item.icon,
+                items=item.submenu,
+                group_id=group_id ~ '-' ~ (item.text | lower | replace(' ', '-')),
+                is_expanded=item.active
+                ) }}
+            </div>
+            {% else %}
             <a href="{{ item.href }}" data-nav-item data-search-text="{{ item.text | lower }}"
                 class="flex items-center space-x-3 px-3 py-2 aos-text-sm text-[var(--aos-neutral-400)] hover:text-[var(--aos-neutral-200)] hover:bg-[var(--aos-surface-glass)] rounded-[var(--aos-radius-lg)] transition-all duration-150 group {% if item.active %}active-nav-item{% endif %}">
                 <div
@@ -49,79 +62,10 @@ is_expanded=False
                 </span>
                 {% endif %}
             </a>
+            {% endif %}
             {% endfor %}
         </div>
     </div>
 </div>
 
-<style>
-    .active-nav-item {
-        background: var(--aos-primary-base) !important;
-        background-color: rgba(var(--aos-primary-base-rgb), 0.1) !important;
-        color: var(--aos-primary-base) !important;
-        font-weight: 600;
-    }
-
-    .active-nav-item>div {
-        color: var(--aos-primary-base) !important;
-    }
-
-    .group-header.expanded {
-        background: var(--aos-surface-elevated);
-    }
-
-    .collapsible-group {
-        margin-bottom: 0.5rem;
-    }
-</style>
-
-<script>
-    function toggleGroup(groupId) {
-        const group = document.querySelector(`[data-group-id="${groupId}"]`);
-        const header = group.querySelector('.group-header');
-        const content = group.querySelector('.group-content');
-        const chevron = header.querySelector('.chevron');
-
-        const isExpanded = header.classList.contains('expanded');
-
-        if (isExpanded) {
-            // Collapse
-            header.classList.remove('expanded');
-            header.setAttribute('aria-expanded', 'false');
-            chevron.classList.remove('rotate-90');
-            content.classList.remove('max-h-screen');
-            content.classList.add('max-h-0');
-        } else {
-            // Expand
-            header.classList.add('expanded');
-            header.setAttribute('aria-expanded', 'true');
-            chevron.classList.add('rotate-90');
-            content.classList.remove('max-h-0');
-            content.classList.add('max-h-screen');
-        }
-
-        // Save state to localStorage
-        const states = JSON.parse(localStorage.getItem('nav_states') || '{}');
-        states[groupId] = !isExpanded;
-        localStorage.setItem('nav_states', JSON.stringify(states));
-    }
-
-    // Restore states on page load
-    document.addEventListener('DOMContentLoaded', () => {
-        const states = JSON.parse(localStorage.getItem('nav_states') || '{}');
-        Object.keys(states).forEach(groupId => {
-            const group = document.querySelector(`[data-group-id="${groupId}"]`);
-            if (group) {
-                const header = group.querySelector('.group-header');
-                const isCurrentlyExpanded = header.classList.contains('expanded');
-                const shouldBeExpanded = states[groupId];
-
-                // Only toggle if state differs from current
-                if (shouldBeExpanded !== isCurrentlyExpanded) {
-                    toggleGroup(groupId);
-                }
-            }
-        });
-    });
-</script>
 {% endmacro %}

@@ -6,30 +6,140 @@
 {% block content %}
 <header class="mb-10 flex items-center justify-between">
     <div>
-        <h1 class="aos-h1 mb-2">Member Registry</h1>
-        <p class="aos-text-muted aos-text-sm">Digital Parish Office | {{ community_id }}</p>
+        <h1 class="aos-h1 mb-2">{% if labels.member_label %}{{ labels.member_label }}{% else %}Member Registry{% endif
+            %}</h1>
+        <p class="aos-text-muted aos-text-sm">{{ institution_type | capitalize }} | {{ community_id }}</p>
+        <h1 class="aos-h1 mb-2">{{ labels.member_registry_title if labels else 'Church Members' }}</h1>
+        <p class="aos-text-muted aos-text-sm">{{ labels.institution_name if labels else 'Faith' }} | {{ community_id }}
+        </p>
     </div>
-    <div class="flex items-center gap-3">
-        <a href="/institution/export/members?community_id={{ community_id }}" class="aos-btn aos-btn-ghost aos-size-md">
+    <div class="flex items-center gap-4">
+        <a href="/dashboard" class="aos-btn aos-btn-ghost aos-size-md group">
+            <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            <span class="aos-btn-text">Back</span>
+        </a>
+        <button onclick="openAddMemberModal()" class="aos-btn aos-btn-primary aos-size-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            <span>Add Member</span>
+        </button>
+        <button onclick="openBroadcastModal()"
+            class="aos-btn aos-btn-primary aos-size-md group relative overflow-hidden">
+            <div
+                class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
+            </div>
+            <svg class="w-4 h-4 transition-transform group-hover:scale-110" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z">
+                </path>
+            </svg>
+            <span class="aos-btn-text">Send Broadcast</span>
+        </button>
+        <a href="/institution/export?type=members&institution_type={{ institution_type }}"
+            class="aos-btn aos-btn-ghost aos-size-md group relative overflow-hidden">
+            <div
+                class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
+            </div>
+            <svg class="w-4 h-4 transition-transform group-hover:translate-y-1" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
             </svg>
-            <span class="aos-btn-text ml-2">Export CSV</span>
+            <span class="aos-btn-text">Export CSV</span>
         </a>
     </div>
 </header>
 
 <!-- Metrics Row -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+<div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
     {{ data_card(label="Total Members", value=members|length|string, status="info") }}
     {{ data_card(label="Active Groups", value=groups|length|string, status="success") }}
-    {{ data_card(label="Community", value=community_id, status="ghost") }}
+    {{ data_card(label="Pending", value=broadcast_stats.pending|string, unit="msgs", status="warning") }}
+    {{ data_card(label="Sent", value=broadcast_stats.sent|string, unit="msgs", status="success") }}
+    {{ data_card(label="Failed", value=broadcast_stats.failed|string, unit="msgs", status="error") }}
+</div>
+
+<!-- Registration & Invite Links Row -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-10">
+    {% call card(class="bg-gradient-to-br from-[var(--aos-primary-base)]/10 to-[var(--aos-primary-base)]/5
+    border-[var(--aos-primary-base)]/20") %}
+    <div class="text-center">
+        <div class="aos-text-xs aos-text-muted mb-2">Registration Code</div>
+        <input type="text" id="customCode" value="{{ community_id[:8]|upper }}"
+            class="aos-input text-center aos-text-2xl font-bold text-[var(--aos-primary-base)] mb-3"
+            placeholder="e.g., OPEN_HEAVENS">
+        <div class="flex gap-2">
+            <label class="aos-btn aos-btn-ghost aos-size-sm flex-1 cursor-pointer" id="activeLabel">
+                <input type="checkbox" id="activeCheckbox" onchange="toggleActive()" class="hidden">
+                <span class="aos-btn-text">Active</span>
+            </label>
+            <button onclick="copyTelegramLink()" class="aos-btn aos-btn-primary aos-size-sm flex-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+                    </path>
+                </svg>
+                <span class="aos-btn-text ml-2">Copy Code</span>
+            </button>
+        </div>
+    </div>
+    {% endcall %}
+
+    {% if invite_slug %}
+    {% call card(class="bg-gradient-to-br from-[var(--aos-success-base)]/10 to-[var(--aos-success-base)]/5
+    border-[var(--aos-success-base)]/20") %}
+    <div class="text-center">
+        <div class="aos-text-xs aos-text-muted mb-2">Invite Link</div>
+        <code
+            class="aos-text-xs aos-text-mono block mb-3 text-[var(--aos-success-base)] break-all">t.me/aos_bot?start={{ invite_slug }}</code>
+        <button onclick="copyInviteLink()" class="aos-btn aos-btn-success aos-size-sm w-full">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+                </path>
+            </svg>
+            <span class="aos-btn-text ml-2">Copy Invite</span>
+        </button>
+    </div>
+    {% endcall %}
+    {% else %}
+    {% call card(class="bg-gradient-to-br from-[var(--aos-neutral-500)]/10 to-[var(--aos-neutral-500)]/5
+    border-[var(--aos-neutral-500)]/20") %}
+    <div class="text-center">
+        <div class="aos-text-xs aos-text-muted mb-2">Invite Link</div>
+        <p class="aos-text-xs aos-text-muted mb-3">No invite link generated yet</p>
+        <button disabled class="aos-btn aos-btn-ghost aos-size-sm w-full opacity-50 cursor-not-allowed">
+            <span class="aos-btn-text">Not Available</span>
+        </button>
+    </div>
+    {% endcall %}
+    {% endif %}
 </div>
 
 <section class="aos-stack-md">
     <div class="flex items-center justify-between mb-6">
-        <h2 class="aos-h2">Institutional Members</h2>
+        <h2 class="aos-h2">{% if labels.member_label %}{{ labels.member_label }}{% else %}Institutional Members{% endif
+            %}</h2>
+    </div>
+
+    <!-- Filter Controls -->
+    <div class="flex gap-4 mb-6">
+        <input type="text" id="searchInput" placeholder="Search by name..."
+            class="flex-1 px-4 py-2 bg-[var(--aos-surface-glass)] border border-white/10 rounded-[var(--aos-radius-md)] text-white placeholder-slate-500 focus:outline-none focus:border-[var(--aos-primary-base)]">
+
+        <select id="roleFilter"
+            class="px-4 py-2 bg-[var(--aos-surface-glass)] border border-white/10 rounded-[var(--aos-radius-md)] text-white focus:outline-none focus:border-[var(--aos-primary-base)]">
+            <option value="">All Roles</option>
+            <option value="ADMIN">Admin</option>
+            <option value="PASTOR">Pastor</option>
+            <option value="DEACON">Deacon</option>
+            <option value="MEMBER">Member</option>
+        </select>
     </div>
 
     {% call card(padding="0", class="aos-overflow-hidden") %}
@@ -43,9 +153,9 @@
                 <th>Actions</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="memberTableBody">
             {% for member in members %}
-            <tr>
+            <tr data-name="{{ member.full_name|lower }}" data-role="{{ member.role_id }}">
                 <td class="aos-font-bold">{{ member.full_name }}</td>
                 <td>
                     <span
@@ -66,14 +176,16 @@
                 </td>
                 <td>
                     <div class="flex items-center gap-2">
-                        <button class="aos-btn aos-btn-ghost aos-size-sm">
+                        <button
+                            onclick="openEditMemberModal('{{ member.id }}', '{{ member.full_name }}', '{{ member.role_id }}')"
+                            class="aos-btn aos-btn-ghost aos-size-sm">
                             <span class="aos-btn-text">Manage</span>
                         </button>
                     </div>
                 </td>
             </tr>
             {% else %}
-            <tr>
+            <tr id="emptyState">
                 <td colspan="5" class="aos-text-center aos-py-8 aos-text-muted">
                     No institutional members found.
                 </td>
@@ -83,5 +195,649 @@
     </table>
     {% endcall %}
 </section>
+
+<script>
+    // Offline-first client-side filtering
+    const searchInput = document.getElementById('searchInput');
+    const roleFilter = document.getElementById('roleFilter');
+    const tableBody = document.getElementById('memberTableBody');
+    const rows = tableBody.querySelectorAll('tr:not(#emptyState)');
+
+    function filterTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedRole = roleFilter.value;
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const name = row.dataset.name || '';
+            const role = row.dataset.role || '';
+
+            const matchesSearch = name.includes(searchTerm);
+            const matchesRole = !selectedRole || role === selectedRole;
+
+            if (matchesSearch && matchesRole) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // Show/hide empty state
+        const emptyState = document.getElementById('emptyState');
+        if (emptyState) {
+            emptyState.style.display = visibleCount === 0 ? '' : 'none';
+        }
+    }
+
+
+    searchInput.addEventListener('input', filterTable);
+    roleFilter.addEventListener('change', filterTable);
+
+    // Copy Telegram registration link
+    function copyTelegramLink() {
+        const code = document.getElementById('customCode').textContent || document.getElementById('customCode').value;
+        const botUsername = 'aos_bot'; // TODO: Get from config
+        const link = `https://t.me/${botUsername}?start=${code}`;
+
+        navigator.clipboard.writeText(link).then(() => {
+            alert('✅ Telegram link copied!\n\n' + link);
+        }).catch(() => {
+            prompt('Copy this link:', link);
+        });
+    }
+
+    // Copy invite link
+    function copyInviteLink() {
+        const inviteSlug = '{{ invite_slug }}';
+        const botUsername = 'aos_bot'; // TODO: Get from config
+        const link = `https://t.me/${botUsername}?start=${inviteSlug}`;
+
+        navigator.clipboard.writeText(link).then(() => {
+            alert('✅ Invite link copied!\n\n' + link);
+        }).catch(() => {
+            prompt('Copy this link:', link);
+        });
+    }
+
+
+    // Open broadcast modal
+    function openBroadcastModal() {
+        const modal = document.getElementById('broadcastModal');
+        modal.style.display = 'flex';
+    }
+
+    // Close broadcast modal
+    function closeBroadcastModal() {
+        const modal = document.getElementById('broadcastModal');
+        modal.style.display = 'none';
+    }
+
+    // Send broadcast
+    async function sendBroadcast() {
+        const message = document.getElementById('broadcastMessage').value;
+        const channel = document.getElementById('broadcastChannel').value;
+        const target = document.getElementById('broadcastTarget').value;
+
+        if (!message) {
+            alert('Please enter a message');
+            return;
+        }
+
+        try {
+            const response = await fetch('/institution/broadcast', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    community_id: '{{ community_id }}',
+                    message: message,
+                    target: target,
+                    institution_type: '{{ institution_type }}'
+                })
+            });
+
+            if (response.ok) {
+                alert('✅ Broadcast sent successfully!');
+                closeBroadcastModal();
+                location.reload();
+            } else {
+                const text = await response.text();
+                alert('❌ Failed to send broadcast: ' + text);
+            }
+        } catch (error) {
+            alert('❌ Error: ' + error.message);
+        }
+    }
+
+    // Open add member modal
+    function openAddMemberModal() {
+        const modal = document.getElementById('addMemberModal');
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    // Close add member modal
+    function closeAddMemberModal() {
+        const modal = document.getElementById('addMemberModal');
+        if (modal) modal.classList.add('hidden');
+        document.getElementById('memberUserId').value = '';
+    }
+
+    // Add member
+    async function addMember() {
+        const userId = document.getElementById('memberUserId').value.trim();
+        const channel = document.getElementById('memberChannel').value;
+
+        if (!userId) {
+            alert('Please enter a Telegram ID or phone number');
+            return;
+        }
+
+        try {
+            const response = await fetch('/institution/members/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    community_id: '{{ community_id }}',
+                    user_id: userId,
+                    channel: channel,
+                    institution_type: '{{ institution_type }}'
+                })
+            });
+
+            if (response.ok) {
+                alert('✅ Member added successfully!');
+                closeAddMemberModal();
+                location.reload();
+            } else {
+                const text = await response.text();
+                alert('❌ Failed to add member: ' + text);
+            }
+        } catch (error) {
+            alert('❌ Error: ' + error.message);
+        }
+    }
+
+    // Edit Member Functions
+    function openEditMemberModal(id, name, role) {
+        document.getElementById('editMemberId').value = id;
+        document.getElementById('editMemberName').value = name;
+        document.getElementById('editMemberRole').value = role;
+        document.getElementById('editMemberModal').classList.remove('hidden');
+    }
+
+    function closeEditMemberModal() {
+        document.getElementById('editMemberModal').classList.add('hidden');
+    }
+
+    async function updateMember() {
+        const id = document.getElementById('editMemberId').value;
+        const name = document.getElementById('editMemberName').value.trim();
+        const role = document.getElementById('editMemberRole').value;
+        if (!name) { alert('Please enter a name'); return; }
+        try {
+            const response = await fetch('/institution/members/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ member_id: id, full_name: name, role_id: role })
+            });
+            if (response.ok) {
+                alert('✅ Member updated!');
+                closeEditMemberModal();
+                location.reload();
+            } else {
+                alert('❌ Failed to update');
+            }
+        } catch (error) {
+            alert('❌ Error: ' + error.message);
+        }
+    }
+
+    async function deactivateMember() {
+        const id = document.getElementById('editMemberId').value;
+        const name = document.getElementById('editMemberName').value;
+        openDeactivateModal(id, name);
+    }
+
+    function confirmDeleteMember() {
+        const id = document.getElementById('editMemberId').value;
+        const name = document.getElementById('editMemberName').value;
+        openDeleteModal(id, name);
+    }
+
+    function openDeactivateModal(id, name) {
+        document.getElementById('deactivateMemberName').textContent = name;
+        document.getElementById('deactivateMemberId').value = id;
+        document.getElementById('deactivateConfirmModal').classList.remove('hidden');
+    }
+
+    function closeDeactivateModal() {
+        document.getElementById('deactivateConfirmModal').classList.add('hidden');
+    }
+
+    async function confirmDeactivate() {
+        const id = document.getElementById('deactivateMemberId').value;
+        try {
+            const response = await fetch('/institution/members/deactivate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ member_id: id })
+            });
+            if (response.ok) {
+                closeDeactivateModal();
+                closeEditMemberModal();
+                location.reload();
+            } else {
+                alert('❌ Failed to deactivate');
+            }
+        } catch (error) {
+            alert('❌ Error: ' + error.message);
+        }
+    }
+
+    function openDeleteModal(id, name) {
+        document.getElementById('deleteMemberName').textContent = name;
+        document.getElementById('deleteMemberId').value = id;
+        document.getElementById('deleteConfirmInput').value = '';
+        document.getElementById('deleteConfirmModal').classList.remove('hidden');
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteConfirmModal').classList.add('hidden');
+    }
+
+    async function confirmDelete() {
+        const id = document.getElementById('deleteMemberId').value;
+        const confirmation = document.getElementById('deleteConfirmInput').value;
+
+        if (confirmation !== 'DELETE') {
+            alert('❌ Please type DELETE to confirm');
+            return;
+        }
+
+        try {
+            const response = await fetch('/institution/members/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ member_id: id })
+            });
+            if (response.ok) {
+                closeDeleteModal();
+                closeEditMemberModal();
+                location.reload();
+            } else {
+                alert('❌ Failed to delete');
+            }
+        } catch (error) {
+            alert('❌ Error: ' + error.message);
+        }
+    }
+
+
+    // Toggle Active checkbox and save code
+    async function toggleActive() {
+        const checkbox = document.getElementById('activeCheckbox');
+        const label = document.getElementById('activeLabel');
+        const code = document.getElementById('customCode').value.trim().toUpperCase();
+
+        if (checkbox.checked) {
+            // Activating - save the code
+            if (!code) {
+                alert('Please enter a code first');
+                checkbox.checked = false;
+                return;
+            }
+
+            try {
+                const response = await fetch('/institution/code/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        community_id: '{{ community_id }}',
+                        custom_code: code,
+                        code_active: 'true'
+                    })
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    label.classList.remove('aos-btn-ghost');
+                    label.classList.add('aos-btn-success');
+                    label.querySelector('.aos-btn-text').textContent = '✓ Active';
+                } else {
+                    alert('❌ Failed to activate code');
+                    checkbox.checked = false;
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+                checkbox.checked = false;
+            }
+        } else {
+            // Deactivating - clear the code
+            try {
+                const response = await fetch('/institution/code/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        community_id: '{{ community_id }}',
+                        custom_code: '',
+                        code_active: 'false'
+                    })
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    label.classList.remove('aos-btn-success');
+                    label.classList.add('aos-btn-ghost');
+                    label.querySelector('.aos-btn-text').textContent = 'Active';
+                } else {
+                    alert('❌ Failed to deactivate code');
+                    checkbox.checked = true;
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+                checkbox.checked = true;
+            }
+        }
+    }
+
+
+
+
+
+</script>
+
+<!-- Broadcast Modal -->
+<div id="broadcastModal"
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:var(--aos-surface); border-radius:16px; padding:2rem; max-width:500px; width:90%;">
+        <h3 class="aos-h3 mb-4">Send Broadcast</h3>
+
+        <div class="form-group mb-4">
+            <label class="aos-text-sm aos-text-muted mb-2 block">Message</label>
+            <textarea id="broadcastMessage" rows="4"
+                class="w-full px-4 py-2 bg-[var(--aos-surface-glass)] border border-white/10 rounded-[var(--aos-radius-md)] text-white"
+                placeholder="Type your message..."></textarea>
+        </div>
+
+        <div class="form-group mb-4">
+            <label class="aos-text-sm aos-text-muted mb-2 block">Send To</label>
+            <select id="broadcastTarget"
+                class="w-full px-4 py-2 bg-[var(--aos-surface-glass)] border border-white/10 rounded-[var(--aos-radius-md)] text-white">
+                <option value="ALL">All Members ({{ members|length }})</option>
+                {% for group in groups %}
+                <option value="GROUP:{{ group.name }}">{{ group.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group mb-4">
+            <label class="aos-text-sm aos-text-muted mb-2 block">Channel</label>
+            <select id="broadcastChannel"
+                class="w-full px-4 py-2 bg-[var(--aos-surface-glass)] border border-white/10 rounded-[var(--aos-radius-md)] text-white">
+                <option value="telegram">Telegram</option>
+                <option value="sms">SMS</option>
+                <option value="whatsapp">WhatsApp</option>
+            </select>
+        </div>
+
+        <div class="flex gap-2">
+            <button onclick="sendBroadcast()" class="aos-btn aos-btn-primary aos-size-md flex-1">
+                <span class="aos-btn-text">Send to {{ members|length }} Members</span>
+            </button>
+            <button onclick="closeBroadcastModal()" class="aos-btn aos-btn-ghost aos-size-md">
+                <span class="aos-btn-text">Cancel</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Add Member Modal -->
+<div id="addMemberModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div
+        class="bg-[var(--aos-surface-glass)] rounded-[var(--aos-radius-lg)] p-6 max-w-md w-full mx-4 border border-white/10">
+        <h3 class="aos-h3 mb-4">Add New Member</h3>
+
+        <div class="form-group mb-4">
+            <label class="aos-text-sm aos-text-muted mb-2 block">Telegram ID or Phone Number</label>
+            <input type="text" id="memberUserId"
+                class="w-full px-4 py-2 bg-[var(--aos-surface-glass)] border border-white/10 rounded-[var(--aos-radius-md)] text-white"
+                placeholder="e.g., @username or +254712345678">
+            <p class="aos-text-xs aos-text-muted mt-1">Enter the member's Telegram username or phone number</p>
+        </div>
+
+        <div class="form-group mb-4">
+            <label class="aos-text-sm aos-text-muted mb-2 block">Channel</label>
+            <select id="memberChannel"
+                class="w-full px-4 py-2 bg-[var(--aos-surface-glass)] border border-white/10 rounded-[var(--aos-radius-md)] text-white">
+                <option value="telegram">Telegram</option>
+                <option value="sms">SMS</option>
+                <option value="whatsapp">WhatsApp</option>
+            </select>
+        </div>
+
+        <div class="flex gap-3">
+            <button onclick="addMember()"
+                class="aos-btn aos-btn-success aos-size-md flex-1 group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
+                </div>
+                <svg class="w-4 h-4 transition-transform group-hover:rotate-90" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                <span class="aos-btn-text">Add Member</span>
+            </button>
+            <button onclick="closeAddMemberModal()" class="aos-btn aos-btn-ghost aos-size-md flex-1 group">
+                <svg class="w-4 h-4 transition-transform group-hover:rotate-90" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+                <span class="aos-btn-text">Cancel</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Member Modal -->
+<div id="editMemberModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div
+        class="bg-[var(--aos-surface-glass)] rounded-[var(--aos-radius-lg)] p-6 max-w-md w-full mx-4 border border-white/10">
+        <h3 class="aos-h3 mb-4">Edit Member</h3>
+
+        <input type="hidden" id="editMemberId">
+
+        <div class="form-group mb-4">
+            <label class="aos-text-sm aos-text-muted mb-2 block">Full Name</label>
+            <input type="text" id="editMemberName"
+                class="w-full px-4 py-2 bg-[var(--aos-surface-glass)] border border-white/10 rounded-[var(--aos-radius-md)] text-white">
+        </div>
+
+        <div class="form-group mb-4">
+            <label class="aos-text-sm aos-text-muted mb-2 block">Role</label>
+            <select id="editMemberRole"
+                class="w-full px-4 py-2 bg-[var(--aos-surface-glass)] border border-white/10 rounded-[var(--aos-radius-md)] text-white">
+                <option value="admin">Admin</option>
+                <option value="pastor">Pastor</option>
+                <option value="deacon">Deacon</option>
+                <option value="member">Member</option>
+            </select>
+        </div>
+
+        <div class="flex flex-col gap-3 mt-6">
+            <button onclick="updateMember()"
+                class="aos-btn aos-btn-primary aos-size-md w-full group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
+                </div>
+                <svg class="w-4 h-4 transition-transform group-hover:scale-110" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span class="aos-btn-text">Save Changes</span>
+            </button>
+            <div class="flex gap-3">
+                <button onclick="deactivateMember()"
+                    class="aos-btn aos-btn-warning aos-size-md flex-1 group relative overflow-hidden">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
+                    </div>
+                    <svg class="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636">
+                        </path>
+                    </svg>
+                    <span class="aos-btn-text">Deactivate</span>
+                </button>
+                <button onclick="confirmDeleteMember()"
+                    class="aos-btn aos-btn-error aos-size-md flex-1 group relative overflow-hidden">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
+                    </div>
+                    <svg class="w-4 h-4 transition-transform group-hover:scale-110" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                        </path>
+                    </svg>
+                    <span class="aos-btn-text">Delete</span>
+                </button>
+            </div>
+            <button onclick="closeEditMemberModal()" class="aos-btn aos-btn-ghost aos-size-md w-full group">
+                <svg class="w-4 h-4 transition-transform group-hover:rotate-90" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+                <span class="aos-btn-text">Cancel</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Deactivate Confirmation Modal -->
+<div id="deactivateConfirmModal"
+    class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+    <div
+        class="bg-[var(--aos-surface-glass)] rounded-[var(--aos-radius-lg)] p-8 max-w-md w-full mx-4 border border-[var(--aos-warning-base)]/30 shadow-2xl">
+        <div class="flex items-start gap-4 mb-6">
+            <div
+                class="flex-shrink-0 w-12 h-12 rounded-full bg-[var(--aos-warning-base)]/20 flex items-center justify-center">
+                <svg class="w-6 h-6 text-[var(--aos-warning-base)]" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                    </path>
+                </svg>
+            </div>
+            <div class="flex-1">
+                <h3 class="aos-h3 mb-3">Deactivate Member?</h3>
+                <p class="aos-text-sm mb-4">
+                    Are you sure you want to deactivate <strong class="text-white" id="deactivateMemberName"></strong>?
+                </p>
+                <div
+                    class="px-4 py-3 rounded-[var(--aos-radius-md)] bg-[var(--aos-warning-base)]/10 border border-[var(--aos-warning-base)]/20">
+                    <p class="aos-text-xs aos-text-muted mb-0">
+                        This will hide them from active lists but preserve all their data (attendance, finances, prayer
+                        requests, etc.). You can reactivate them later.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <input type="hidden" id="deactivateMemberId">
+        <div class="flex gap-3">
+            <button onclick="confirmDeactivate()"
+                class="aos-btn aos-btn-warning aos-size-md flex-1 group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
+                </div>
+                <svg class="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636">
+                    </path>
+                </svg>
+                <span class="aos-btn-text">Deactivate Member</span>
+            </button>
+            <button onclick="closeDeactivateModal()" class="aos-btn aos-btn-ghost aos-size-md flex-1 group">
+                <svg class="w-4 h-4 transition-transform group-hover:rotate-90" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+                <span class="aos-btn-text">Cancel</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteConfirmModal"
+    class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+    <div
+        class="bg-[var(--aos-surface-glass)] rounded-[var(--aos-radius-lg)] p-8 max-w-md w-full mx-4 border border-[var(--aos-error-base)]/30 shadow-2xl">
+        <div class="flex items-start gap-4 mb-6">
+            <div
+                class="flex-shrink-0 w-12 h-12 rounded-full bg-[var(--aos-error-base)]/20 flex items-center justify-center">
+                <svg class="w-6 h-6 text-[var(--aos-error-base)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                    </path>
+                </svg>
+            </div>
+            <div class="flex-1">
+                <h3 class="aos-h3 mb-3 text-[var(--aos-error-base)]">Permanently Delete?</h3>
+                <p class="aos-text-sm mb-4">
+                    This will <strong class="text-[var(--aos-error-base)]">PERMANENTLY DELETE</strong> <strong
+                        class="text-white" id="deleteMemberName"></strong> and ALL their data:
+                </p>
+                <div
+                    class="px-4 py-3 rounded-[var(--aos-radius-md)] bg-[var(--aos-error-base)]/10 border border-[var(--aos-error-base)]/20 mb-4">
+                    <ul class="aos-text-xs aos-text-muted list-disc list-inside space-y-1 mb-2">
+                        <li>Attendance records</li>
+                        <li>Financial contributions</li>
+                        <li>Prayer requests</li>
+                        <li>Group memberships</li>
+                    </ul>
+                    <p class="aos-text-xs text-[var(--aos-error-base)] font-bold mb-0">⚠️ This action CANNOT be undone!
+                    </p>
+                </div>
+            </div>
+        </div>
+        <input type="hidden" id="deleteMemberId">
+        <div class="form-group mb-6">
+            <label class="aos-text-sm aos-text-muted mb-2 block">
+                Type <strong class="text-[var(--aos-error-base)]">DELETE</strong> to confirm:
+            </label>
+            <input type="text" id="deleteConfirmInput"
+                class="w-full px-4 py-3 bg-[var(--aos-surface-glass)] border border-[var(--aos-border-subtle)] rounded-[var(--aos-radius-md)] text-white font-mono aos-text-sm focus:border-[var(--aos-error-base)] focus:outline-none transition-colors"
+                placeholder="DELETE" autocomplete="off">
+        </div>
+        <div class="flex gap-3">
+            <button onclick="confirmDelete()"
+                class="aos-btn aos-btn-error aos-size-md flex-1 group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
+                </div>
+                <svg class="w-4 h-4 transition-transform group-hover:scale-110" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                    </path>
+                </svg>
+                <span class="aos-btn-text">Delete Forever</span>
+            </button>
+            <button onclick="closeDeleteModal()" class="aos-btn aos-btn-ghost aos-size-md flex-1 group">
+                <svg class="w-4 h-4 transition-transform group-hover:rotate-90" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+                <span class="aos-btn-text">Cancel</span>
+            </button>
+        </div>
+    </div>
+</div>
 
 {% endblock %}

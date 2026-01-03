@@ -58,11 +58,20 @@ class FaithPlugin(InstitutionPlugin):
             }
         ]
     
+    def get_attendance_types(self) -> List[str]:
+        """Return faith-specific attendance categories."""
+        return ["Main Service", "Youth Service", "Mid-week", "Special Event"]
+
+    def get_financial_categories(self) -> List[str]:
+        """Return faith-specific financial categories."""
+        return ["Tithe", "Offering", "Building", "Project", "Other"]
+    
     def get_context_labels(self) -> Dict[str, str]:
         """Return faith-specific labels for shared features."""
         return {
             "attendance_label": "Worship Attendance",
             "financial_label": "Tithes & Offerings",
             "group_label": "Ministry Groups",
-            "member_label": "Church Members"
+            "member_label": "Church Members",
+            "prayer_label": "Prayer Requests"
         }

@@ -6,11 +6,22 @@
 {% block content %}
 <header class="mb-10 flex items-center justify-between">
     <div>
-        <h1 class="aos-h1 mb-2">Pastoral Inbox</h1>
-        <p class="aos-text-muted aos-text-sm">Digital Parish Office | Prayer Request Review</p>
+        <h1 class="aos-h1 mb-2">{% if labels.prayer_label %}{{ labels.prayer_label }}{% else %}Requests Review{% endif
+            %}</h1>
+        <p class="aos-text-muted aos-text-sm">{{ institution_type | capitalize }} | Review Inbox</p>
     </div>
-    <div class="flex items-center gap-3">
-        <a href="/institution/export/prayers?community_id={{ community_id }}" class="aos-btn aos-btn-ghost aos-size-md">
+    <div class="flex flex-col items-end gap-3">
+        <div
+            class="flex items-center bg-[var(--aos-surface-glass)] p-1 rounded-[var(--aos-radius-md)] border border-white/5">
+            {% for t in available_types %}
+            <a href="?institution_type={{ t }}&community_id={{ community_id }}"
+                class="px-3 py-1.5 aos-text-xs font-bold rounded-[var(--aos-radius-sm)] transition-all {% if institution_type == t %}bg-[var(--aos-primary-base)] text-white shadow-lg{% else %}text-[var(--aos-neutral-400)] hover:text-white{% endif %}">
+                {{ t | capitalize }}
+            </a>
+            {% endfor %}
+        </div>
+        <a href="/institution/export/prayers?community_id={{ community_id }}&institution_type={{ institution_type }}"
+            class="aos-btn aos-btn-ghost aos-size-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
@@ -27,7 +38,7 @@
 
 <section class="aos-stack-md">
     <div class="flex items-center justify-between mb-4">
-        <h2 class="aos-h2">Prayer Requests</h2>
+        <h2 class="aos-h2">{% if labels.prayer_label %}{{ labels.prayer_label }}{% else %}Requests{% endif %}</h2>
     </div>
 
     <div class="grid grid-cols-1 gap-4">
@@ -70,7 +81,8 @@
                         d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z">
                     </path>
                 </svg>
-                <p class="aos-text-muted">Your pastoral inbox is clear. No pending requests.</p>
+                <p class="aos-text-muted">Your inbox is clear. No pending {% if labels.prayer_label %}{{
+                    labels.prayer_label | lower }}{% else %}requests{% endif %}.</p>
             </div>
             {% endcall %}
         </div>

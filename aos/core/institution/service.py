@@ -105,10 +105,14 @@ class InstitutionService:
         self.log_audit(community_id, "SYSTEM", "GROUP_CREATE", group_id, f"Name: {name}, Type: {institution_type}")
         return group
 
-    def list_community_groups(self, community_id: str) -> list[InstitutionGroupDTO]:
-        """List all groups within a community."""
+    def list_community_groups(self, community_id: str, institution_type: str | None = None) -> list[InstitutionGroupDTO]:
+        """List groups within a community, optionally filtered by type."""
         all_groups = self.groups.list_all()
-        return [g for g in all_groups if g.community_id == community_id]
+        return [
+            g for g in all_groups 
+            if g.community_id == community_id 
+            and (institution_type is None or g.institution_type == institution_type)
+        ]
 
     def join_group(self, member_id: str, group_id: str) -> bool:
         """Join a member to a subgroup."""
@@ -165,7 +169,8 @@ class InstitutionService:
         community_id: str, 
         full_name: str, 
         vehicle_type: str, 
-        vehicle_identity: str
+        vehicle_identity: str,
+        institution_type: str = "faith"  # NEW
     ) -> InstitutionMemberDTO:
         """
         Registers a new member and maps their vehicle identity.
@@ -175,6 +180,7 @@ class InstitutionService:
         member = InstitutionMemberDTO(
             id=member_id,
             community_id=community_id,
+            institution_type=institution_type,  # NEW
             full_name=full_name,
             role_id="MEMBER"
         )
@@ -269,12 +275,12 @@ class InstitutionService:
 
     # --- Targeted Announcement Engine (PROMPT 11) ---
 
-    def resolve_broadcast_targets(self, community_id: str, target: str) -> list[InstitutionMemberDTO]:
+    def resolve_broadcast_targets(self, community_id: str, target: str, institution_type: str = "faith") -> list[InstitutionMemberDTO]:
         """
         Resolves a target string (e.g. 'ALL', 'GROUP:Youth') into a list of members.
         """
         if target.upper() == "ALL":
-            return [m for m in self.members.list_all() if m.community_id == community_id]
+            return [m for m in self.members.list_all() if m.community_id == community_id and (not m.institution_type or m.institution_type == institution_type)]
         
         if target.startswith("GROUP:"):
             group_name = target.split(":", 1)[1]
@@ -296,7 +302,8 @@ class InstitutionService:
         community_id: str,
         sender_id: str,
         target: str,
-        message: str
+        message: str,
+        institution_type: str = "faith"  # NEW
     ) -> list[str]:
         """
         Resolves targets and emits send events for each member/vehicle.
@@ -304,7 +311,7 @@ class InstitutionService:
         """
         from aos.bus.events import Event
         
-        targets = self.resolve_broadcast_targets(community_id, target)
+        targets = self.resolve_broadcast_targets(community_id, target, institution_type)
         track_ids = []
 
         logger.info(f"Broadcasting to {len(targets)} members in {community_id} (Target: {target})")
@@ -424,9 +431,20 @@ class InstitutionService:
 
     def get_financial_summary(self, community_id: str) -> dict:
         """Consolidated report of categories and pledges."""
+        category_report = self.finance.get_category_report(community_id)
+        pledge_report = self.finance.get_pledge_status(community_id)
+        
+        # Build category_totals dict from the report
+        category_totals = {item['category']: item['total'] for item in category_report}
+        
+        # Calculate total pledge amount
+        total_pledge_amount = sum(item.get('total', 0) for item in pledge_report if item.get('is_pledge') == 1)
+        
         return {
-            "categories": self.finance.get_category_report(community_id),
-            "pledges": self.finance.get_pledge_status(community_id)
+            "category_totals": category_totals,
+            "total_pledge_amount": total_pledge_amount,
+            "categories": category_report,
+            "pledges": pledge_report
         }
 
     # --- Institutional Analytics (PROMPT 6/10) ---

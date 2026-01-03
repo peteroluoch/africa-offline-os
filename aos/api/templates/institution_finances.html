@@ -5,11 +5,21 @@
 {% block content %}
 <header class="mb-10 flex items-center justify-between">
     <div>
-        <h1 class="aos-h1 mb-2">Financial Ledger</h1>
-        <p class="aos-text-muted aos-text-sm">Digital Parish Office | Stewardship & Accounting</p>
+        <h1 class="aos-h1 mb-2">{% if labels.financial_label %}{{ labels.financial_label }}{% else %}Financial Ledger{%
+            endif %}</h1>
+        <p class="aos-text-muted aos-text-sm">{{ institution_type | capitalize }} | Stewardship & Accounting</p>
     </div>
-    <div class="flex items-center gap-3">
-        <a href="/institution/export/finances?community_id={{ community_id }}"
+    <div class="flex flex-col items-end gap-3">
+        <div
+            class="flex items-center bg-[var(--aos-surface-glass)] p-1 rounded-[var(--aos-radius-md)] border border-white/5">
+            {% for t in available_types %}
+            <a href="?institution_type={{ t }}"
+                class="px-3 py-1.5 aos-text-xs font-bold rounded-[var(--aos-radius-sm)] transition-all {% if institution_type == t %}bg-[var(--aos-primary-base)] text-white shadow-lg{% else %}text-[var(--aos-neutral-400)] hover:text-white{% endif %}">
+                {{ t | capitalize }}
+            </a>
+            {% endfor %}
+        </div>
+        <a href="/institution/export/finances?institution_type={{ institution_type }}"
             class="aos-btn aos-btn-ghost aos-size-md">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -22,11 +32,15 @@
 
 <!-- Financial Summary -->
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-    {{ data_card(label="Tithes (Total)", value="KES " + (summary.category_totals.get('Tithe', 0)|string),
+    {{ data_card(label=financial_categories[0] if financial_categories|length > 0 else "Tithes", value="KES " +
+    (summary.category_totals.get(financial_categories[0] if financial_categories|length > 0 else 'Tithe', 0)|string),
     status="success") }}
-    {{ data_card(label="Offerings", value="KES " + (summary.category_totals.get('Offering', 0)|string), status="info")
+    {{ data_card(label=financial_categories[1] if financial_categories|length > 1 else "Offerings", value="KES " +
+    (summary.category_totals.get(financial_categories[1] if financial_categories|length > 1 else 'Offering', 0)|string),
+    status="info")
     }}
-    {{ data_card(label="Building Fund", value="KES " + (summary.category_totals.get('Building', 0)|string),
+    {{ data_card(label=financial_categories[2] if financial_categories|length > 2 else "Project", value="KES " +
+    (summary.category_totals.get(financial_categories[2] if financial_categories|length > 2 else 'Building', 0)|string),
     status="warning") }}
     {{ data_card(label="Total Pledges", value="KES " + (summary.total_pledge_amount|string), unit="unpaid",
     status="ghost") }}
@@ -108,10 +122,10 @@
                     <div>
                         <label class="aos-text-xs aos-text-muted uppercase font-bold mb-2 block">Category</label>
                         <select name="category" class="aos-input aos-size-md w-full" required>
-                            <option value="Tithe">Tithe</option>
-                            <option value="Offering">Offering</option>
-                            <option value="Building">Building</option>
-                            <option value="Pledge">Other</option>
+                            {% for cat in financial_categories %}
+                            <option value="{{ cat }}">{{ cat }}</option>
+                            {% endfor %}
+                            <option value="Other">Other</option>
                         </select>
                     </div>
                 </div>
