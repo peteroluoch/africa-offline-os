@@ -5,11 +5,14 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from aos.core.vehicles.interface import VehicleInterface
+
 
 class ChannelType(str, Enum):
     USSD = "ussd"
     SMS = "sms"
     WHATSAPP = "whatsapp"
+    TELEGRAM = "telegram"
 
 
 @dataclass
@@ -32,7 +35,7 @@ class ChannelResponse:
     metadata: dict[str, Any] | None = None
 
 
-class ChannelAdapter(ABC):
+class ChannelAdapter(VehicleInterface, ABC):
     """Abstract base class for all channel adapters."""
 
     @abstractmethod
@@ -47,12 +50,21 @@ class ChannelAdapter(ABC):
 
     @abstractmethod
     async def send_message(self, to: str, message: str, metadata: dict[str, Any] | None = None) -> bool:
-        """Send an outbound message (SMS/WhatsApp)."""
+        """Send an outbound message (SMS/WhatsApp/Telegram)."""
         pass
 
     @abstractmethod
     def get_channel_type(self) -> str:
         """Return the channel type identifier."""
+        pass
+
+    @property
+    def vehicle_type(self) -> str:
+        """Map vehicle_type to channel_type for compatibility."""
+        return self.get_channel_type()
+
+    def register_identity(self, identity: str) -> None:
+        """Default implementation for identity registration."""
         pass
 
 

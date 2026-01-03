@@ -34,4 +34,6 @@ africastalking>=1.2.0,<2.0.0
 # Development
 ruff>=0.1.0,<1.0.0
 mypy>=1.7.0,<2.0.0
+# Communication & Reporting
+reportlab>=4.0.0,<5.0.0
 python-multipart>=0.0.6,<1.0.0

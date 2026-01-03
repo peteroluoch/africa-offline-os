@@ -1,0 +1,81 @@
+{% extends "dashboard.html" %}
+{% from "components/atoms/Badge.html" import badge %}
+{% from "components/atoms/Card.html" import card %}
+{% from "components/molecules/DataCard.html" import data_card %}
+
+{% block content %}
+<header class="mb-10 flex items-center justify-between">
+    <div>
+        <h1 class="aos-h1 mb-2">Pastoral Inbox</h1>
+        <p class="aos-text-muted aos-text-sm">Digital Parish Office | Prayer Request Review</p>
+    </div>
+    <div class="flex items-center gap-3">
+        <a href="/institution/export/prayers?community_id={{ community_id }}" class="aos-btn aos-btn-ghost aos-size-md">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            <span class="aos-btn-text ml-2">Export Requests</span>
+        </a>
+    </div>
+</header>
+
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+    {{ data_card(label="Pending Review", value=prayers|length|string, status="warning") }}
+    {{ data_card(label="Community", value=community_id, status="ghost") }}
+</div>
+
+<section class="aos-stack-md">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="aos-h2">Prayer Requests</h2>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4">
+        {% for prayer in prayers %}
+        {% call card(id="prayer-" + prayer.id, class="hover:border-[var(--aos-primary-base)] transition-colors") %}
+        <div class="flex items-start justify-between">
+            <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="aos-text-sm font-bold aos-text-primary">{{ prayer.member_id }}</span>
+                    <span class="h-1 w-1 rounded-full bg-white/20"></span>
+                    <span class="aos-text-xs aos-text-muted">{{ prayer.created_at.strftime('%Y-%m-%d %H:%M') if
+                        prayer.created_at else 'N/A' }}</span>
+                </div>
+                <p class="aos-text-base leading-relaxed text-slate-200">
+                    "{{ prayer.request_text }}"
+                </p>
+            </div>
+            <div class="ml-6 flex flex-col gap-2">
+                <button class="aos-btn aos-btn-primary aos-size-sm"
+                    hx-post="/institution/prayers/{{ prayer.id }}/review?community_id={{ community_id }}"
+                    hx-target="#prayer-{{ prayer.id }}" hx-swap="outerHTML swap:400ms">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="aos-btn-text">Reviewed</span>
+                </button>
+                <button class="aos-btn aos-btn-ghost aos-size-sm">
+                    <span class="aos-btn-text">Flag</span>
+                </button>
+            </div>
+        </div>
+        {% endcall %}
+        {% else %}
+        <div class="aos-py-12 aos-text-center">
+            {% call card(glass=True) %}
+            <div class="aos-stack-sm py-8">
+                <svg class="w-12 h-12 mx-auto text-slate-600 mb-4" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z">
+                    </path>
+                </svg>
+                <p class="aos-text-muted">Your pastoral inbox is clear. No pending requests.</p>
+            </div>
+            {% endcall %}
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+{% endblock %}

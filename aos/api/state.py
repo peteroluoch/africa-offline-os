@@ -13,6 +13,9 @@ if TYPE_CHECKING:
     from aos.modules.agri import AgriModule
     from aos.modules.transport import TransportModule
     from aos.modules.community import CommunityModule
+    from aos.core.vehicles.manager import OutboundMessageManager
+    from aos.core.institution.service import InstitutionService
+    from aos.core.vehicles.router import CommandRouter
 
 class CoreState:
     db_conn: sqlite3.Connection | None = None
@@ -84,6 +87,11 @@ class EventStream:
         """Clear all listeners."""
         self._listeners.clear()
 
+class InstitutionState:
+    service: InstitutionService | None = None
+    router: CommandRouter | None = None
+    message_manager: OutboundMessageManager | None = None
+
 # Singletons
 core_state = CoreState()
 mesh_state = MeshState()
@@ -91,4 +99,5 @@ agri_state = AgriState()
 transport_state = TransportState()
 resource_state = ResourceState()
 community_state = CommunityState()
+institution_state = InstitutionState()
 event_stream = EventStream()

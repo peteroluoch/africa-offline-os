@@ -6,8 +6,14 @@ from __future__ import annotations
 
 import logging
 import uuid
+import sqlite3
+import hashlib
 from datetime import datetime
-from typing import Any
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from aos.bus.dispatcher import EventDispatcher
+    from aos.bus.events import Event
 
 from aos.db.models import (
     InstitutionMemberDTO, InstitutionGroupDTO, InstitutionMessageLogDTO,
@@ -19,15 +25,19 @@ from aos.db.repository import (
     InstitutionMessageLogRepository, PrayerRequestRepository,
     MemberVehicleMapRepository, CommunityGroupRepository,
     InstitutionGroupMemberRepository, InstitutionalAttendanceRepository,
-    InstitutionalFinanceRepository
+    InstitutionalFinanceRepository, InstitutionalAuditRepository
 )
 
 logger = logging.getLogger("aos.institution")
 
 class InstitutionService:
     """
-    Orchestrates institutional logic. 
-    Does not know about Telegram, SMS, or USSD.
+    Orchestrates institutional logic with plugin architecture support.
+    
+    The service is type-aware and delegates type-specific features to plugins.
+    Core features (members, groups, attendance, finances) are shared across all types.
+    
+    Does not know about Telegram, SMS, or USSD (vehicle-agnostic).
     """
 
     def __init__(
@@ -40,7 +50,10 @@ class InstitutionService:
         community_repo: CommunityGroupRepository,
         group_member_repo: InstitutionGroupMemberRepository,
         attendance_repo: InstitutionalAttendanceRepository,
-        finance_repo: InstitutionalFinanceRepository
+        finance_repo: InstitutionalFinanceRepository,
+        audit_repo: InstitutionalAuditRepository,
+        dispatcher: EventDispatcher | None = None,
+        plugins: dict[str, Any] | None = None  # NEW: Plugin registry
     ):
         self.members = member_repo
         self.groups = group_repo
@@ -51,19 +64,45 @@ class InstitutionService:
         self.group_members = group_member_repo
         self.attendance = attendance_repo
         self.finance = finance_repo
+        self.audit = audit_repo
+        self.dispatcher = dispatcher
+        self.plugins = plugins or {}  # NEW: Store registered plugins
+
+    def get_plugin(self, institution_type: str) -> Any | None:
+        """Get plugin for specific institution type."""
+        return self.plugins.get(institution_type)
+    
+    def get_available_types(self) -> list[str]:
+        """Get list of available institution types based on registered plugins."""
+        return list(self.plugins.keys())
+
+    def log_audit(self, community_id: str, operator_id: str, action: str, target_id: str | None = None, details: str | None = None):
+        """Helper to log administrative actions."""
+        try:
+            self.audit.log_action(community_id, operator_id, action, target_id, details)
+        except Exception as e:
+            logger.error(f"Failed to log audit action {action}: {e}")
 
     # --- Group Management (PROMPT 6) ---
 
-    def create_group(self, community_id: str, name: str, description: str | None = None) -> InstitutionGroupDTO:
+    def create_group(
+        self, 
+        community_id: str, 
+        name: str, 
+        description: str | None = None,
+        institution_type: str = "faith"  # NEW: Type-aware group creation
+    ) -> InstitutionGroupDTO:
         """Create a new institutional subgroup."""
         group_id = str(uuid.uuid4())
         group = InstitutionGroupDTO(
             id=group_id,
             community_id=community_id,
+            institution_type=institution_type,  # NEW
             name=name,
             description=description
         )
         self.groups.save(group)
+        self.log_audit(community_id, "SYSTEM", "GROUP_CREATE", group_id, f"Name: {name}, Type: {institution_type}")
         return group
 
     def list_community_groups(self, community_id: str) -> list[InstitutionGroupDTO]:
@@ -213,7 +252,6 @@ class InstitutionService:
         Logs an outgoing message and returns a tracking ID.
         """
         msg_id = str(uuid.uuid4())
-        import hashlib
         content_hash = hashlib.sha256(content.encode()).hexdigest()
 
         log = InstitutionMessageLogDTO(
@@ -228,6 +266,82 @@ class InstitutionService:
         )
         self.logs.save(log)
         return msg_id
+
+    # --- Targeted Announcement Engine (PROMPT 11) ---
+
+    def resolve_broadcast_targets(self, community_id: str, target: str) -> list[InstitutionMemberDTO]:
+        """
+        Resolves a target string (e.g. 'ALL', 'GROUP:Youth') into a list of members.
+        """
+        if target.upper() == "ALL":
+            return [m for m in self.members.list_all() if m.community_id == community_id]
+        
+        if target.startswith("GROUP:"):
+            group_name = target.split(":", 1)[1]
+            groups = self.list_community_groups(community_id)
+            group = next((g for g in groups if g.name.lower() == group_name.lower()), None)
+            
+            if not group:
+                logger.warning(f"Target group '{group_name}' not found in community {community_id}")
+                return []
+            
+            memberships = self.group_members.list_by_group(group.id)
+            member_ids = [m.member_id for m in memberships]
+            return [self.members.get_by_id(mid) for mid in member_ids]
+        
+        return []
+
+    async def send_targeted_announcement(
+        self,
+        community_id: str,
+        sender_id: str,
+        target: str,
+        message: str
+    ) -> list[str]:
+        """
+        Resolves targets and emits send events for each member/vehicle.
+        Ensures 100% logging of every delivery attempt.
+        """
+        from aos.bus.events import Event
+        
+        targets = self.resolve_broadcast_targets(community_id, target)
+        track_ids = []
+
+        logger.info(f"Broadcasting to {len(targets)} members in {community_id} (Target: {target})")
+
+        for member in targets:
+            # Resolve vehicle maps for this member
+            vmaps = self.vmaps.list_by_member(member.id)
+            for vmap in vmaps:
+                # 1. Log message first (Brain record)
+                track_id = self.log_message(
+                    community_id,
+                    sender_id,
+                    "member",
+                    member.id,
+                    vmap.vehicle_type,
+                    "announcement",
+                    message
+                )
+                track_ids.append(track_id)
+
+                # 2. Dispatch for delivery (Interface agnostic)
+                if self.dispatcher:
+                    await self.dispatcher.dispatch(Event(
+                        name="outbound_send",
+                        payload={
+                            "to": vmap.vehicle_identity,
+                            "vehicle_type": vmap.vehicle_type,
+                            "message": f"📢 ANNOUNCEMENT:\n\n{message}",
+                            "tracking_id": track_id,
+                            "community_id": community_id
+                        }
+                    ))
+        
+        # Log Audit (Prompt 13)
+        self.log_audit(community_id, sender_id, "BROADCAST", target, f"Message: {message[:50]}...")
+        
+        return track_ids
 
     # --- Module Logic (Prayer Requests) ---
 
@@ -305,6 +419,7 @@ class InstitutionService:
             notes=notes
         )
         self.finance.save(entry)
+        self.log_audit(community_id, requester_id, "FINANCE_ENTRY", entry.id, f"Amount: {amount}, Category: {category}")
         return True
 
     def get_financial_summary(self, community_id: str) -> dict:

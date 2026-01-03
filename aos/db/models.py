@@ -156,6 +156,7 @@ class InstitutionMemberDTO(BaseModel):
     """Institutional member entity (UUID based)."""
     id: str  # Member UUID
     community_id: str
+    institution_type: str = "faith"  # Institution type: faith, sports, political, youth, women
     full_name: str
     role_id: str = "MEMBER"  # Institutional role (ADMIN, SECRETARY, TREASURER, MEMBER)
     joined_at: datetime = Field(default_factory=datetime.utcnow)
@@ -165,6 +166,7 @@ class InstitutionGroupDTO(BaseModel):
     """Institutional groups (e.g. Youth, Women, Choir)."""
     id: str
     community_id: str
+    institution_type: str = "faith"  # Institution type: faith, sports, political, youth, women
     name: str
     description: str | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -226,4 +228,26 @@ class FinancialLedgerDTO(BaseModel):
     is_pledge: bool = False
     entry_date: datetime
     notes: str | None = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class InstitutionAuditLogDTO(BaseModel):
+    """Read-only audit trail for administrative actions."""
+    id: str
+    community_id: str
+    operator_id: str
+    action_type: str
+    target_id: str | None = None
+    details: str | None = None
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+class MessageRetryDTO(BaseModel):
+    """Queue for failed outbound messages (Offline-First)."""
+    id: str
+    community_id: str
+    vehicle_type: str
+    vehicle_identity: str
+    content: str
+    metadata: str | None = None  # JSON encoded metadata
+    retry_count: int = 0
+    next_retry_at: datetime = Field(default_factory=datetime.utcnow)
     created_at: datetime = Field(default_factory=datetime.utcnow)

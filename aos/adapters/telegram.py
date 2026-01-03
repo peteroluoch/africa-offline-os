@@ -33,12 +33,14 @@ class TelegramAdapter(ChannelAdapter):
         agri_module: Optional[AgriModule] = None,
         transport_module: Optional[TransportModule] = None,
         community_module: Optional[CommunityModule] = None,
-        gateway: Optional[TelegramGateway] = None
+        gateway: Optional[TelegramGateway] = None,
+        command_router: Any = None
     ):
         self.event_bus = event_bus
         self.agri_module = agri_module
         self.transport_module = transport_module
         self.community_module = community_module
+        self.command_router = command_router
         self.logger = logging.getLogger(__name__)
         
         # Inject or create gateway for API interactions
@@ -103,7 +105,17 @@ class TelegramAdapter(ChannelAdapter):
         }
 
     def get_channel_type(self) -> str:
-        return "telegram"
+        return ChannelType.TELEGRAM.value
+
+    def register_identity(self, identity: str) -> None:
+        """
+        Register the bot token/identity.
+        In A-OS, this is typically set via environment variables, 
+        but we implement this for VehicleInterface compliance.
+        """
+        if identity:
+            os.environ["TELEGRAM_BOT_TOKEN"] = identity
+            logger.info("Telegram identity registered via interface.")
 
     def send_chat_action(self, chat_id: int, action: str = "typing") -> bool:
         """Send a chat action indicator indicator via gateway."""
@@ -126,20 +138,32 @@ class TelegramAdapter(ChannelAdapter):
             command = parts[0].lower()
             args = parts[1:]
             
-            # 1. Handle Global Core Commands
+            # --- PHASE 3: Integrated Command Routing ---
+            if self.command_router:
+                # Use the new multi-layer router
+                response = await self.command_router.handle_command(
+                    text, 
+                    vehicle_type="telegram", 
+                    vehicle_identity=str(chat_id),
+                    user_name=message.get("from", {}).get("first_name", "Unknown"),
+                    vehicle_type_raw="telegram"
+                )
+                
+                # If the router handled it (not just 'Unknown command'), return response
+                if response and "Unknown command" not in response:
+                    await self.send_message(str(chat_id), response)
+                    return
+            
+            # --- LEGACY / FALLBACK HANDLERS ---
             if command == '/start':
                 if args:
-                    # Deep link join: /start <slug>
-                    # Auditor Alignment: Support human-readable slugs
                     slug = args[0]
-                    # Strip 'join_' prefix if present (backwards compatibility)
                     if slug.startswith('join_'):
                         slug = slug.replace('join_', '')
                     await self._handle_community_join_request(chat_id, slug)
                 else:
                     await self.send_welcome(chat_id)
             elif command == '/myid':
-                # Surgical Phase 1: Only echo ID, no storage or registration
                 chat_type = message.get('chat', {}).get('type')
                 if chat_type == 'private':
                     await self.send_message(
@@ -161,7 +185,7 @@ class TelegramAdapter(ChannelAdapter):
             elif command == '/domain':
                 await self.router.show_domain_selector(chat_id)
             else:
-                # 2. Route to Active Domain
+                # 2. Route to Active Domain (Legacy)
                 handled = await self.router.route_command(chat_id, command, args)
                 if not handled:
                     await self.send_message(str(chat_id), f"❓ Unknown command: {command}\n\nUse /domain to select a service or /help for info.")

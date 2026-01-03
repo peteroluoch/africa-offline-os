@@ -84,7 +84,7 @@ from aos.db.models import (
     TransportZoneDTO, TrafficSignalDTO, TransportAvailabilityDTO,
     InstitutionMemberDTO, InstitutionGroupDTO, MemberVehicleMapDTO,
     InstitutionMessageLogDTO, PrayerRequestDTO, InstitutionGroupMemberDTO,
-    AttendanceRecordDTO, FinancialLedgerDTO
+    AttendanceRecordDTO, FinancialLedgerDTO, InstitutionAuditLogDTO, MessageRetryDTO
 )
 
 
@@ -342,6 +342,15 @@ class MemberVehicleMapRepository(BaseRepository[MemberVehicleMapDTO]):
         row = cursor.fetchone()
         return self._row_to_model(row) if row else None
 
+    def list_by_member(self, member_id: str) -> list[MemberVehicleMapDTO]:
+        """Fetch all vehicle identities for a specific member."""
+        self.conn.row_factory = sqlite3.Row
+        cursor = self.conn.execute(
+            f"SELECT * FROM {self.table_name} WHERE member_id = ?",
+            (member_id,)
+        )
+        return [self._row_to_model(row) for row in cursor.fetchall()]
+
 class InstitutionMessageLogRepository(BaseRepository[InstitutionMessageLogDTO]):
     def __init__(self, connection: sqlite3.Connection):
         super().__init__(connection, InstitutionMessageLogDTO, "institution_message_logs")
@@ -453,3 +462,49 @@ class InstitutionalFinanceRepository(BaseRepository[FinancialLedgerDTO]):
             GROUP BY is_pledge
         """, (community_id,))
         return [dict(row) for row in cursor.fetchall()]
+
+class InstitutionalAuditRepository(BaseRepository[InstitutionAuditLogDTO]):
+    """Repository for read-only system audit trails."""
+    def __init__(self, conn: sqlite3.Connection):
+        super().__init__(conn, InstitutionAuditLogDTO, "institution_audit_logs")
+
+    def list_by_community(self, community_id: str) -> list[InstitutionAuditLogDTO]:
+        """Fetch audit logs for a specific community."""
+        self.conn.row_factory = sqlite3.Row
+        cursor = self.conn.execute(
+            f"SELECT * FROM {self.table_name} WHERE community_id = ? ORDER BY timestamp DESC",
+            (community_id,)
+        )
+        return [self._row_to_model(row) for row in cursor.fetchall()]
+
+    def log_action(self, community_id: str, operator_id: str, action: str, target_id: str | None = None, details: str | None = None) -> None:
+        """Append-only logging hook."""
+        import uuid
+        log_id = str(uuid.uuid4())
+        self.conn.execute(
+            f"INSERT INTO {self.table_name} (id, community_id, operator_id, action_type, target_id, details) VALUES (?, ?, ?, ?, ?, ?)",
+            (log_id, community_id, operator_id, action, target_id, details)
+        )
+        self.conn.commit()
+
+class MessageRetryRepository(BaseRepository[MessageRetryDTO]):
+    """Repository for managing the outbound message retry queue."""
+    def __init__(self, conn: sqlite3.Connection):
+        super().__init__(conn, MessageRetryDTO, "message_retry_queue")
+
+    def list_pending(self, limit: int = 50) -> list[MessageRetryDTO]:
+        """Fetch messages ready for retry."""
+        self.conn.row_factory = sqlite3.Row
+        cursor = self.conn.execute(
+            f"SELECT * FROM {self.table_name} WHERE next_retry_at <= CURRENT_TIMESTAMP ORDER BY next_retry_at ASC LIMIT ?",
+            (limit,)
+        )
+        return [self._row_to_model(row) for row in cursor.fetchall()]
+
+    def increment_retry(self, id: str, next_retry_seconds: int = 300) -> None:
+        """Update retry count and push back next retry time."""
+        self.conn.execute(
+            f"UPDATE {self.table_name} SET retry_count = retry_count + 1, next_retry_at = datetime('now', '+{next_retry_seconds} seconds') WHERE id = ?",
+            (id,)
+        )
+        self.conn.commit()

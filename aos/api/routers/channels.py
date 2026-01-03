@@ -226,13 +226,14 @@ async def telegram_webhook(request: Request):
         
         # Initialize Telegram Adapter
         from aos.adapters.telegram import TelegramAdapter
-        from aos.api.state import core_state, agri_state, transport_state, community_state
+        from aos.api.state import core_state, agri_state, transport_state, community_state, institution_state
         
         telegram_adapter = TelegramAdapter(
             event_bus=core_state.event_dispatcher,
             agri_module=agri_state.module,
             transport_module=transport_state.module,
-            community_module=community_state.module
+            community_module=community_state.module,
+            command_router=institution_state.router
         )
         
         # Handle message or callback query

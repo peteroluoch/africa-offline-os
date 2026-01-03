@@ -1,0 +1,87 @@
+{% extends "dashboard.html" %}
+{% from "components/atoms/Badge.html" import badge %}
+{% from "components/atoms/Card.html" import card %}
+{% from "components/molecules/DataCard.html" import data_card %}
+
+{% block content %}
+<header class="mb-10 flex items-center justify-between">
+    <div>
+        <h1 class="aos-h1 mb-2">Member Registry</h1>
+        <p class="aos-text-muted aos-text-sm">Digital Parish Office | {{ community_id }}</p>
+    </div>
+    <div class="flex items-center gap-3">
+        <a href="/institution/export/members?community_id={{ community_id }}" class="aos-btn aos-btn-ghost aos-size-md">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            <span class="aos-btn-text ml-2">Export CSV</span>
+        </a>
+    </div>
+</header>
+
+<!-- Metrics Row -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+    {{ data_card(label="Total Members", value=members|length|string, status="info") }}
+    {{ data_card(label="Active Groups", value=groups|length|string, status="success") }}
+    {{ data_card(label="Community", value=community_id, status="ghost") }}
+</div>
+
+<section class="aos-stack-md">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="aos-h2">Institutional Members</h2>
+    </div>
+
+    {% call card(padding="0", class="aos-overflow-hidden") %}
+    <table class="aos-table">
+        <thead>
+            <tr>
+                <th>Member Name</th>
+                <th>Role</th>
+                <th>Joined On</th>
+                <th>Group Memberships</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for member in members %}
+            <tr>
+                <td class="aos-font-bold">{{ member.full_name }}</td>
+                <td>
+                    <span
+                        class="aos-badge {% if member.role_id == 'ADMIN' %}aos-badge-primary{% elif member.role_id == 'PASTOR' %}aos-badge-success{% else %}aos-badge-info{% endif %}">
+                        {{ member.role_id }}
+                    </span>
+                </td>
+                <td class="aos-text-sm aos-text-muted">
+                    {{ member.joined_at.strftime('%Y-%m-%d') if member.joined_at else 'N/A' }}
+                </td>
+                <td>
+                    <div class="flex flex-wrap gap-1">
+                        {# For now, groups aren't directly nested in Member DTO,
+                        we'd need a separate lookup or joined query if we want to show tags here.
+                        For Section 3 MVP, we show role and basic info. #}
+                        <span class="aos-text-xs aos-text-muted italic">View details for groups</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="flex items-center gap-2">
+                        <button class="aos-btn aos-btn-ghost aos-size-sm">
+                            <span class="aos-btn-text">Manage</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="aos-text-center aos-py-8 aos-text-muted">
+                    No institutional members found.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endcall %}
+</section>
+
+{% endblock %}

@@ -17,6 +17,9 @@ from aos.db.migrations import (
     _016_institution_core,
     _017_group_memberships,
     _018_attendance_finance,
+    _019_audit_logs,
+    _020_retry_queue,
+    _021_institution_types,
 )
 
 # Strict migration registry
@@ -39,4 +42,7 @@ MIGRATIONS = [
     _016_institution_core,
     _017_group_memberships,
     _018_attendance_finance,
+    _019_audit_logs,
+    _020_retry_queue,
+    _021_institution_types,
 ]

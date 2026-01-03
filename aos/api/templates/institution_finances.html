@@ -1,0 +1,134 @@
+{% extends "dashboard.html" %}
+{% from "components/atoms/Card.html" import card %}
+{% from "components/molecules/DataCard.html" import data_card %}
+
+{% block content %}
+<header class="mb-10 flex items-center justify-between">
+    <div>
+        <h1 class="aos-h1 mb-2">Financial Ledger</h1>
+        <p class="aos-text-muted aos-text-sm">Digital Parish Office | Stewardship & Accounting</p>
+    </div>
+    <div class="flex items-center gap-3">
+        <a href="/institution/export/finances?community_id={{ community_id }}"
+            class="aos-btn aos-btn-ghost aos-size-md">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            <span class="aos-btn-text ml-2">Export Ledger</span>
+        </a>
+    </div>
+</header>
+
+<!-- Financial Summary -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+    {{ data_card(label="Tithes (Total)", value="KES " + (summary.category_totals.get('Tithe', 0)|string),
+    status="success") }}
+    {{ data_card(label="Offerings", value="KES " + (summary.category_totals.get('Offering', 0)|string), status="info")
+    }}
+    {{ data_card(label="Building Fund", value="KES " + (summary.category_totals.get('Building', 0)|string),
+    status="warning") }}
+    {{ data_card(label="Total Pledges", value="KES " + (summary.total_pledge_amount|string), unit="unpaid",
+    status="ghost") }}
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+    <!-- Ledger Table -->
+    <div class="lg:col-span-2">
+        <section class="aos-stack-md">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="aos-h2">Recent Transactions</h2>
+            </div>
+
+            {% call card(padding="0", class="aos-overflow-hidden") %}
+            <table class="aos-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Member</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="ledger-body">
+                    {% for entry in entries %}
+                    <tr>
+                        <td class="aos-text-xs aos-text-muted">{{ entry.entry_date.strftime('%Y-%m-%d %H:%M') if
+                            entry.entry_date else 'N/A' }}</td>
+                        <td class="aos-font-bold">{{ entry.member_id }}</td>
+                        <td><span class="aos-badge aos-badge-ghost">{{ entry.category }}</span></td>
+                        <td class="aos-font-mono text-success">KES {{ entry.amount }}</td>
+                        <td>
+                            {% if entry.is_pledge %}
+                            <span class="aos-badge aos-badge-warning aos-size-xs">PLEDGE</span>
+                            {% else %}
+                            <span class="aos-badge aos-badge-success aos-size-xs">PAID</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="aos-text-center aos-py-8 aos-text-muted">No transactions recorded yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endcall %}
+        </section>
+    </div>
+
+    <!-- Quick Entry Form -->
+    <div>
+        <section class="aos-stack-md">
+            <h2 class="aos-h2 mb-4">Quick Entry</h2>
+            {% call card(glass=True) %}
+            <form hx-post="/institution/finances" hx-target="#ledger-feedback"
+                hx-on::after-request="if(event.detail.successful) { this.reset(); window.location.reload(); }"
+                class="aos-stack-md">
+                <input type="hidden" name="community_id" value="{{ community_id }}">
+
+                <div>
+                    <label class="aos-text-xs aos-text-muted uppercase font-bold mb-2 block">Member</label>
+                    <select name="member_id" class="aos-input aos-size-md w-full" required>
+                        <option value="">Select Member...</option>
+                        {% for member in members %}
+                        <option value="{{ member.id }}">{{ member.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="aos-text-xs aos-text-muted uppercase font-bold mb-2 block">Amount</label>
+                        <input type="number" name="amount" class="aos-input aos-size-md w-full" placeholder="0.00"
+                            step="0.01" required>
+                    </div>
+                    <div>
+                        <label class="aos-text-xs aos-text-muted uppercase font-bold mb-2 block">Category</label>
+                        <select name="category" class="aos-input aos-size-md w-full" required>
+                            <option value="Tithe">Tithe</option>
+                            <option value="Offering">Offering</option>
+                            <option value="Building">Building</option>
+                            <option value="Pledge">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 py-2">
+                    <input type="checkbox" name="is_pledge" id="is_pledge" class="aos-checkbox">
+                    <label for="is_pledge" class="aos-text-sm">Record as unpaid pledge</label>
+                </div>
+
+                <button type="submit" class="aos-btn aos-btn-primary aos-size-md w-full">
+                    <span class="aos-btn-text">Record Entry</span>
+                </button>
+
+                <div id="ledger-feedback" class="mt-4"></div>
+            </form>
+            {% endcall %}
+        </section>
+    </div>
+</div>
+{% endblock %}

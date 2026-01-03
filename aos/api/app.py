@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-import json
+import os
 import sqlite3
 import time
 from collections.abc import AsyncIterator
@@ -160,6 +160,77 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     community_state.module = CommunityModule(core_state.event_dispatcher, core_state.db_conn)
     await community_state.module.initialize()
+
+    # Initialize Institutional Core (The Brain)
+    from aos.core.institution.service import InstitutionService
+    from aos.core.institution.plugins.faith import FaithPlugin  # NEW
+    from aos.core.vehicles.router import CommandRouter
+    from aos.db.repository import (
+        InstitutionMemberRepository, InstitutionGroupRepository,
+        InstitutionMessageLogRepository, PrayerRequestRepository,
+        MemberVehicleMapRepository, CommunityGroupRepository,
+        InstitutionGroupMemberRepository, InstitutionalAttendanceRepository,
+        InstitutionalFinanceRepository, InstitutionalAuditRepository,
+        MessageRetryRepository
+    )
+    from aos.api.state import institution_state
+    
+    # NEW: Initialize plugins
+    plugins = {
+        "faith": FaithPlugin()
+    }
+    
+    institution_state.service = InstitutionService(
+        member_repo=InstitutionMemberRepository(core_state.db_conn),
+        group_repo=InstitutionGroupRepository(core_state.db_conn),
+        msg_log_repo=InstitutionMessageLogRepository(core_state.db_conn),
+        prayer_repo=PrayerRequestRepository(core_state.db_conn),
+        vmap_repo=MemberVehicleMapRepository(core_state.db_conn),
+        community_repo=CommunityGroupRepository(core_state.db_conn),
+        group_member_repo=InstitutionGroupMemberRepository(core_state.db_conn),
+        attendance_repo=InstitutionalAttendanceRepository(core_state.db_conn),
+        finance_repo=InstitutionalFinanceRepository(core_state.db_conn),
+        audit_repo=InstitutionalAuditRepository(core_state.db_conn),
+        dispatcher=core_state.event_dispatcher,
+        plugins=plugins  # NEW: Pass plugins to service
+    )
+    
+    # Initialize Message Resilience (Prompt 14)
+    from aos.core.vehicles.manager import OutboundMessageManager
+    from aos.adapters.telegram import TelegramAdapter
+    from aos.adapters.telegram_gateway import TelegramGateway
+    
+    retry_repo = MessageRetryRepository(core_state.db_conn)
+    institution_state.message_manager = OutboundMessageManager(core_state.event_dispatcher, retry_repo)
+    
+    # Register Telegram
+    tg_gateway = TelegramGateway(os.environ.get("TELEGRAM_BOT_TOKEN", ""))
+    tg_adapter = TelegramAdapter(tg_gateway)
+    institution_state.message_manager.register_vehicle(tg_adapter)
+    
+    # Start Retry Loop
+    async def retry_loop():
+        while True:
+            await asyncio.sleep(60) # Try every minute
+            if institution_state.message_manager:
+                await institution_state.message_manager.process_retries()
+    
+    asyncio.create_task(retry_loop())
+    
+    # Initialize Multi-Layer Router (The Vehicle Interface)
+    router = CommandRouter(institution_state.service)
+    # Layer 2: Core
+    router.register_core("join", router.handle_join)
+    router.register_core("myinfo", router.handle_myinfo)
+    # Layer 3: Module
+    router.register_module("groups", router.handle_groups)
+    router.register_module("join_group", router.handle_join_group)
+    router.register_module("leave_group", router.handle_leave_group)
+    router.register_module("broadcast", router.handle_broadcast)
+    router.register_module("prayer", router.handle_prayer)
+    router.register_module("prayer_list", router.handle_prayer_list)
+    
+    institution_state.router = router
 
     print(f"[A-OS] Started - DB: {settings.sqlite_path}")
 
