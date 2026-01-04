@@ -6,8 +6,9 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from aos.api.dependencies import get_db
-from aos.core.security.auth import auth_manager
-from aos.core.security.password import verify_password
+from aos.api.state import auth_manager, community_state
+from aos.core.security.password import verify_password, get_password_hash
+from aos.core.security.auth import AosRole
 
 router = APIRouter(tags=["auth"])
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
@@ -113,7 +114,11 @@ async def logout():
 async def signup(
     username: str = Form(...),
     password: str = Form(...),
-    community_id: str = Form(...),
+    community_id: str = Form(None),
+    create_new: bool = Form(False),
+    community_name: str = Form(None),
+    community_type: str = Form(None),
+    location: str = Form(None),
     db: sqlite3.Connection = Depends(get_db)
 ):
     """
@@ -133,25 +138,48 @@ async def signup(
                 status_code=400
             )
 
-        # 2. Get the 'operator' role ID
-        role_row = db.execute("SELECT id FROM roles WHERE name='operator'").fetchone()
+        # 2. Assign role and generate ID
+        # Default to 'operator' unless they are creating a community, then they are 'admin'
+        role_name = 'admin' if create_new else 'operator'
+        role_row = db.execute("SELECT id FROM roles WHERE name=?", (role_name,)).fetchone()
         if not role_row:
-             return HTMLResponse(content="System misconfigured: Operator role missing.", status_code=500)
+             return HTMLResponse(content=f"System misconfigured: {role_name} role missing.", status_code=500)
         
         role_id = role_row[0]
         op_id = str(uuid.uuid4())
         pw_hash = get_password_hash(password)
 
-        # 3. Create the user
+        # 3. Handle Community Creation if requested
+        final_community_id = community_id
+        if create_new:
+            if not community_name:
+                return HTMLResponse(content="Community name required for new registration", status_code=400)
+            
+            if community_state.module:
+                new_group = await community_state.module.register_group(
+                    name=community_name,
+                    tags=[community_type] if community_type else [],
+                    location=location or "Remote",
+                    admin_id=op_id,
+                    group_type=community_type or "Generic"
+                )
+                final_community_id = new_group.id
+            else:
+                return HTMLResponse(content="Community module not initialized", status_code=500)
+
+        if not final_community_id:
+             return HTMLResponse(content="Please select a community or create a new one.", status_code=400)
+
+        # 4. Create the user
         db.execute(
             "INSERT INTO operators (id, username, password_hash, role_id, community_id, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-            (op_id, username, pw_hash, role_id, community_id, datetime.now(UTC).isoformat())
+            (op_id, username, pw_hash, role_id, final_community_id, datetime.now(UTC).isoformat())
         )
         db.commit()
 
-        print(f"[Auth] New field agent registered: {username}")
+        print(f"[Auth] New {role_name} registered: {username} for community {final_community_id}")
         
-        # 4. Redirect to login with success message
+        # 5. Redirect to login with success message
         return RedirectResponse(url="/login?msg=Signup+success!+Please+login.", status_code=status.HTTP_303_SEE_OTHER)
 
     except Exception as e:

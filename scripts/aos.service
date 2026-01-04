@@ -1,0 +1,17 @@
+[Unit]
+Description=A-OS (Africa Offline OS) Kernel
+After=network.target
+
+[Service]
+User=aos-user
+Group=aos-user
+WorkingDirectory=/app
+EnvironmentFile=/app/.env
+ExecStart=/app/aos_venv/bin/python main.py
+Restart=always
+RestartSec=5
+StandardOutput=append:/app/data/logs/aos.log
+StandardError=append:/app/data/logs/aos.log
+
+[Install]
+WantedBy=multi-user.target

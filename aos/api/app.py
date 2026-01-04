@@ -163,7 +163,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     # Initialize Institutional Core (The Brain)
     from aos.core.institution.service import InstitutionService
-    from aos.core.institution.plugins.faith import FaithPlugin  # NEW
+    from aos.core.institution.plugins.faith import FaithPlugin
+    from aos.core.institution.plugins.sports import SportsPlugin
     from aos.core.vehicles.router import CommandRouter
     from aos.db.repository import (
         InstitutionMemberRepository, InstitutionGroupRepository,
@@ -177,7 +178,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     
     # NEW: Initialize plugins
     plugins = {
-        "faith": FaithPlugin()
+        "faith": FaithPlugin(),
+        "sports": SportsPlugin()
     }
     
     institution_state.service = InstitutionService(

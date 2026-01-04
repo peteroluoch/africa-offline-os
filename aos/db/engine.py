@@ -17,6 +17,18 @@ def connect(sqlite_path: str) -> sqlite3.Connection:
     
     # CRITICAL: WAL mode for crash safety and concurrent reads
     conn.execute("PRAGMA journal_mode=WAL;")
+    # Power failure hardening: NORMAL is faster than FULL but still very safe with WAL
+    conn.execute("PRAGMA synchronous=NORMAL;")
+    
+    # Run a quick integrity check on startup
+    try:
+        cursor = conn.execute("PRAGMA integrity_check;")
+        result = cursor.fetchone()
+        if result[0] != "ok":
+            # In a real environment, we'd log this to the persistent system log
+            print(f"DATABASE INTEGRITY WARNING: {result[0]}")
+    except Exception as e:
+        print(f"FAILED TO RUN INTEGRITY CHECK: {e}")
     conn.execute("PRAGMA foreign_keys=ON;")
     conn.execute("PRAGMA synchronous=NORMAL;")  # Balance safety/performance
     

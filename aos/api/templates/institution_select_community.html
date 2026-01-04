@@ -1,0 +1,62 @@
+{% extends "dashboard.html" %}
+{% from "components/atoms/Card.html" import card %}
+
+{% block content %}
+<header class="mb-10">
+    <h1 class="aos-h1 mb-2">Select Community</h1>
+    <p class="aos-text-muted aos-text-sm">Please choose a community context to manage its institutional data.</p>
+</header>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for community in communities %}
+    <a href="{{ target_url }}?community_id={{ community.id }}&institution_type={{ institution_type }}" class="group">
+        {% call card(class="hover:border-[var(--aos-primary-base)] transition-all h-full flex flex-col justify-between")
+        %}
+        <div>
+            <div class="flex items-center justify-between mb-4">
+                <span class="aos-badge aos-badge-ghost">{{ community.group_type | capitalize }}</span>
+                <div
+                    class="w-8 h-8 rounded-full bg-[var(--aos-primary-base)]/10 flex items-center justify-center text-[var(--aos-primary-base)] opacity-0 group-hover:opacity-100 transition-opacity">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="aos-text-lg font-bold mb-2 group-hover:text-[var(--aos-primary-base)] transition-colors">{{
+                community.name }}</h3>
+            <p class="aos-text-xs aos-text-muted line-clamp-2 h-8">{{ community.description or 'No description provided'
+                }}</p>
+        </div>
+        <div
+            class="mt-6 pt-4 border-t border-white/5 flex items-center justify-between text-[10px] uppercase tracking-widest font-bold text-slate-500">
+            <span>{{ community.location }}</span>
+            <span class="text-[var(--aos-primary-base)]">Manage &rarr;</span>
+        </div>
+        {% endcall %}
+    </a>
+    {% endfor %}
+</div>
+
+{% if not communities %}
+<div class="aos-py-20 aos-text-center">
+    {% call card(glass=True) %}
+    <div class="aos-stack-sm py-8">
+        <svg class="w-16 h-16 mx-auto text-slate-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+            </path>
+        </svg>
+        <h3 class="aos-text-xl font-bold">No Communities Found</h3>
+        <p class="aos-text-muted max-w-md mx-auto">You haven't been assigned to any communities yet, and no active
+            communities were found in the system registry.</p>
+        <div class="mt-6">
+            <a href="/community" class="aos-btn aos-btn-primary aos-size-md">
+                <span class="aos-btn-text">Go to Community Groups</span>
+            </a>
+        </div>
+    </div>
+    {% endcall %}
+</div>
+{% endif %}
+{% endblock %}

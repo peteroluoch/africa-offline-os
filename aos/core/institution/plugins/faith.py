@@ -69,9 +69,9 @@ class FaithPlugin(InstitutionPlugin):
     def get_context_labels(self) -> Dict[str, str]:
         """Return faith-specific labels for shared features."""
         return {
-            "attendance_label": "Worship Attendance",
-            "financial_label": "Tithes & Offerings",
-            "group_label": "Ministry Groups",
-            "member_label": "Church Members",
-            "prayer_label": "Prayer Requests"
+            "attendance_label": "Registry Attendance",
+            "financial_label": "Institutional Finances",
+            "group_label": "Institutional Groups",
+            "member_label": "Institutional Registry",
+            "prayer_label": "Prayer & Requests"
         }

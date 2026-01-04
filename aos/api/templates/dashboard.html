@@ -449,6 +449,35 @@
             <!-- Dependency Update Alerts (Admin Only) -->
             {{ dependency_alert(dependency_updates) }}
 
+            <!-- Quick Actions (Admin Only) -->
+            {% if user.role in ['super_admin', 'admin'] %}
+            <div class="aos-stack-md">
+                <h3 class="aos-text-xs aos-text-muted uppercase tracking-[0.2em] font-black mb-6">Quick Actions</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <a href="/community" class="group relative block">
+                        {% call card(padding="6", glass=True, class="h-full border border-blue-500/10
+                        hover:border-blue-500/30 transition-all duration-300 transform hover:-translate-y-1") %}
+                        <div class="flex items-start justify-between mb-4">
+                            <div
+                                class="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4"></path>
+                                </svg>
+                            </div>
+                            <div
+                                class="p-1 px-2 rounded-md bg-blue-500/5 text-blue-400 font-mono text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+                                Launch</div>
+                        </div>
+                        <h4 class="aos-h4 mb-2">Register Community</h4>
+                        <p class="aos-text-xs aos-text-muted leading-relaxed">System-wide registration for new mosques,
+                            churches, or clubs.</p>
+                        {% endcall %}
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Live Kernel Log (Collapsible) -->
             {{ live_kernel_log() }}
             {% endblock %}

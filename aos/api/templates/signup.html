@@ -5,180 +5,188 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>A-OS | Community Onboarding</title>
-    <link rel="stylesheet" href="/static/index.css">
     <!-- A-OS Design System -->
     {% include 'partials/design_system.html' %}
     <style>
-        :root {
-            --aos-bg: #0f172a;
-            --aos-surface: #1e293b;
-            --aos-primary: #38bdf8;
-            --aos-text: #f8fafc;
-            --aos-text-muted: #94a3b8;
-        }
-
         body {
-            font-family: 'Outfit', sans-serif;
-            background: radial-gradient(circle at top right, #1e293b, #0f172a);
-            color: var(--aos-text);
-            height: 100vh;
+            background: var(--aos-bg);
+            background-image:
+                radial-gradient(circle at 0% 0%, var(--aos-primary-base) 0%, transparent 25%),
+                radial-gradient(circle at 100% 100%, var(--aos-success-base) 0%, transparent 25%);
+            background-attachment: fixed;
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0;
-            overflow: hidden;
+            padding: 2rem;
         }
 
         .signup-card {
-            background: rgba(30, 41, 59, 0.7);
+            background: var(--aos-surface-glass);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 3rem;
+            border: 1px solid white;
+            border-color: rgba(255, 255, 255, 0.1);
+            border-radius: var(--aos-radius-lg);
+            padding: 2.5rem;
             width: 100%;
-            max-width: 440px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            animation: fadeIn 0.6s ease-out;
+            max-width: 480px;
+            box-shadow: var(--aos-shadow-lg);
+            animation: aos-fade-up 0.6s ease-out;
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .toggle-group {
+            display: flex;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 4px;
+            border-radius: var(--aos-radius-md);
+            margin-bottom: 2rem;
         }
 
-        .header {
+        .toggle-btn {
+            flex: 1;
+            padding: 0.75rem;
             text-align: center;
-            margin-bottom: 2.5rem;
-        }
-
-        .logo {
-            font-size: 2rem;
-            font-weight: 700;
-            background: linear-gradient(to right, #38bdf8, #818cf8);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
-        }
-
-        .subtitle {
-            color: var(--aos-text-muted);
-            font-size: 0.95rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--aos-text-muted);
-        }
-
-        input,
-        select {
-            width: 100%;
-            padding: 0.875rem 1rem;
-            background: rgba(15, 23, 42, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            color: white;
-            font-size: 1rem;
-            transition: all 0.3s;
-            box-sizing: border-box;
-        }
-
-        input:focus,
-        select:focus {
-            outline: none;
-            border-color: var(--aos-primary);
-            background: rgba(15, 23, 42, 0.8);
-            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.1);
-        }
-
-        .btn-submit {
-            width: 100%;
-            padding: 1rem;
-            background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%);
-            border: none;
-            border-radius: 12px;
-            color: white;
-            font-weight: 700;
-            font-size: 1rem;
+            border-radius: calc(var(--aos-radius-md) - 2px);
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            margin-top: 1rem;
-        }
-
-        .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
-        }
-
-        .footer-links {
-            text-align: center;
-            margin-top: 2rem;
             font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.3s;
             color: var(--aos-text-muted);
         }
 
-        .footer-links a {
-            color: var(--aos-primary);
-            text-decoration: none;
-            font-weight: 600;
+        .toggle-btn.active {
+            background: var(--aos-primary-base);
+            color: white;
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
         }
 
-        .footer-links a:hover {
-            text-decoration: underline;
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 
 <body>
     <div class="signup-card">
-        <div class="header">
-            <div class="logo">A-OS KERNEL</div>
-            <div class="subtitle">Join your local community network</div>
+        <div class="text-center mb-8">
+            <div
+                class="aos-h1 text-transparent bg-clip-text bg-gradient-to-r from-[var(--aos-primary-base)] to-[var(--aos-primary-light)] mb-2">
+                A-OS Kernel</div>
+            <div class="aos-text-sm aos-text-muted">Initialize your local community network</div>
         </div>
 
-        <form action="/auth/signup" method="POST">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" placeholder="Choose a name" required autofocus>
+        <div class="toggle-group">
+            <div id="btnJoin" class="toggle-btn active" onclick="setMode('join')">Join Existing</div>
+            <div id="btnCreate" class="toggle-btn" onclick="setMode('create')">Start New</div>
+        </div>
+
+        <form action="/auth/signup" method="POST" id="signupForm">
+            <!-- New Community Toggle Field -->
+            <input type="hidden" name="create_new" id="createNewField" value="false">
+
+            <div class="form-group mb-4">
+                <label
+                    class="aos-text-xs aos-text-muted mb-2 block font-semibold uppercase tracking-wider">Username</label>
+                <input type="text" name="username" class="aos-input w-full" placeholder="e.g. admin_kenya" required
+                    autofocus shadow>
             </div>
 
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="••••••••" required>
+            <div class="form-group mb-6">
+                <label
+                    class="aos-text-xs aos-text-muted mb-2 block font-semibold uppercase tracking-wider">Password</label>
+                <input type="password" name="password" class="aos-input w-full" placeholder="••••••••" required shadow>
             </div>
 
-            <div class="form-group">
-                <label for="community_id">Select Community</label>
-                <select id="community_id" name="community_id" required>
-                    <option value="" disabled selected>Select your group...</option>
-                    {% for comm in communities %}
-                    <option value="{{ comm.id }}">{{ comm.name }}</option>
-                    {% endfor %}
-                </select>
+            <!-- MODE: JOIN EXISTING -->
+            <div id="joinFields">
+                <div class="form-group mb-8">
+                    <label class="aos-text-xs aos-text-muted mb-2 block font-semibold uppercase tracking-wider">Select
+                        Community</label>
+                    <select name="community_id" id="join_community_id" class="aos-input w-full" required shadow>
+                        <option value="" disabled selected>Choose your group...</option>
+                        {% for comm in communities %}
+                        <option value="{{ comm.id }}">{{ comm.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
 
-            <button type="submit" class="btn-submit">Initialize Account</button>
+            <!-- MODE: START NEW -->
+            <div id="createFields" class="hidden">
+                <div class="form-group mb-4">
+                    <label
+                        class="aos-text-xs aos-text-muted mb-2 block font-semibold uppercase tracking-wider">Community
+                        Name</label>
+                    <input type="text" name="community_name" id="new_community_name" class="aos-input w-full"
+                        placeholder="e.g. Nairobi Central Mosque" shadow>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    <div class="form-group">
+                        <label
+                            class="aos-text-xs aos-text-muted mb-2 block font-semibold uppercase tracking-wider">Type</label>
+                        <select name="community_type" class="aos-input w-full" shadow>
+                            <option value="faith">Faith/Religion</option>
+                            <option value="group">Community Group</option>
+                            <option value="sacco">Fin/Sacco</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label
+                            class="aos-text-xs aos-text-muted mb-2 block font-semibold uppercase tracking-wider">Location</label>
+                        <input type="text" name="location" class="aos-input w-full" placeholder="e.g. Nairobi" shadow>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="aos-btn aos-btn-primary w-full aos-size-md group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
+                </div>
+                <span class="aos-btn-text">Initialize Account</span>
+            </button>
         </form>
 
-        <div class="footer-links">
-            Already have an account? <a href="/login">Sign In</a>
+        <div class="text-center mt-8 aos-text-sm aos-text-muted">
+            Already have an account? <a href="/login"
+                class="text-[var(--aos-primary-base)] font-bold hover:underline">Sign In</a>
         </div>
     </div>
+
+    <script>
+        function setMode(mode) {
+            const btnJoin = document.getElementById('btnJoin');
+            const btnCreate = document.getElementById('btnCreate');
+            const joinFields = document.getElementById('joinFields');
+            const createFields = document.getElementById('createFields');
+            const createNewField = document.getElementById('createNewField');
+
+            const joinSelect = document.getElementById('join_community_id');
+            const createNameInput = document.getElementById('new_community_name');
+
+            if (mode === 'join') {
+                btnJoin.classList.add('active');
+                btnCreate.classList.remove('active');
+                joinFields.classList.remove('hidden');
+                createFields.classList.add('hidden');
+                createNewField.value = "false";
+
+                joinSelect.required = true;
+                createNameInput.required = false;
+            } else {
+                btnJoin.classList.remove('active');
+                btnCreate.classList.add('active');
+                joinFields.classList.add('hidden');
+                createFields.classList.remove('hidden');
+                createNewField.value = "true";
+
+                joinSelect.required = false;
+                createNameInput.required = true;
+            }
+        }
+    </script>
 </body>
 
 </html>

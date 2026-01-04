@@ -109,7 +109,7 @@ async def register_community_group(
     if AosRole(operator.get("role", "viewer")).level < AosRole.SYSTEM_ADMIN.level:
         raise HTTPException(403, "Access denied: Only system admins can register new communities.")
     if community_state.module:
-        await community_state.module.register_group(
+        group = await community_state.module.register_group(
             name=name,
             tags=[group_type] if group_type else [],
             location=location or "Unknown",
@@ -117,6 +117,7 @@ async def register_community_group(
             group_type=group_type,
             description=description
         )
+        return RedirectResponse(url=f"/institution/members/ui?community_id={group.id}", status_code=303)
     return RedirectResponse(url="/community", status_code=303)
 
 @router.get("/{group_id}/edit", response_class=HTMLResponse)
